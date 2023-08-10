@@ -1,0 +1,20 @@
+[package]
+name = "assets"
+version = "0.1.0"
+authors = ["Evan Almloff"]
+edition = "2021"
+description = "Ergonomic, Automatic, cross crate asset collection"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/DioxusLabs/dioxus/"
+homepage = "https://dioxuslabs.com"
+keywords = ["assets"]
+
+[lib]
+
+[dependencies]
+assets-macro = { path = "./macro" }
+assets-common = { path = "./common" }
+cargo-lock = "9.0.0"
+
+[workspace]
+members = ["macro", "common", "test-package", "test-package/test-package-dependency"]

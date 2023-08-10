@@ -1,0 +1,19 @@
+[package]
+name = "assets-macro"
+version = "0.0.1"
+authors = ["Evan Almloff"]
+edition = "2021"
+description = "Ergonomic, Automatic, cross crate asset collection"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/DioxusLabs/dioxus/"
+homepage = "https://dioxuslabs.com"
+keywords = ["assets"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = { version = "1.0" }
+quote = "1.0"
+syn = { version = "2.0", features = ["full", "extra-traits"] }
+assets-common = { path = "../common" }
