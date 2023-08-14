@@ -12,14 +12,37 @@ pub enum AssetType {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
-pub struct FileAsset {
+pub struct FileLocation {
     unique_name: String,
     path: PathBuf,
+}
+
+impl FileLocation {
+    pub fn unique_name(&self) -> &str {
+        &self.unique_name
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+pub struct FileAsset {
+    location: FileLocation,
     options: FileOptions,
 }
 
 impl FileAsset {
-    pub fn new(path: PathBuf, options: FileOptions) -> std::io::Result<Self> {
+    pub fn new(path: PathBuf) -> std::io::Result<Self> {
+        let options = path
+            .extension()
+            .map(|e| FileOptions::default_for_extension(&e.to_string_lossy()))
+            .unwrap_or_default();
+        Self::new_with_options(path, options)
+    }
+
+    pub fn new_with_options(path: PathBuf, options: FileOptions) -> std::io::Result<Self> {
         let manifest_dir = manifest_dir();
         let path = manifest_dir.join(path);
         let uuid = uuid::Uuid::new_v4();
@@ -32,18 +55,24 @@ impl FileAsset {
         let unique_name = format!("{file_name}{uuid_hex}{extension}");
 
         Ok(Self {
-            unique_name,
-            path: path.canonicalize()?,
+            location: FileLocation {
+                unique_name,
+                path: path.canonicalize()?,
+            },
             options,
         })
     }
 
+    pub fn process_file(&self, output_folder: &Path) -> std::io::Result<()> {
+        self.options.process_file(&self.location, output_folder)
+    }
+
     pub fn unique_name(&self) -> &str {
-        &self.unique_name
+        &self.location.unique_name
     }
 
     pub fn path(&self) -> &Path {
-        &self.path
+        &self.location.path
     }
 }
 

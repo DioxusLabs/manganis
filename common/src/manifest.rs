@@ -55,10 +55,7 @@ impl AssetManifest {
         for package in &self.assets {
             for asset in package.assets() {
                 if let AssetType::File(file_asset) = asset {
-                    let mut path = location.clone();
-                    std::fs::create_dir_all(&path)?;
-                    path.push(file_asset.unique_name());
-                    std::fs::copy(file_asset.path(), path)?;
+                    file_asset.process_file(&location)?;
                 }
             }
         }

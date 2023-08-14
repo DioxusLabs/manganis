@@ -36,7 +36,7 @@ pub fn file(input: TokenStream) -> TokenStream {
     let input_as_str = parse_macro_input!(input as LitStr);
     let input_as_str = input_as_str.value();
     let path = std::path::PathBuf::from(&input_as_str);
-    match FileAsset::new(path, Default::default()) {
+    match FileAsset::new(path) {
         Ok(file) => {
             let file_name = file.unique_name().to_string();
             add_asset(assets_common::AssetType::File(file));

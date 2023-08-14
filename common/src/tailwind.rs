@@ -21,6 +21,8 @@ impl AssetManifest {
 
         let source = railwind::Source::String(all_classes, railwind::CollectionOptions::String);
 
-        railwind::parse_to_string(source, include_preflight, warnings)
+        let css = railwind::parse_to_string(source, include_preflight, warnings);
+
+        crate::minify_css(&css)
     }
 }
