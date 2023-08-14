@@ -1,6 +1,7 @@
+use image::DynamicImage;
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::{path::{Path, PathBuf}, io::BufWriter};
 
 use crate::FileLocation;
 
@@ -45,6 +46,9 @@ impl FileOptions {
             Self::Css(options) => {
                 options.process_file(input_location, output_folder)?;
             }
+            Self::Image(options) => {
+                options.process_file(input_location, output_folder)?;
+            }
             _ => todo!(),
         }
 
@@ -67,6 +71,84 @@ pub struct ImageOptions {
 impl ImageOptions {
     fn new(ty: ImageType) -> Self {
         Self { compress: true, ty }
+    }
+
+    fn process_file(
+        &self,
+        input_location: &FileLocation,
+        output_folder: &Path,
+    ) -> std::io::Result<()> {
+        let image = image::open(input_location.path()).unwrap();
+
+        let mut output_location = output_folder.to_path_buf();
+
+        match self.ty {
+            ImageType::PNG => {
+                output_location.push(input_location.unique_name());
+                Self::compress_png(image, output_location);
+            },
+            ImageType::JPG => {
+                output_location.push(input_location.unique_name());
+                image.save(output_location).unwrap();
+            },
+            ImageType::Avif => {
+                output_location.push(input_location.unique_name());
+                image.save(output_location).unwrap();
+            },
+            ImageType::Webp => {
+                output_location.push(input_location.unique_name());
+                image.save(output_location).unwrap();
+            },
+        }
+
+        Ok(())
+    }
+
+    fn compress_png(image: DynamicImage, output_location: PathBuf){
+        // Image loading/saving is outside scope of this library
+        let width = image.width() as usize;
+        let height = image.height() as usize;
+        let bitmap:Vec<_> = image.into_rgba8().pixels().map(|px|{
+            imagequant::RGBA::new(px[0],px[1],px[2],px[3])
+        }).collect();
+
+        // Configure the library
+        let mut liq = imagequant::new();
+        liq.set_speed(5).unwrap();
+        liq.set_quality(0, 99).unwrap();
+
+        // Describe the bitmap
+        let mut img = liq.new_image(&bitmap[..], width, height, 0.0).unwrap();
+
+        // The magic happens in quantize()
+        let mut res = match liq.quantize(&mut img) {
+            Ok(res) => res,
+            Err(err) => panic!("Quantization failed, because: {err:?}"),
+        };
+
+        let (palette, pixels) = res.remapped(&mut img).unwrap();
+
+        let file  = std::fs::File::create(output_location).unwrap();
+        let w = &mut BufWriter::new(file);
+
+        let mut encoder = png::Encoder::new(w, width as u32, height as u32);
+        encoder.set_color(png::ColorType::Rgba);
+        let mut flattened_palette =Vec::new();
+        let mut alpha_palette =Vec::new();
+        for px in palette {
+            flattened_palette.push(px.r);
+            flattened_palette.push(px.g);
+            flattened_palette.push(px.b);
+            alpha_palette.push(px.a);
+        }
+        encoder.set_palette(flattened_palette);
+        encoder.set_trns(alpha_palette);
+        encoder.set_depth(png::BitDepth::Eight);
+        encoder.set_color(png::ColorType::Indexed);
+        encoder.set_compression(png::Compression::Best);
+        let mut writer = encoder.write_header().unwrap();
+        writer.write_image_data(&pixels).unwrap();
+        writer.finish().unwrap();
     }
 }
 
@@ -135,12 +217,7 @@ impl CssOptions {
         let path = input_location.path();
         let css = std::fs::read_to_string(path)?;
 
-        let css = if self.minify {
-            minify_css(&css)
-        }
-        else {
-            css
-        };
+        let css = if self.minify { minify_css(&css) } else { css };
 
         let mut output_location = output_folder.to_path_buf();
         output_location.push(input_location.unique_name());
@@ -150,7 +227,7 @@ impl CssOptions {
     }
 }
 
-pub(crate)fn minify_css(css: &str) -> String {
+pub(crate) fn minify_css(css: &str) -> String {
     let mut stylesheet = StyleSheet::parse(&css, ParserOptions::default()).unwrap();
     stylesheet.minify(MinifyOptions::default()).unwrap();
     let mut printer = PrinterOptions::default();
