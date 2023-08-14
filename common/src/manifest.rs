@@ -52,6 +52,7 @@ impl AssetManifest {
 
     pub fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> std::io::Result<()> {
         let location = location.into();
+        std::fs::create_dir_all(&location)?;
         for package in &self.assets {
             for asset in package.assets() {
                 if let AssetType::File(file_asset) = asset {
