@@ -1,7 +1,7 @@
-use assets::{asset, AssetManifest};
+use assets::{classes, AssetManifest};
 
 fn main() {
-    asset!("p-10");
+    classes!("p-10");
     let assets = assets::AssetManifest::load();
 
     assert!(assets_contains_tailwind_asset(&assets, "p-10"));
@@ -16,12 +16,14 @@ fn main() {
 
     println!("{:#?}", assets);
 
-    let include_preflight = false;
-    let mut warnings = Vec::new();
-    let css = assets.tailwind_css(include_preflight, &mut warnings);
+    // let include_preflight = false;
+    // let mut warnings = Vec::new();
+    // let css = assets.tailwind_css(include_preflight, &mut warnings);
 
-    println!("{}", css);
-    println!("{:#?}", warnings);
+    // println!("{}", css);
+    // println!("{:#?}", warnings);
+
+    assets.copy_static_assets_to("./assets").unwrap();
 }
 
 fn assets_contains_tailwind_asset(assets: &AssetManifest, required_classes: &str) -> bool {

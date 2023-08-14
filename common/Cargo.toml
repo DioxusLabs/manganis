@@ -8,9 +8,25 @@ edition = "2021"
 [dependencies]
 serde = { version = "1.0.183", features = ["derive"] }
 toml = "0.7.6"
-railwind = "0.1.5"
-fslock = "0.2.1"
 cargo-lock = { version = "9.0.0", features = ["dependency-tree"] }
 project-root = "0.2.2"
 cargo_toml = "0.15.3"
 petgraph = "0.6.3"
+uuid = { version = "1.4.1", features = ["v4", "fast-rng","macro-diagnostics"] }
+
+# Tailwind
+railwind = "0.1.5"
+
+# Font conversion
+ttf-parser = "0.19.1"
+
+# Image compression/conversion
+# JPEG
+mozjpeg = "0.9.6"
+# PNG
+imagequant = "4.2.0"
+# Conversion
+image = "0.24.7"
+
+# CSS Minification
+lightningcss = "1.0.0-alpha.44"

@@ -1,11 +1,10 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use cargo_lock::{
     dependency::{self, graph::NodeIndex},
     Lockfile,
 };
 use petgraph::visit::EdgeRef;
-pub use railwind::warning::Warning as TailwindWarning;
 
 use crate::{
     cache::{asset_cache_dir, current_cargo_toml, lock_path, package_identifier},
@@ -15,14 +14,18 @@ use crate::{
 
 #[derive(Debug, PartialEq, Default, Clone)]
 pub struct AssetManifest {
-    assets: Vec<PackageAssets>,
+    pub(crate) assets: Vec<PackageAssets>,
 }
 
 impl AssetManifest {
     pub fn load() -> Self {
         let lock_path = lock_path();
-        let lockfile = Lockfile::load(lock_path).unwrap();
         let cargo_toml = current_cargo_toml();
+        Self::load_from_path(cargo_toml, lock_path)
+    }
+
+    pub fn load_from_path(cargo_toml: PathBuf, cargo_lock: PathBuf) -> Self {
+        let lockfile = Lockfile::load(cargo_lock).unwrap();
 
         let cargo_toml = cargo_toml::Manifest::from_path(cargo_toml).unwrap();
         let this_package = cargo_toml.package.unwrap();
@@ -47,25 +50,20 @@ impl AssetManifest {
         &self.assets
     }
 
-    pub fn tailwind_css(
-        &self,
-        include_preflight: bool,
-        warnings: &mut Vec<TailwindWarning>,
-    ) -> String {
-        let mut all_classes = String::new();
-
+    pub fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> std::io::Result<()> {
+        let location = location.into();
         for package in &self.assets {
             for asset in package.assets() {
-                if let AssetType::Tailwind(classes) = asset {
-                    all_classes.push_str(classes.classes());
-                    all_classes.push(' ');
+                if let AssetType::File(file_asset) = asset {
+                    let mut path = location.clone();
+                    std::fs::create_dir_all(&path)?;
+                    path.push(file_asset.unique_name());
+                    std::fs::copy(file_asset.path(), path)?;
                 }
             }
         }
 
-        let source = railwind::Source::String(all_classes, railwind::CollectionOptions::String);
-
-        railwind::parse_to_string(source, include_preflight, warnings)
+        Ok(())
     }
 }
 
