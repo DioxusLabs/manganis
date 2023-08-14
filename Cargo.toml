@@ -14,7 +14,6 @@ keywords = ["assets"]
 [dependencies]
 assets-macro = { path = "./macro" }
 assets-common = { path = "./common" }
-cargo-lock = "9.0.0"
 
 [workspace]
-members = ["macro", "common", "test-package", "test-package/test-package-dependency"]
+members = ["macro", "common", "test-package", "test-package/test-package-dependency", "test-package/test-package-nested-dependency"]

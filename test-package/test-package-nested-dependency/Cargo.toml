@@ -1,5 +1,5 @@
 [package]
-name = "test-package-dependency"
+name = "test-package-nested-dependency"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 assets = { path = "../../" }
-test-package-nested-dependency = { path = "../test-package-nested-dependency" }
+

@@ -10,3 +10,7 @@ serde = { version = "1.0.183", features = ["derive"] }
 toml = "0.7.6"
 railwind = "0.1.5"
 fslock = "0.2.1"
+cargo-lock = { version = "9.0.0", features = ["dependency-tree"] }
+project-root = "0.2.2"
+cargo_toml = "0.15.3"
+petgraph = "0.6.3"
