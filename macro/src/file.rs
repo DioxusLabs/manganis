@@ -26,7 +26,7 @@ impl AssetType {
 impl Parse for AssetType {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let ident = input.parse::<syn::Ident>()?;
-        match ident.to_string().as_str() {
+        match ident.to_string().to_lowercase().as_str() {
             "png" => Ok(AssetType::Image(ImageType::Png)),
             "jpeg" => Ok(AssetType::Image(ImageType::Jpeg)),
             "webp" => Ok(AssetType::Image(ImageType::Webp)),
@@ -72,7 +72,6 @@ impl Parse for FileAssetParser {
         match asset {
             Ok(file) => {
                 let file_name: String = file.unique_name().to_string();
-                println!("file_name: {}", file_name);
                 add_asset(assets_common::AssetType::File(file.clone()));
 
                 Ok(FileAssetParser {file_name})
