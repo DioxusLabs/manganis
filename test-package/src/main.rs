@@ -1,6 +1,8 @@
 use assets::{classes, AssetManifest};
 
 fn main() {
+    std::fs::remove_dir_all("./assets").unwrap_or_default();
+
     classes!("p-10");
     let assets = assets::AssetManifest::load();
 

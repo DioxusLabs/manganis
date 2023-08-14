@@ -1,9 +1,12 @@
-use assets_common::{FileAsset, MetadataAsset, TailwindAsset};
+use assets_common::{MetadataAsset, TailwindAsset};
+use file::FileAssetParser;
 use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{quote, ToTokens};
 use syn::{parse::Parse, parse_macro_input, LitStr};
+
+mod file;
 
 // It appears rustc uses one instance of the dynamic library for each crate that uses it.
 // We can reset the asset of the current crate the first time the macro is used in the crate.
@@ -33,27 +36,13 @@ pub fn classes(input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn file(input: TokenStream) -> TokenStream {
-    let input_as_str = parse_macro_input!(input as LitStr);
-    let input_as_str = input_as_str.value();
-    let path = std::path::PathBuf::from(&input_as_str);
-    match FileAsset::new(path) {
-        Ok(file) => {
-            let file_name = file.unique_name().to_string();
-            add_asset(assets_common::AssetType::File(file));
+    let asset = parse_macro_input!(input as FileAssetParser);
 
-            quote! {
-                #file_name
-            }
-            .into_token_stream()
-            .into()
-        }
-        Err(e) => syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to canonicalize path: {input_as_str}\nAny relative paths are resolved relative to the manifest directory\n{e}"),
-        )
-        .into_compile_error()
-        .into(),
+    quote! {
+        #asset
     }
+    .into_token_stream()
+    .into()
 }
 
 struct MetadataValue {

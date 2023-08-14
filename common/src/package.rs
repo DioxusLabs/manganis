@@ -15,7 +15,10 @@ pub fn add_asset(asset: AssetType) {
     dir.push("assets.toml");
     let mut package_assets: PackageAssets = if dir.exists() {
         let contents = std::fs::read_to_string(&dir).unwrap();
-        toml::from_str(&contents).unwrap()
+        toml::from_str(&contents).unwrap_or_else(|_|PackageAssets {
+            package: current_package_identifier(),
+            assets: vec![],
+        })
     } else {
         std::fs::create_dir_all(&dir.parent().unwrap()).unwrap();
         PackageAssets {

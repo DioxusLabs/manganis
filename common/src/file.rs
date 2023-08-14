@@ -1,9 +1,13 @@
-use image::DynamicImage;
+use image::{DynamicImage, EncodableLayout};
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
 use serde::{Deserialize, Serialize};
-use std::{path::{Path, PathBuf}, io::BufWriter};
+use std::{
+    io::{BufWriter, Write},
+    path::{Path, PathBuf},
+};
 
 use crate::FileLocation;
+
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum FileOptions {
@@ -11,24 +15,50 @@ pub enum FileOptions {
     Video(VideoOptions),
     Font(FontOptions),
     Css(CssOptions),
-    Other,
+    Other(FileExtension),
 }
 
+
 impl FileOptions {
-    pub fn default_for_extension(extension: &str) -> Self {
+    pub fn default_for_extension(extension: Option<&str>) -> Self {
         match extension {
-            "png" => Self::Image(ImageOptions::new(ImageType::PNG)),
-            "jpg" => Self::Image(ImageOptions::new(ImageType::JPG)),
-            "avif" => Self::Image(ImageOptions::new(ImageType::Avif)),
-            "webp" => Self::Image(ImageOptions::new(ImageType::Webp)),
-            "mp4" => Self::Video(VideoOptions::new(VideoType::MP4)),
-            "webm" => Self::Video(VideoOptions::new(VideoType::Webm)),
-            "gif" => Self::Video(VideoOptions::new(VideoType::GIF)),
-            "ttf" => Self::Font(FontOptions::new(FontType::TTF)),
-            "woff" => Self::Font(FontOptions::new(FontType::WOFF)),
-            "woff2" => Self::Font(FontOptions::new(FontType::WOFF2)),
-            "css" => Self::Css(CssOptions::default()),
-            _ => Self::Other,
+            Some("png") => Self::Image(ImageOptions::new(ImageType::PNG)),
+            Some("jpg") | Some("jpeg") => Self::Image(ImageOptions::new(ImageType::JPG)),
+            Some("avif") => Self::Image(ImageOptions::new(ImageType::Avif)),
+            Some("webp") => Self::Image(ImageOptions::new(ImageType::Webp)),
+            Some("mp4") => Self::Video(VideoOptions::new(VideoType::MP4)),
+            Some("webm") => Self::Video(VideoOptions::new(VideoType::Webm)),
+            Some("gif") => Self::Video(VideoOptions::new(VideoType::GIF)),
+            Some("ttf") => Self::Font(FontOptions::new(FontType::TTF)),
+            Some("woff") => Self::Font(FontOptions::new(FontType::WOFF)),
+            Some("woff2") => Self::Font(FontOptions::new(FontType::WOFF2)),
+            Some("css") => Self::Css(CssOptions::default()),
+            _ => Self::Other(FileExtension{
+                extension: extension.map(String::from)
+            })
+        }
+    }
+
+    pub fn extension(&self) -> Option<&str> {
+        match self {
+            Self::Image(options) => match options.ty {
+                ImageType::PNG => Some("png"),
+                ImageType::JPG => Some("jpg"),
+                ImageType::Avif => Some("avif"),
+                ImageType::Webp => Some("webp"),
+            },
+            Self::Video(options) => match options.ty {
+                VideoType::MP4 => Some("mp4"),
+                VideoType::Webm => Some("webm"),
+                VideoType::GIF => Some("gif"),
+            },
+            Self::Font(options) => match options.ty {
+                FontType::TTF => Some("ttf"),
+                FontType::WOFF => Some("woff"),
+                FontType::WOFF2 => Some("woff2"),
+            },
+            Self::Css(_) => Some("css"),
+            Self::Other(extension) => extension.extension.as_deref(),
         }
     }
 
@@ -38,7 +68,7 @@ impl FileOptions {
         output_folder: &Path,
     ) -> std::io::Result<()> {
         match self {
-            Self::Other => {
+            Self::Other { .. } => {
                 let mut output_location = output_folder.to_path_buf();
                 output_location.push(input_location.unique_name());
                 std::fs::copy(input_location.path(), output_location)?;
@@ -58,7 +88,9 @@ impl FileOptions {
 
 impl Default for FileOptions {
     fn default() -> Self {
-        Self::Other
+        Self::Other (FileExtension{
+            extension: None
+        })
     }
 }
 
@@ -86,31 +118,53 @@ impl ImageOptions {
             ImageType::PNG => {
                 output_location.push(input_location.unique_name());
                 Self::compress_png(image, output_location);
-            },
+            }
             ImageType::JPG => {
                 output_location.push(input_location.unique_name());
-                image.save(output_location).unwrap();
-            },
+                Self::compress_jpg(image, output_location);
+            }
             ImageType::Avif => {
                 output_location.push(input_location.unique_name());
                 image.save(output_location).unwrap();
-            },
+            }
             ImageType::Webp => {
                 output_location.push(input_location.unique_name());
                 image.save(output_location).unwrap();
-            },
+            }
         }
 
         Ok(())
     }
 
-    fn compress_png(image: DynamicImage, output_location: PathBuf){
+    fn compress_jpg(image: DynamicImage, output_location: PathBuf) {
+        let mut comp = mozjpeg::Compress::new(mozjpeg::ColorSpace::JCS_EXT_RGBX);
+        let width = image.width() as usize;
+        let height = image.height() as usize;
+
+        comp.set_size(width, height);
+        comp.set_optimize_scans(true);
+        comp.set_mem_dest();
+        comp.start_compress();
+
+        comp.write_scanlines(image.to_rgba8().as_bytes());
+
+        comp.finish_compress();
+        let jpeg_bytes = comp.data_to_vec().unwrap();
+
+        let file = std::fs::File::create(output_location).unwrap();
+        let w = &mut BufWriter::new(file);
+        w.write_all(&jpeg_bytes).unwrap();
+    }
+
+    fn compress_png(image: DynamicImage, output_location: PathBuf) {
         // Image loading/saving is outside scope of this library
         let width = image.width() as usize;
         let height = image.height() as usize;
-        let bitmap:Vec<_> = image.into_rgba8().pixels().map(|px|{
-            imagequant::RGBA::new(px[0],px[1],px[2],px[3])
-        }).collect();
+        let bitmap: Vec<_> = image
+            .into_rgba8()
+            .pixels()
+            .map(|px| imagequant::RGBA::new(px[0], px[1], px[2], px[3]))
+            .collect();
 
         // Configure the library
         let mut liq = imagequant::new();
@@ -128,13 +182,13 @@ impl ImageOptions {
 
         let (palette, pixels) = res.remapped(&mut img).unwrap();
 
-        let file  = std::fs::File::create(output_location).unwrap();
+        let file = std::fs::File::create(output_location).unwrap();
         let w = &mut BufWriter::new(file);
 
         let mut encoder = png::Encoder::new(w, width as u32, height as u32);
         encoder.set_color(png::ColorType::Rgba);
-        let mut flattened_palette =Vec::new();
-        let mut alpha_palette =Vec::new();
+        let mut flattened_palette = Vec::new();
+        let mut alpha_palette = Vec::new();
         for px in palette {
             flattened_palette.push(px.r);
             flattened_palette.push(px.g);
@@ -234,4 +288,9 @@ pub(crate) fn minify_css(css: &str) -> String {
     printer.minify = true;
     let res = stylesheet.to_css(printer).unwrap();
     res.code
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+pub struct FileExtension{
+    extension:Option< String>,
 }

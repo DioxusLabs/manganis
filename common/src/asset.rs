@@ -35,10 +35,11 @@ pub struct FileAsset {
 
 impl FileAsset {
     pub fn new(path: PathBuf) -> std::io::Result<Self> {
-        let options = path
-            .extension()
-            .map(|e| FileOptions::default_for_extension(&e.to_string_lossy()))
-            .unwrap_or_default();
+        let options = FileOptions::default_for_extension(
+            path.extension()
+                .map(|e| e.to_string_lossy().to_string())
+                .as_deref(),
+        );
         Self::new_with_options(path, options)
     }
 
@@ -47,9 +48,9 @@ impl FileAsset {
         let path = manifest_dir.join(path);
         let uuid = uuid::Uuid::new_v4();
         let file_name = path.file_stem().unwrap().to_string_lossy();
-        let extension = path
+        let extension = options
             .extension()
-            .map(|e| format!(".{}", e.to_string_lossy()))
+            .map(|e| format!(".{e}"))
             .unwrap_or_default();
         let uuid_hex = uuid.simple().to_string();
         let unique_name = format!("{file_name}{uuid_hex}{extension}");
