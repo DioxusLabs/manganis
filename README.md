@@ -14,10 +14,11 @@ TODO:
 - - [x] PNG
 - - [x] JPG
 - - [x] Convert images
-- - [ ] Resize images
+- - [x] Resize images
 - - [x] CSS
 - - [ ] Self-host remote assets (fonts)
 - - [ ] JS (?)
+- [ ] Google Fonts Integration
 - [x] Deduplicate assets
 - [x] Collect assets from dependencies
 - [x] Tailwind

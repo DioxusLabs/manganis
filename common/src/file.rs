@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     io::{BufWriter, Write},
     path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use crate::FileLocation;
@@ -20,10 +21,10 @@ pub enum FileOptions {
 impl FileOptions {
     pub fn default_for_extension(extension: Option<&str>) -> Self {
         match extension {
-            Some("png") => Self::Image(ImageOptions::new(ImageType::PNG)),
-            Some("jpg") | Some("jpeg") => Self::Image(ImageOptions::new(ImageType::JPG)),
-            Some("avif") => Self::Image(ImageOptions::new(ImageType::Avif)),
-            Some("webp") => Self::Image(ImageOptions::new(ImageType::Webp)),
+            Some("png") => Self::Image(ImageOptions::new(ImageType::Png, None)),
+            Some("jpg") | Some("jpeg") => Self::Image(ImageOptions::new(ImageType::Jpg, None)),
+            Some("avif") => Self::Image(ImageOptions::new(ImageType::Avif, None)),
+            Some("webp") => Self::Image(ImageOptions::new(ImageType::Webp, None)),
             Some("mp4") => Self::Video(VideoOptions::new(VideoType::MP4)),
             Some("webm") => Self::Video(VideoOptions::new(VideoType::Webm)),
             Some("gif") => Self::Video(VideoOptions::new(VideoType::GIF)),
@@ -40,8 +41,8 @@ impl FileOptions {
     pub fn extension(&self) -> Option<&str> {
         match self {
             Self::Image(options) => match options.ty {
-                ImageType::PNG => Some("png"),
-                ImageType::JPG => Some("jpg"),
+                ImageType::Png => Some("png"),
+                ImageType::Jpg => Some("jpg"),
                 ImageType::Avif => Some("avif"),
                 ImageType::Webp => Some("webp"),
             },
@@ -93,12 +94,25 @@ impl Default for FileOptions {
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct ImageOptions {
     compress: bool,
+    size: Option<(u32, u32)>,
     ty: ImageType,
 }
 
 impl ImageOptions {
-    fn new(ty: ImageType) -> Self {
-        Self { compress: true, ty }
+    pub fn new(ty: ImageType, size: Option<(u32, u32)>) -> Self {
+        Self {
+            compress: true,
+            size,
+            ty,
+        }
+    }
+
+    pub fn set_ty(&mut self, ty: ImageType) {
+        self.ty = ty;
+    }
+
+    pub fn set_size(&mut self, size: Option<(u32, u32)>) {
+        self.size = size;
     }
 
     fn process_file(
@@ -106,16 +120,20 @@ impl ImageOptions {
         input_location: &FileLocation,
         output_folder: &Path,
     ) -> std::io::Result<()> {
-        let image = image::open(input_location.path()).unwrap();
+        let mut image = image::open(input_location.path()).unwrap();
+
+        if let Some(size) = self.size {
+            image = image.resize_exact(size.0, size.1, image::imageops::FilterType::Lanczos3);
+        }
 
         let mut output_location = output_folder.to_path_buf();
 
         match self.ty {
-            ImageType::PNG => {
+            ImageType::Png => {
                 output_location.push(input_location.unique_name());
                 Self::compress_png(image, output_location);
             }
-            ImageType::JPG => {
+            ImageType::Jpg => {
                 output_location.push(input_location.unique_name());
                 Self::compress_jpg(image, output_location);
             }
@@ -204,10 +222,24 @@ impl ImageOptions {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum ImageType {
-    PNG,
-    JPG,
+    Png,
+    Jpg,
     Avif,
     Webp,
+}
+
+impl FromStr for ImageType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "png" => Ok(Self::Png),
+            "jpg" | "jpeg" => Ok(Self::Jpg),
+            "avif" => Ok(Self::Avif),
+            "webp" => Ok(Self::Webp),
+            _ => Err(()),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]

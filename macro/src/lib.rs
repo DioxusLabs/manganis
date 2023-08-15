@@ -1,5 +1,6 @@
 use assets_common::{AssetType, MetadataAsset, TailwindAsset};
 use file::FileAssetParser;
+use image::ImageAssetParser;
 use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
@@ -7,6 +8,7 @@ use quote::{quote, ToTokens};
 use syn::{parse::Parse, parse_macro_input, LitStr};
 
 mod file;
+mod image;
 
 // It appears rustc uses one instance of the dynamic library for each crate that uses it.
 // We can reset the asset of the current crate the first time the macro is used in the crate.
@@ -29,6 +31,17 @@ pub fn classes(input: TokenStream) -> TokenStream {
 
     quote! {
         #input_as_str
+    }
+    .into_token_stream()
+    .into()
+}
+
+#[proc_macro]
+pub fn image(input: TokenStream) -> TokenStream {
+    let asset = parse_macro_input!(input as ImageAssetParser);
+
+    quote! {
+        #asset
     }
     .into_token_stream()
     .into()
