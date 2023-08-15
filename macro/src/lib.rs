@@ -1,5 +1,6 @@
 use assets_common::{AssetType, MetadataAsset, TailwindAsset};
 use file::FileAssetParser;
+use font::FontAssetParser;
 use image::ImageAssetParser;
 use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
@@ -8,6 +9,7 @@ use quote::{quote, ToTokens};
 use syn::{parse::Parse, parse_macro_input, LitStr};
 
 mod file;
+mod font;
 mod image;
 
 // It appears rustc uses one instance of the dynamic library for each crate that uses it.
@@ -31,6 +33,17 @@ pub fn classes(input: TokenStream) -> TokenStream {
 
     quote! {
         #input_as_str
+    }
+    .into_token_stream()
+    .into()
+}
+
+#[proc_macro]
+pub fn font(input: TokenStream) -> TokenStream {
+    let asset = parse_macro_input!(input as FontAssetParser);
+
+    quote! {
+        #asset
     }
     .into_token_stream()
     .into()
