@@ -68,12 +68,20 @@ impl FileAsset {
         self.options.process_file(&self.location, output_folder)
     }
 
+    pub fn set_unique_name(&mut self, unique_name: &str) {
+        self.location.unique_name = unique_name.to_string();
+    }
+
     pub fn unique_name(&self) -> &str {
         &self.location.unique_name
     }
 
     pub fn path(&self) -> &Path {
         &self.location.path
+    }
+
+    pub fn options(&self) -> &FileOptions {
+        &self.options
     }
 }
 

@@ -17,17 +17,12 @@ uuid = { version = "1.4.1", features = ["v4", "fast-rng","macro-diagnostics"] }
 # Tailwind
 railwind = "0.1.5"
 
-# Font conversion
-ttf-parser = "0.19.1"
-
 # Image compression/conversion
 # JPEG
 mozjpeg = "0.9.6"
 # PNG
 imagequant = "4.2.0"
 png = "0.17.9"
-# GIF
-gifski = "1.12.0"
 # Conversion
 image = { version = "0.24.7", features = ["avif-encoder", "webp-encoder"] }
 

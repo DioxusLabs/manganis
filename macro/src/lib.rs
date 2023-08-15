@@ -1,4 +1,4 @@
-use assets_common::{MetadataAsset, TailwindAsset};
+use assets_common::{AssetType, MetadataAsset, TailwindAsset};
 use file::FileAssetParser;
 use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
@@ -12,10 +12,10 @@ mod file;
 // We can reset the asset of the current crate the first time the macro is used in the crate.
 static RESET_ASSETS: Lazy<()> = Lazy::new(|| assets_common::clear_assets());
 
-fn add_asset(asset: assets_common::AssetType) {
+fn add_asset(asset: assets_common::AssetType) -> AssetType {
     let _: () = *RESET_ASSETS;
 
-    assets_common::add_asset(asset);
+    assets_common::add_asset(asset)
 }
 
 #[proc_macro]

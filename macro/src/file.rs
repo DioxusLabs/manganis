@@ -70,9 +70,13 @@ impl Parse for FileAssetParser {
             FileOptions::default_for_extension(output_type.extension().or(extension.as_deref())),
         );
         match asset {
-            Ok(file) => {
-                let file_name: String = file.unique_name().to_string();
-                add_asset(assets_common::AssetType::File(file.clone()));
+            Ok( this_file) => {
+                let asset = add_asset(assets_common::AssetType::File(this_file.clone()));
+                let this_file = match asset {
+                    assets_common::AssetType::File(this_file) => this_file,
+                    _ => unreachable!(),
+                };
+                let file_name: String = this_file.unique_name().to_string();
 
                 Ok(FileAssetParser {file_name})
             }

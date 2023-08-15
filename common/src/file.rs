@@ -8,7 +8,6 @@ use std::{
 
 use crate::FileLocation;
 
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum FileOptions {
     Image(ImageOptions),
@@ -17,7 +16,6 @@ pub enum FileOptions {
     Css(CssOptions),
     Other(FileExtension),
 }
-
 
 impl FileOptions {
     pub fn default_for_extension(extension: Option<&str>) -> Self {
@@ -33,9 +31,9 @@ impl FileOptions {
             Some("woff") => Self::Font(FontOptions::new(FontType::WOFF)),
             Some("woff2") => Self::Font(FontOptions::new(FontType::WOFF2)),
             Some("css") => Self::Css(CssOptions::default()),
-            _ => Self::Other(FileExtension{
-                extension: extension.map(String::from)
-            })
+            _ => Self::Other(FileExtension {
+                extension: extension.map(String::from),
+            }),
         }
     }
 
@@ -88,9 +86,7 @@ impl FileOptions {
 
 impl Default for FileOptions {
     fn default() -> Self {
-        Self::Other (FileExtension{
-            extension: None
-        })
+        Self::Other(FileExtension { extension: None })
     }
 }
 
@@ -291,6 +287,6 @@ pub(crate) fn minify_css(css: &str) -> String {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
-pub struct FileExtension{
-    extension:Option< String>,
+pub struct FileExtension {
+    extension: Option<String>,
 }

@@ -9,7 +9,7 @@ pub(crate) fn asset_cache_dir() -> PathBuf {
     dir
 }
 
-pub(crate) fn current_package_identifier() -> String {
+pub fn current_package_identifier() -> String {
     package_identifier(
         &std::env::var("CARGO_PKG_NAME").unwrap(),
         &current_package_version(),

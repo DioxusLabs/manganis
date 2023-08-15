@@ -14,12 +14,12 @@ TODO:
 - - [x] PNG
 - - [x] JPG
 - - [x] Convert images
-- - [x] Resize images
-- - [ ] GIF
-- - [ ] Convert videos
-- - [ ] Convert fonts
-- - [ ] CSS
+- - [ ] Resize images
+- - [x] CSS
+- - [ ] Self-host remote assets (fonts)
+- - [ ] JS (?)
+- [x] Deduplicate assets
 - [x] Collect assets from dependencies
-- [ ] Tailwind
+- [x] Tailwind
 - [ ] Think of a better name
 - [ ] Configuration for the final asset serve location
