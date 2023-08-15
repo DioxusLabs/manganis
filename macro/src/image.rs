@@ -180,7 +180,7 @@ impl Parse for ImageAssetParser {
                     assets_common::AssetType::File(this_file) => this_file,
                     _ => unreachable!(),
                 };
-                let file_name: String = this_file.unique_name().to_string();
+                let file_name = this_file.served_location();
 
                 Ok(ImageAssetParser {file_name})
             }

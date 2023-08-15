@@ -1,9 +1,16 @@
-use assets::{classes, AssetManifest};
+use assets::{classes, AssetManifest, Config};
 
 fn main() {
+    Config::current()
+        .with_assets_serve_location("/assets")
+        .save();
     std::fs::remove_dir_all("./assets").unwrap_or_default();
 
-    classes!("p-10");
+    let class = classes!("p-10");
+    assert_eq!(class, "p-10");
+    let path = assets::file!("./test-package-dependency/src/asset.txt");
+    println!("{}", path);
+    assert!(path.starts_with("/assets/asset"));
     let assets = assets::AssetManifest::load();
 
     assert!(contains_tailwind_asset(&assets, "p-10"));

@@ -9,6 +9,10 @@ pub(crate) fn asset_cache_dir() -> PathBuf {
     dir
 }
 
+pub(crate) fn config_path() -> PathBuf {
+    asset_cache_dir().join("config.toml")
+}
+
 pub fn current_package_identifier() -> String {
     package_identifier(
         &std::env::var("CARGO_PKG_NAME").unwrap(),

@@ -6,7 +6,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::{cache::manifest_dir, FileOptions};
+use crate::{cache::manifest_dir, Config, FileOptions};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum AssetType {
@@ -125,6 +125,13 @@ impl FileAsset {
             },
             options,
         })
+    }
+
+    pub fn served_location(&self) -> String {
+        let config = Config::current();
+        let root = config.assets_serve_location();
+        let unique_name = self.location.unique_name();
+        format!("{root}/{unique_name}")
     }
 
     pub fn process_file(&self, output_folder: &Path) -> anyhow::Result<()> {

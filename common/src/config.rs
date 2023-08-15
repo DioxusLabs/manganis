@@ -1,20 +1,21 @@
 use serde::{Deserialize, Serialize};
 
-fn default_path() -> String {
-    let mut path = std::env::current_dir().unwrap();
-    path.push("collect_assets.toml");
-    path.to_string_lossy().to_string()
+use crate::config_path;
+
+fn default_assets_serve_location() -> String {
+    "public".to_string()
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
+    #[serde(default = "default_assets_serve_location")]
     assets_serve_location: String,
 }
 
 impl Config {
-    pub fn with_assets_serve_location(&self, assets_serve_location: String) -> Self {
+    pub fn with_assets_serve_location(&self, assets_serve_location: impl Into<String>) -> Self {
         Self {
-            assets_serve_location,
+            assets_serve_location: assets_serve_location.into(),
         }
     }
 
@@ -23,26 +24,22 @@ impl Config {
     }
 
     pub fn current() -> Self {
-        let environment_variable =
-            std::env::var("ASSETS_CONFIG_PATH").unwrap_or_else(|_| default_path());
-        let config_path = std::path::Path::new(&environment_variable);
-        let config_file = std::fs::read_to_string(config_path).unwrap_or_default();
-        toml::from_str(&config_file).unwrap_or_default()
+        std::fs::read(config_path())
+            .ok()
+            .and_then(|config| toml::from_str(&String::from_utf8_lossy(&config)).ok())
+            .unwrap_or_default()
     }
 
     pub fn save(&self) {
-        let environment_variable =
-            std::env::var("ASSETS_CONFIG").unwrap_or_else(|_| default_path());
-        let config_path = std::path::Path::new(&environment_variable);
-        let config_file = toml::to_string(&self).unwrap();
-        std::fs::write(config_path, config_file).unwrap();
+        let config = toml::to_string(&self).unwrap();
+        std::fs::write(config_path(), config).unwrap();
     }
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            assets_serve_location: "assets".to_string(),
+            assets_serve_location: default_assets_serve_location(),
         }
     }
 }
