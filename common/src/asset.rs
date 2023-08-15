@@ -1,6 +1,10 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use crate::{cache::manifest_dir, FileOptions};
 
@@ -12,9 +16,37 @@ pub enum AssetType {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+pub enum FileSource {
+    Local(PathBuf),
+    Remote(Url),
+}
+
+impl FileSource {
+    pub fn last_segment(&self) -> &str {
+        match self {
+            Self::Local(path) => path.file_name().unwrap().to_str().unwrap(),
+            Self::Remote(url) => url.path_segments().unwrap().last().unwrap(),
+        }
+    }
+
+    pub fn extension(&self) -> Option<&str> {
+        match self {
+            Self::Local(path) => path.extension().map(|e| e.to_str().unwrap()),
+            Self::Remote(url) => url
+                .path_segments()
+                .unwrap()
+                .last()
+                .unwrap()
+                .split('.')
+                .last(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct FileLocation {
     unique_name: String,
-    path: PathBuf,
+    source: FileSource,
 }
 
 impl FileLocation {
@@ -22,8 +54,43 @@ impl FileLocation {
         &self.unique_name
     }
 
-    pub fn path(&self) -> &Path {
-        &self.path
+    pub fn source(&self) -> &FileSource {
+        &self.source
+    }
+
+    pub fn read_to_string(&self) -> anyhow::Result<String> {
+        match &self.source {
+            FileSource::Local(path) => Ok(std::fs::read_to_string(path)?),
+            FileSource::Remote(url) => {
+                let response = reqwest::blocking::get(url.as_str())?;
+                Ok(response.text()?)
+            }
+        }
+    }
+
+    pub fn read_to_bytes(&self) -> anyhow::Result<Vec<u8>> {
+        match &self.source {
+            FileSource::Local(path) => Ok(std::fs::read(path)?),
+            FileSource::Remote(url) => {
+                let response = reqwest::blocking::get(url.as_str())?;
+                Ok(response.bytes().map(|b| b.to_vec())?)
+            }
+        }
+    }
+}
+
+impl FromStr for FileSource {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match Url::parse(s) {
+            Ok(url) => Ok(Self::Remote(url)),
+            Err(_) => {
+                let manifest_dir = manifest_dir();
+                let path = manifest_dir.join(PathBuf::from(s));
+                Ok(Self::Local(path.canonicalize()?))
+            }
+        }
     }
 }
 
@@ -34,18 +101,14 @@ pub struct FileAsset {
 }
 
 impl FileAsset {
-    pub fn new(path: PathBuf) -> std::io::Result<Self> {
-        let options = FileOptions::default_for_extension(
-            path.extension()
-                .map(|e| e.to_string_lossy().to_string())
-                .as_deref(),
-        );
-        Self::new_with_options(path, options)
+    pub fn new(source: FileSource) -> std::io::Result<Self> {
+        let options = FileOptions::default_for_extension(source.extension());
+        Self::new_with_options(source, options)
     }
 
-    pub fn new_with_options(path: PathBuf, options: FileOptions) -> std::io::Result<Self> {
+    pub fn new_with_options(source: FileSource, options: FileOptions) -> std::io::Result<Self> {
         let manifest_dir = manifest_dir();
-        let path = manifest_dir.join(path);
+        let path = manifest_dir.join(source.last_segment());
         let uuid = uuid::Uuid::new_v4();
         let file_name = path.file_stem().unwrap().to_string_lossy();
         let extension = options
@@ -58,14 +121,16 @@ impl FileAsset {
         Ok(Self {
             location: FileLocation {
                 unique_name,
-                path: path.canonicalize()?,
+                source,
             },
             options,
         })
     }
 
-    pub fn process_file(&self, output_folder: &Path) -> std::io::Result<()> {
-        self.options.process_file(&self.location, output_folder)
+    pub fn process_file(&self, output_folder: &Path) -> anyhow::Result<()> {
+        self.options.process_file(&self.location, output_folder)?;
+
+        Ok(())
     }
 
     pub fn set_unique_name(&mut self, unique_name: &str) {
@@ -76,8 +141,8 @@ impl FileAsset {
         &self.location.unique_name
     }
 
-    pub fn path(&self) -> &Path {
-        &self.location.path
+    pub fn source(&self) -> &FileSource {
+        &self.location.source
     }
 
     pub fn options(&self) -> &FileOptions {

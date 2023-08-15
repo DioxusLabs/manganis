@@ -4,7 +4,7 @@ Dioxus Assets handles collecting assets through dependencies and compressing ima
 
 If you defined this in a component library:
 ```rust
-const AVIF_ASSET: &str = assets::file!("./rustacean-flat-gesture.png" -> avif);
+const AVIF_ASSET: &str = assets::file!("./rustacean-flat-gesture.png", { format: avif });
 ```
 
 AVIF_ASSET will be set to a new file name that will be served by some CLI with the avif encoding. That file can be collected by any package that depends on the component library.
@@ -16,7 +16,7 @@ TODO:
 - - [x] Convert images
 - - [x] Resize images
 - - [x] CSS
-- - [ ] Self-host remote assets (fonts)
+- - [x] Self-host remote assets (fonts)
 - - [ ] JS (?)
 - [ ] Google Fonts Integration
 - [x] Deduplicate assets

@@ -65,12 +65,13 @@ impl FileOptions {
         &self,
         input_location: &FileLocation,
         output_folder: &Path,
-    ) -> std::io::Result<()> {
+    ) -> anyhow::Result<()> {
         match self {
             Self::Other { .. } => {
                 let mut output_location = output_folder.to_path_buf();
                 output_location.push(input_location.unique_name());
-                std::fs::copy(input_location.path(), output_location)?;
+                let bytes = input_location.read_to_bytes()?;
+                std::fs::write(output_location, bytes)?;
             }
             Self::Css(options) => {
                 options.process_file(input_location, output_folder)?;
@@ -120,7 +121,13 @@ impl ImageOptions {
         input_location: &FileLocation,
         output_folder: &Path,
     ) -> std::io::Result<()> {
-        let mut image = image::open(input_location.path()).unwrap();
+        let mut image = image::io::Reader::new(std::io::Cursor::new(
+            &*input_location.read_to_bytes().unwrap(),
+        ))
+        .with_guessed_format()
+        .unwrap()
+        .decode()
+        .unwrap();
 
         if let Some(size) = self.size {
             image = image.resize_exact(size.0, size.1, image::imageops::FilterType::Lanczos3);
@@ -296,8 +303,7 @@ impl CssOptions {
         input_location: &FileLocation,
         output_folder: &Path,
     ) -> std::io::Result<()> {
-        let path = input_location.path();
-        let css = std::fs::read_to_string(path)?;
+        let css = input_location.read_to_string().unwrap();
 
         let css = if self.minify { minify_css(&css) } else { css };
 

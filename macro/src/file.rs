@@ -13,7 +13,13 @@ impl Parse for FileAssetParser {
         let path = input.parse::<syn::LitStr>()?;
 
         let path_as_str = path.value();
-        let path = std::path::PathBuf::from(&path_as_str);
+        let path = match path_as_str.parse(){
+            Ok(path) => path,
+            Err(e) => return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                format!("Failed to parse path: {path_as_str}\nAny relative paths are resolved relative to the manifest directory\n{e}"),
+            ))
+        };
         let asset = FileAsset::new(path);
         match asset {
             Ok( this_file) => {

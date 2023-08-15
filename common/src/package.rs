@@ -33,7 +33,7 @@ pub fn add_asset(mut asset: AssetType) -> AssetType {
         for asset in package_assets.assets() {
             if let AssetType::File(file) = asset {
                 // If there is another file in the same package with the same path, use that instead
-                if file.path() == this_file.path() && file.options() == this_file.options() {
+                if file.source() == this_file.source() && file.options() == this_file.options() {
                     this_file.set_unique_name(file.unique_name());
                     add_asset = false;
                 }

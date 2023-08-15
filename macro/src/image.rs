@@ -1,4 +1,4 @@
-use assets_common::{FileAsset, FileOptions, ImageOptions};
+use assets_common::{FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{braced, parenthesized, parse::Parse};
 
@@ -147,13 +147,21 @@ impl Parse for ImageAssetParser {
         };
 
         let path_as_str = path.value();
-        let path = std::path::PathBuf::from(&path_as_str);
-        let extension = path.extension().and_then(|s| s.to_str()).ok_or_else(|| {
-            syn::Error::new(
+        let path: FileSource = match path_as_str.parse() {
+            Ok(path) => path,
+            Err(_) => {
+                return Err(syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to parse path: {}", path_as_str),
+                ))
+            }
+        };
+        let Some(extension) = path.extension() else {
+            return Err(syn::Error::new(
                 proc_macro2::Span::call_site(),
                 format!("Failed to get extension from path: {}", path_as_str),
-            )
-        })?;
+            ))
+        };
         let Ok(extension) = extension.parse() else {
             return Err(syn::Error::new(
                 proc_macro2::Span::call_site(),
