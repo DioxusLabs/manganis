@@ -1,4 +1,4 @@
-use assets_common::{FileAsset, FileSource, CssOptions};
+use assets_common::{CssOptions, FileAsset, FileSource};
 use quote::{quote, ToTokens};
 use syn::{braced, bracketed, parse::Parse};
 
@@ -153,7 +153,10 @@ impl Parse for FontAssetParser {
                 ))
             }
         };
-        let asset = FileAsset::new_with_options(url.clone(), assets_common::FileOptions::Css(CssOptions::default()));
+        let asset = FileAsset::new_with_options(
+            url.clone(),
+            assets_common::FileOptions::Css(CssOptions::default()),
+        );
         match asset {
             Ok( this_file) => {
                 let asset = add_asset(assets_common::AssetType::File(this_file.clone()));

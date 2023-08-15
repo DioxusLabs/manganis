@@ -5,6 +5,7 @@ use cargo_lock::{
     Lockfile,
 };
 use petgraph::visit::EdgeRef;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
     cache::{asset_cache_dir, current_cargo_toml, lock_path, package_identifier},
@@ -53,13 +54,15 @@ impl AssetManifest {
     pub fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> anyhow::Result<()> {
         let location = location.into();
         std::fs::create_dir_all(&location)?;
-        for package in &self.assets {
-            for asset in package.assets() {
+        self.assets.par_iter().try_for_each(|package| {
+            package.assets().par_iter().try_for_each(|asset| {
                 if let AssetType::File(file_asset) = asset {
                     file_asset.process_file(&location)?;
                 }
-            }
-        }
+                Ok::<(), anyhow::Error>(())
+            })?;
+            Ok::<(), anyhow::Error>(())
+        })?;
 
         Ok(())
     }

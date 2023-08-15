@@ -92,6 +92,7 @@ dependencies = [
  "png",
  "project-root",
  "railwind",
+ "rayon",
  "reqwest",
  "serde",
  "toml 0.7.6",

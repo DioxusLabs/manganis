@@ -18,9 +18,10 @@ TODO:
 - - [x] CSS
 - - [x] Self-host remote assets (fonts)
 - - [ ] JS (?)
-- [ ] Google Fonts Integration
+- [x] Google Fonts Integration
 - [x] Deduplicate assets
 - [x] Collect assets from dependencies
 - [x] Tailwind
 - [x] Configuration for the final asset serve location
+- [ ] `#![deny(missing_docs)]`
 - [ ] Think of a better name
