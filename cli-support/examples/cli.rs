@@ -1,4 +1,3 @@
-#![allow(unused)]
 use assets_cli_support::AssetManifestExt;
 use assets_common::{AssetManifest, Config};
 
@@ -11,7 +10,7 @@ fn main() {
     let assets_serve_location = "/assets";
 
     // First set any settings you need for the build
-    let config = Config::default()
+    Config::default()
         .with_assets_serve_location(assets_serve_location)
         .save();
 
