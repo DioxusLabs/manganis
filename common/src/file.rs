@@ -84,7 +84,7 @@ impl ImageOptions {
             compress: true,
             size,
             ty,
-            preload: true,
+            preload: false,
         }
     }
 
