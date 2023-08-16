@@ -16,7 +16,7 @@ project-root = "0.2.2"
 cargo_toml = "0.15.3"
 petgraph = "0.6.3"
 uuid = { version = "1.4.1", features = ["v4", "fast-rng","macro-diagnostics"] }
-anyhow = "1.0.74"
+anyhow = "1"
 rayon = "1.7.0"
 
 # Tailwind
