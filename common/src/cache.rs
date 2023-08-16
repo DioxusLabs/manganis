@@ -1,7 +1,12 @@
+//! Utilities for the cache that is used to collect assets
+
 use std::path::PathBuf;
 
+use home::cargo_home;
+
+/// The location where assets are cached
 pub fn asset_cache_dir() -> PathBuf {
-    let dir = std::env::var("CARGO_HOME").unwrap();
+    let dir = cargo_home().unwrap();
     let mut dir = PathBuf::from(dir);
     dir.push("assets");
     dir
@@ -11,13 +16,14 @@ pub(crate) fn config_path() -> PathBuf {
     asset_cache_dir().join("config.toml")
 }
 
-pub fn current_package_identifier() -> String {
+pub(crate) fn current_package_identifier() -> String {
     package_identifier(
         &std::env::var("CARGO_PKG_NAME").unwrap(),
         &current_package_version(),
     )
 }
 
+/// The identifier for a package used to cache assets
 pub fn package_identifier(package: &str, version: &str) -> String {
     package.to_string() + "-" + version
 }

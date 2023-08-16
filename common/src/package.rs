@@ -5,11 +5,13 @@ use crate::{
     cache::{current_package_cache_dir, current_package_identifier},
 };
 
+/// Clears all assets from the current package
 pub fn clear_assets() {
     let dir = current_package_cache_dir();
     std::fs::remove_dir_all(dir).unwrap();
 }
 
+/// Adds an asset to the current package
 pub fn add_asset(mut asset: AssetType) -> AssetType {
     let mut dir = current_package_cache_dir();
     dir.push("assets.toml");
@@ -33,8 +35,10 @@ pub fn add_asset(mut asset: AssetType) -> AssetType {
         for asset in package_assets.assets() {
             if let AssetType::File(file) = asset {
                 // If there is another file in the same package with the same path, use that instead
-                if file.source() == this_file.source() && file.options() == this_file.options() {
-                    this_file.set_unique_name(file.unique_name());
+                if file.location().source() == this_file.location().source()
+                    && file.options() == this_file.options()
+                {
+                    this_file.set_unique_name(file.location().unique_name());
                     add_asset = false;
                 }
             }
@@ -50,6 +54,7 @@ pub fn add_asset(mut asset: AssetType) -> AssetType {
     asset
 }
 
+/// All assets collected from a specific package
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct PackageAssets {
     package: String,
@@ -57,14 +62,17 @@ pub struct PackageAssets {
 }
 
 impl PackageAssets {
+    /// Adds an asset to the package
     pub fn add(&mut self, asset: AssetType) {
         self.assets.push(asset);
     }
 
+    /// Returns a reference to the package name
     pub fn package(&self) -> &str {
         &self.package
     }
 
+    /// Returns a reference to the assets in this package
     pub fn assets(&self) -> &Vec<AssetType> {
         &self.assets
     }

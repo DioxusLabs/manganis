@@ -1,13 +1,41 @@
-# Dioxus Assets
+# Collect Assets
 
-Dioxus Assets handles collecting assets through dependencies and compressing images, videos, fonts, CSS, and tailwind assets.
+The Collect Assets allows you to submit assets to a build tool that supports collecting assets. It makes it easy to self-host assets that are distributed throughout your library. Collect Assets also handles optimizing, converting, and fetching assets.
 
 If you defined this in a component library:
 ```rust
-const AVIF_ASSET: &str = assets::file!("./rustacean-flat-gesture.png", { format: avif });
+const AVIF_ASSET: &str = assets::file!("./rustacean-flat-gesture.png");
 ```
 
-AVIF_ASSET will be set to a new file name that will be served by some CLI with the avif encoding. That file can be collected by any package that depends on the component library.
+AVIF_ASSET will be set to a new file name that will be served by some CLI. That file can be collected by any package that depends on the component library.
+
+```rust
+// You can include tailwind classes that will be collected into the final binary
+const TAILWIND_CLASSES: &str = assets::classes!("flex flex-col p-5");
+
+// You can also collect arbitrary files. Relative paths are resolved relative to the package root
+const _: &str = assets::file!("./src/asset.txt");
+// You can use URLs to copy read the asset at build time
+const _: &str = assets::file!("https://rustacean.net/assets/rustacean-flat-happy.png");
+
+// You can collect images which will be automatically optimized
+const _: &str = assets::image!("./rustacean-flat-gesture.png");
+// Resize the image at compile time to make the assets smaller
+const _: &str = assets::image!("./rustacean-flat-gesture.png", { size: (52, 52) });
+// Or convert the image at compile time to a web friendly format
+const _: &str = assets::image!("./rustacean-flat-gesture.png", { format: avif, size: (52, 52) });
+
+// You can also collect google fonts
+const _: &str = assets::font!({ families: ["Roboto"] });
+// Specify weights for fonts to collect
+const _: &str = assets::font!({ families: ["Comfortaa"], weights: [300] });
+// Or specific text to include fonts for only the characters used in that text
+const _: &str = assets::font!({ families: ["Roboto"], weights: [200], text: "light font" });
+```
+
+## Adding Support to Your CLI
+
+To add support for 
 
 TODO:
 - [x] Support optimizing assets
@@ -23,5 +51,5 @@ TODO:
 - [x] Collect assets from dependencies
 - [x] Tailwind
 - [x] Configuration for the final asset serve location
-- [ ] `#![deny(missing_docs)]`
+- [x] `#![deny(missing_docs)]`
 - [ ] Think of a better name

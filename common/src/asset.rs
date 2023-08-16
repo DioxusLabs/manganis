@@ -5,20 +5,28 @@ use url::Url;
 
 use crate::{cache::manifest_dir, Config, FileOptions};
 
+/// The type of asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum AssetType {
+    /// A file asset
     File(FileAsset),
+    /// A tailwind class asset
     Tailwind(TailwindAsset),
+    /// A metadata asset
     Metadata(MetadataAsset),
 }
 
+/// The source of a file asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum FileSource {
+    /// A local file
     Local(PathBuf),
+    /// A remote file
     Remote(Url),
 }
 
 impl FileSource {
+    /// Returns the last segment of the file source used to generate a unique name
     pub fn last_segment(&self) -> &str {
         match self {
             Self::Local(path) => path.file_name().unwrap().to_str().unwrap(),
@@ -26,17 +34,21 @@ impl FileSource {
         }
     }
 
+    /// Returns the extension of the file source
     pub fn extension(&self) -> Option<String> {
         match self {
             Self::Local(path) => path.extension().map(|e| e.to_str().unwrap().to_string()),
             Self::Remote(url) => reqwest::blocking::get(url.as_str())
                 .ok()
                 .and_then(|request| {
-request
+                    request
                         .headers()
                         .get("content-type")
                         .and_then(|content_type| {
-                            content_type.to_str().ok().map(|ty| ext_of_mime(ty).to_string())
+                            content_type
+                                .to_str()
+                                .ok()
+                                .map(|ty| ext_of_mime(ty).to_string())
                         })
                 }),
         }
@@ -73,6 +85,7 @@ fn ext_of_mime(mime: &str) -> &str {
     }
 }
 
+/// The location of an asset before and after it is collected
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct FileLocation {
     unique_name: String,
@@ -80,14 +93,17 @@ pub struct FileLocation {
 }
 
 impl FileLocation {
+    /// Returns the unique name of the file that the asset will be served from
     pub fn unique_name(&self) -> &str {
         &self.unique_name
     }
 
+    /// Returns the source of the file that the asset will be collected from
     pub fn source(&self) -> &FileSource {
         &self.source
     }
 
+    /// Reads the file to a string
     pub fn read_to_string(&self) -> anyhow::Result<String> {
         match &self.source {
             FileSource::Local(path) => Ok(std::fs::read_to_string(path)?),
@@ -98,6 +114,7 @@ impl FileLocation {
         }
     }
 
+    /// Reads the file to bytes
     pub fn read_to_bytes(&self) -> anyhow::Result<Vec<u8>> {
         match &self.source {
             FileSource::Local(path) => Ok(std::fs::read(path)?),
@@ -124,6 +141,7 @@ impl FromStr for FileSource {
     }
 }
 
+/// A file asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct FileAsset {
     location: FileLocation,
@@ -131,11 +149,13 @@ pub struct FileAsset {
 }
 
 impl FileAsset {
+    /// Creates a new file asset
     pub fn new(source: FileSource) -> std::io::Result<Self> {
         let options = FileOptions::default_for_extension(source.extension().as_deref());
         Self::new_with_options(source, options)
     }
 
+    /// Creates a new file asset with options
     pub fn new_with_options(source: FileSource, options: FileOptions) -> std::io::Result<Self> {
         let manifest_dir = manifest_dir();
         let path = manifest_dir.join(source.last_segment());
@@ -157,6 +177,7 @@ impl FileAsset {
         })
     }
 
+    /// Returns the location where the file asset will be served from
     pub fn served_location(&self) -> String {
         let config = Config::current();
         let root = config.assets_serve_location();
@@ -164,27 +185,23 @@ impl FileAsset {
         format!("{root}/{unique_name}")
     }
 
+    /// Returns the location of the file asset
     pub fn location(&self) -> &FileLocation {
         &self.location
     }
 
+    /// Returns the location of the file asset
     pub fn set_unique_name(&mut self, unique_name: &str) {
         self.location.unique_name = unique_name.to_string();
     }
 
-    pub fn unique_name(&self) -> &str {
-        &self.location.unique_name
-    }
-
-    pub fn source(&self) -> &FileSource {
-        &self.location.source
-    }
-
+    /// Returns the options for the file asset
     pub fn options(&self) -> &FileOptions {
         &self.options
     }
 }
 
+/// A metadata asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct MetadataAsset {
     key: String,
@@ -192,6 +209,7 @@ pub struct MetadataAsset {
 }
 
 impl MetadataAsset {
+    /// Creates a new metadata asset
     pub fn new(key: &str, value: &str) -> Self {
         Self {
             key: key.to_string(),
@@ -199,27 +217,32 @@ impl MetadataAsset {
         }
     }
 
+    /// Returns the key of the metadata asset
     pub fn key(&self) -> &str {
         &self.key
     }
 
+    /// Returns the value of the metadata asset
     pub fn value(&self) -> &str {
         &self.value
     }
 }
 
+/// A tailwind class asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct TailwindAsset {
     classes: String,
 }
 
 impl TailwindAsset {
+    /// Creates a new tailwind class asset
     pub fn new(classes: &str) -> Self {
         Self {
             classes: classes.to_string(),
         }
     }
 
+    /// Returns the classes of the tailwind class asset
     pub fn classes(&self) -> &str {
         &self.classes
     }

@@ -1,6 +1,9 @@
+pub use railwind::warning::Warning as TailwindWarning;
 use std::path::{Path, PathBuf};
 
-use assets_common::{asset_cache_dir, package_identifier, AssetManifest, AssetType, PackageAssets};
+use assets_common::{
+    cache::asset_cache_dir, cache::package_identifier, AssetManifest, AssetType, PackageAssets,
+};
 use cargo_lock::{
     dependency::{self, graph::NodeIndex},
     Lockfile,
@@ -13,12 +16,23 @@ use crate::{
     file::process_file,
 };
 
+/// An extension trait CLI support for the asset manifest
 pub trait AssetManifestExt {
+    /// Loads the asset manifest for the current working directory
     fn load() -> Self;
 
+    /// Loads the asset manifest from the cargo toml and lock file
     fn load_from_path(cargo_toml: PathBuf, cargo_lock: PathBuf) -> Self;
 
+    /// Copies all static assets to the given location
     fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> anyhow::Result<()>;
+
+    /// Collects all tailwind classes from all assets and outputs the CSS file
+    fn collect_tailwind_css(
+        &self,
+        include_preflight: bool,
+        warnings: &mut Vec<TailwindWarning>,
+    ) -> String;
 }
 
 impl AssetManifestExt for AssetManifest {
@@ -64,6 +78,29 @@ impl AssetManifestExt for AssetManifest {
         })?;
 
         Ok(())
+    }
+
+    fn collect_tailwind_css(
+        self: &AssetManifest,
+        include_preflight: bool,
+        warnings: &mut Vec<TailwindWarning>,
+    ) -> String {
+        let mut all_classes = String::new();
+
+        for package in self.assets() {
+            for asset in package.assets() {
+                if let AssetType::Tailwind(classes) = asset {
+                    all_classes.push_str(classes.classes());
+                    all_classes.push(' ');
+                }
+            }
+        }
+
+        let source = railwind::Source::String(all_classes, railwind::CollectionOptions::String);
+
+        let css = railwind::parse_to_string(source, include_preflight, warnings);
+
+        crate::file::minify_css(&css)
     }
 }
 

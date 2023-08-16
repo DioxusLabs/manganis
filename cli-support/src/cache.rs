@@ -2,12 +2,8 @@ use std::path::PathBuf;
 
 use project_root::get_project_root;
 
-pub(crate) fn manifest_dir() -> PathBuf {
-    std::env::var("CARGO_MANIFEST_DIR").unwrap().into()
-}
-
 pub(crate) fn current_cargo_toml() -> PathBuf {
-    manifest_dir().join("Cargo.toml")
+    cargo_metadata::MetadataCommand::new().exec().unwrap().root_package().unwrap().manifest_path.clone().into()
 }
 
 pub(crate) fn root_dir() -> PathBuf {

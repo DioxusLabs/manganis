@@ -1,12 +1,14 @@
+#![doc = include_str!("../../README.md")]
+#![deny(missing_docs)]
+
 mod asset;
-mod cache;
+pub mod cache;
 mod config;
 mod file;
 mod manifest;
 mod package;
 
 pub use asset::*;
-pub use cache::*;
 pub use config::*;
 pub use file::*;
 pub use manifest::*;

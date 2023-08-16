@@ -1,3 +1,6 @@
+#![doc = include_str!("../../README.md")]
+#![deny(missing_docs)]
+
 use assets_common::{AssetType, MetadataAsset, TailwindAsset};
 use file::FileAssetParser;
 use font::FontAssetParser;
@@ -22,6 +25,13 @@ fn add_asset(asset: assets_common::AssetType) -> AssetType {
     assets_common::add_asset(asset)
 }
 
+/// Collects tailwind classes that will be included in the final binary and returns them unmodified
+///
+/// ```rust
+/// // You can include tailwind classes that will be collected into the final binary
+/// const TAILWIND_CLASSES: &str = assets::classes!("flex flex-col p-5");
+/// assert_eq!(TAILWIND_CLASSES, "flex flex-col p-5");
+/// ```
 #[proc_macro]
 pub fn classes(input: TokenStream) -> TokenStream {
     let input_as_str = parse_macro_input!(input as LitStr);
@@ -38,6 +48,18 @@ pub fn classes(input: TokenStream) -> TokenStream {
     .into()
 }
 
+/// You can use the font macro to collect fonts that will be included in the final binary from google fonts
+/// ```rust
+/// const _: &str = assets::font!({ families: ["Roboto"] });
+/// ```
+/// You can specify weights for the fonts
+/// ```rust
+/// const _: &str = assets::font!({ families: ["Comfortaa"], weights: [300] });
+/// ```
+/// Or set the text to only include the characters you need
+/// ```rust
+/// const _: &str = assets::font!({ families: ["Roboto"], weights: [200], text: "light font" });
+/// ```
 #[proc_macro]
 pub fn font(input: TokenStream) -> TokenStream {
     let asset = parse_macro_input!(input as FontAssetParser);
@@ -49,6 +71,18 @@ pub fn font(input: TokenStream) -> TokenStream {
     .into()
 }
 
+/// You can collect images which will be automatically optimized with the image macro:
+/// ```rust
+/// const _: &str = assets::image!("./rustacean-flat-gesture.png");
+/// ```
+/// Resize the image at compile time to make the assets file size smaller:
+/// ```rust
+/// const _: &str = assets::image!("./rustacean-flat-gesture.png", { size: (52, 52) });
+/// ```
+/// Or convert the image at compile time to a web friendly format:
+/// ```rust
+/// const _: &str = assets::image!("./rustacean-flat-gesture.png", { format: avif, size: (52, 52) });
+/// ```
 #[proc_macro]
 pub fn image(input: TokenStream) -> TokenStream {
     let asset = parse_macro_input!(input as ImageAssetParser);
@@ -60,6 +94,14 @@ pub fn image(input: TokenStream) -> TokenStream {
     .into()
 }
 
+/// The file macro collects an arbitrary file. Relative paths are resolved relative to the package root
+/// ```rust
+/// const _: &str = assets::file!("./src/asset.txt");
+/// ```
+/// You can use URLs to read the asset at build time from a remote location
+/// ```rust
+/// const _: &str = assets::file!("https://rustacean.net/assets/rustacean-flat-happy.png");
+/// ```
 #[proc_macro]
 pub fn file(input: TokenStream) -> TokenStream {
     let asset = parse_macro_input!(input as FileAssetParser);
@@ -85,6 +127,10 @@ impl Parse for MetadataValue {
     }
 }
 
+/// // You can also collect arbitrary key-value pairs. The meaning of these pairs is determined by the CLI that processes your assets
+/// ```rust
+/// const _: () = assets::meta!("opt-level": "3");
+/// ```
 #[proc_macro]
 pub fn meta(input: TokenStream) -> TokenStream {
     let md = parse_macro_input!(input as MetadataValue);

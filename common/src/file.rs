@@ -1,16 +1,23 @@
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
+/// The options for a file asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum FileOptions {
+    /// An image asset
     Image(ImageOptions),
+    /// A video asset
     Video(VideoOptions),
+    /// A font asset
     Font(FontOptions),
+    /// A css asset
     Css(CssOptions),
-    Other(FileExtension),
+    /// Any other asset
+    Other(UnknownFileOptions),
 }
 
 impl FileOptions {
+    /// Returns the default options for a given extension
     pub fn default_for_extension(extension: Option<&str>) -> Self {
         match extension {
             Some("png") => Self::Image(ImageOptions::new(ImageType::Png, None)),
@@ -24,12 +31,13 @@ impl FileOptions {
             Some("woff") => Self::Font(FontOptions::new(FontType::WOFF)),
             Some("woff2") => Self::Font(FontOptions::new(FontType::WOFF2)),
             Some("css") => Self::Css(CssOptions::default()),
-            _ => Self::Other(FileExtension {
+            _ => Self::Other(UnknownFileOptions {
                 extension: extension.map(String::from),
             }),
         }
     }
 
+    /// Returns the extension for this file
     pub fn extension(&self) -> Option<&str> {
         match self {
             Self::Image(options) => match options.ty {
@@ -56,10 +64,11 @@ impl FileOptions {
 
 impl Default for FileOptions {
     fn default() -> Self {
-        Self::Other(FileExtension { extension: None })
+        Self::Other(UnknownFileOptions { extension: None })
     }
 }
 
+/// The options for an image asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct ImageOptions {
     compress: bool,
@@ -68,6 +77,7 @@ pub struct ImageOptions {
 }
 
 impl ImageOptions {
+    /// Creates a new image options struct
     pub fn new(ty: ImageType, size: Option<(u32, u32)>) -> Self {
         Self {
             compress: true,
@@ -76,36 +86,47 @@ impl ImageOptions {
         }
     }
 
+    /// Returns the image type
     pub fn ty(&self) -> &ImageType {
         &self.ty
     }
 
+    /// Sets the image type
     pub fn set_ty(&mut self, ty: ImageType) {
         self.ty = ty;
     }
 
+    /// Returns the size of the image
     pub fn size(&self) -> Option<(u32, u32)> {
         self.size
     }
 
+    /// Sets the size of the image
     pub fn set_size(&mut self, size: Option<(u32, u32)>) {
         self.size = size;
     }
 
+    /// Returns whether the image should be compressed
     pub fn compress(&self) -> bool {
         self.compress
     }
 
+    /// Sets whether the image should be compressed
     pub fn set_compress(&mut self, compress: bool) {
         self.compress = compress;
     }
 }
 
+/// The type of an image
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum ImageType {
+    /// A png image
     Png,
+    /// A jpg image
     Jpg,
+    /// An avif image
     Avif,
+    /// A webp image
     Webp,
 }
 
@@ -123,69 +144,95 @@ impl FromStr for ImageType {
     }
 }
 
+/// The options for a video asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct VideoOptions {
+    /// Whether the video should be compressed
     compress: bool,
+    /// The type of the video
     ty: VideoType,
 }
 
 impl VideoOptions {
-    fn new(ty: VideoType) -> Self {
+    /// Creates a new video options struct
+    pub fn new(ty: VideoType) -> Self {
         Self { compress: true, ty }
     }
 
+    /// Returns the type of the video
     pub fn ty(&self) -> &VideoType {
         &self.ty
     }
 
+    /// Sets the type of the video
     pub fn set_ty(&mut self, ty: VideoType) {
         self.ty = ty;
     }
 
+    /// Returns whether the video should be compressed
     pub fn compress(&self) -> bool {
         self.compress
     }
 
+    /// Sets whether the video should be compressed
     pub fn set_compress(&mut self, compress: bool) {
         self.compress = compress;
     }
 }
 
+/// The type of a video
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum VideoType {
+    /// An mp4 video
     MP4,
+    /// A webm video
     Webm,
+    /// A gif video
     GIF,
 }
 
+/// The options for a font asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct FontOptions {
     ty: FontType,
 }
 
 impl FontOptions {
-    fn new(ty: FontType) -> Self {
+    /// Creates a new font options struct
+    pub fn new(ty: FontType) -> Self {
         Self { ty }
     }
 
+    /// Returns the type of the font
     pub fn ty(&self) -> &FontType {
         &self.ty
     }
 }
 
+/// The type of a font
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum FontType {
+    /// A ttf (TrueType) font
     TTF,
+    /// A woff (Web Open Font Format) font
     WOFF,
+    /// A woff2 (Web Open Font Format 2) font
     WOFF2,
 }
 
+/// The options for a css asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct CssOptions {
     minify: bool,
 }
 
 impl CssOptions {
+    /// Creates a new css options struct
+    pub fn new(minify: bool) -> Self {
+        Self { minify }
+    }
+
+    /// Returns whether the css should be minified
     pub fn minify(&self) -> bool {
         self.minify
     }
@@ -197,12 +244,19 @@ impl Default for CssOptions {
     }
 }
 
+/// The options for an unknown file asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
-pub struct FileExtension {
+pub struct UnknownFileOptions {
     extension: Option<String>,
 }
 
-impl FileExtension {
+impl UnknownFileOptions {
+    /// Creates a new unknown file options struct
+    pub fn new(extension: Option<String>) -> Self {
+        Self { extension }
+    }
+
+    /// Returns the extension of the file
     pub fn extension(&self) -> Option<&str> {
         self.extension.as_deref()
     }

@@ -13,7 +13,6 @@ keywords = ["assets"]
 
 [dependencies]
 assets-macro = { path = "./macro" }
-assets-common = { path = "./common" }
 
 [workspace]
 members = ["macro", "common", "cli-support", "test-package", "test-package/test-package-dependency", "test-package/test-package-nested-dependency"]

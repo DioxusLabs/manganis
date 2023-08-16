@@ -10,6 +10,7 @@ serde = { version = "1.0.183", features = ["derive"] }
 toml = "0.7.6"
 uuid = { version = "1.4.1", features = ["v4", "fast-rng", "macro-diagnostics"] }
 anyhow = "1.0.74"
+home = "0.5.5"
 
 # Remote assets
 url = { version = "2.4.0", features = ["serde"] }
