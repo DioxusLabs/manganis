@@ -15,3 +15,6 @@ home = "0.5.5"
 # Remote assets
 url = { version = "2.4.0", features = ["serde"] }
 reqwest = { version = "0.11.18", features = ["blocking"] }
+
+[features]
+html = []

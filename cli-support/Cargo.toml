@@ -43,3 +43,4 @@ log = "0.4.20"
 default = []
 avif = ["image/avif-encoder"]
 webp = ["image/webp-encoder"]
+html = ["assets-common/html"]
