@@ -29,7 +29,7 @@ mozjpeg = "0.9.6"
 imagequant = "4.2.0"
 png = "0.17.9"
 # Conversion
-image = { version = "0.24.7", features = ["avif-encoder", "webp-encoder"] }
+image = { version = "0.24.7" }
 
 # CSS Minification
 lightningcss = "1.0.0-alpha.44"
@@ -38,5 +38,7 @@ lightningcss = "1.0.0-alpha.44"
 url = { version = "2.4.0", features = ["serde"] }
 reqwest = { version = "0.11.18", features = ["blocking"] }
 
-[patch.crates-io]
-built = { git = "https://github.com/lukaslueg/built" }
+[features]
+default = []
+avif = ["image/avif-encoder"]
+webp = ["image/webp-encoder"]
