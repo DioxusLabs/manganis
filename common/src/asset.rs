@@ -182,7 +182,7 @@ impl FileAsset {
         let config = Config::current();
         let root = config.assets_serve_location();
         let unique_name = self.location.unique_name();
-        format!("{root}/{unique_name}")
+        format!("{root}{unique_name}")
     }
 
     /// Returns the location of the file asset
