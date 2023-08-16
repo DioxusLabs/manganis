@@ -1,7 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+use std::{path::PathBuf, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -29,17 +26,50 @@ impl FileSource {
         }
     }
 
-    pub fn extension(&self) -> Option<&str> {
+    pub fn extension(&self) -> Option<String> {
         match self {
-            Self::Local(path) => path.extension().map(|e| e.to_str().unwrap()),
-            Self::Remote(url) => url
-                .path_segments()
-                .unwrap()
-                .last()
-                .unwrap()
-                .split('.')
-                .last(),
+            Self::Local(path) => path.extension().map(|e| e.to_str().unwrap().to_string()),
+            Self::Remote(url) => reqwest::blocking::get(url.as_str())
+                .ok()
+                .and_then(|request| {
+request
+                        .headers()
+                        .get("content-type")
+                        .and_then(|content_type| {
+                            content_type.to_str().ok().map(|ty| ext_of_mime(ty).to_string())
+                        })
+                }),
         }
+    }
+}
+
+/// Get the mime type from a URI using its extension
+fn ext_of_mime(mime: &str) -> &str {
+    let mime = mime.split(';').next().unwrap_or_default();
+    match mime.trim() {
+        "application/octet-stream" => "bin",
+        "text/css" => "css",
+        "text/csv" => "csv",
+        "text/html" => "html",
+        "image/vnd.microsoft.icon" => "ico",
+        "text/javascript" => "js",
+        "application/json" => "json",
+        "application/ld+json" => "jsonld",
+        "application/rtf" => "rtf",
+        "image/svg+xml" => "svg",
+        "video/mp4" => "mp4",
+        "text/plain" => "txt",
+        "application/xml" => "xml",
+        "application/zip" => "zip",
+        "image/png" => "png",
+        "image/jpeg" => "jpg",
+        "image/gif" => "gif",
+        "image/webp" => "webp",
+        "image/avif" => "avif",
+        "font/ttf" => "ttf",
+        "font/woff" => "woff",
+        "font/woff2" => "woff2",
+        other => other.split('/').last().unwrap_or_default(),
     }
 }
 
@@ -102,7 +132,7 @@ pub struct FileAsset {
 
 impl FileAsset {
     pub fn new(source: FileSource) -> std::io::Result<Self> {
-        let options = FileOptions::default_for_extension(source.extension());
+        let options = FileOptions::default_for_extension(source.extension().as_deref());
         Self::new_with_options(source, options)
     }
 
@@ -134,10 +164,8 @@ impl FileAsset {
         format!("{root}/{unique_name}")
     }
 
-    pub fn process_file(&self, output_folder: &Path) -> anyhow::Result<()> {
-        self.options.process_file(&self.location, output_folder)?;
-
-        Ok(())
+    pub fn location(&self) -> &FileLocation {
+        &self.location
     }
 
     pub fn set_unique_name(&mut self, unique_name: &str) {

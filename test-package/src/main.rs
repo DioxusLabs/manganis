@@ -1,4 +1,4 @@
-use assets::{classes, AssetManifest, Config};
+use assets_cli_support::*;
 
 fn main() {
     Config::current()
@@ -6,12 +6,12 @@ fn main() {
         .save();
     std::fs::remove_dir_all("./assets").unwrap_or_default();
 
-    let class = classes!("p-10");
+    let class = assets::classes!("p-10");
     assert_eq!(class, "p-10");
     let path = assets::file!("./test-package-dependency/src/asset.txt");
     println!("{}", path);
     assert!(path.starts_with("/assets/asset"));
-    let assets = assets::AssetManifest::load();
+    let assets = AssetManifest::load();
 
     assert!(contains_tailwind_asset(&assets, "p-10"));
     for i in 1..=5 {
@@ -27,7 +27,7 @@ fn main() {
 
     let include_preflight = false;
     let mut warnings = Vec::new();
-    let css = assets.tailwind_css(include_preflight, &mut warnings);
+    let css = create_tailwind_css(&assets, include_preflight, &mut warnings);
 
     println!("{}", css);
     println!("{:#?}", warnings);
@@ -38,7 +38,7 @@ fn main() {
 fn contains_tailwind_asset(assets: &AssetManifest, required_classes: &str) -> bool {
     for asset in assets.assets() {
         for asset in asset.assets() {
-            if let assets::AssetType::Tailwind(classes) = asset {
+            if let AssetType::Tailwind(classes) = asset {
                 if classes.classes() == required_classes {
                     return true;
                 }

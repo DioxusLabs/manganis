@@ -78,10 +78,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "assets-common"
+name = "assets-cli-support"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "assets-common",
  "cargo-lock 9.0.0",
  "cargo_toml",
  "image",
@@ -93,6 +94,18 @@ dependencies = [
  "project-root",
  "railwind",
  "rayon",
+ "reqwest",
+ "serde",
+ "toml 0.7.6",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "assets-common"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "reqwest",
  "serde",
  "toml 0.7.6",
@@ -2504,6 +2517,7 @@ name = "test-package"
 version = "0.1.0"
 dependencies = [
  "assets",
+ "assets-cli-support",
  "test-package-dependency",
 ]
 

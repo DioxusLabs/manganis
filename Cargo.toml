@@ -16,4 +16,4 @@ assets-macro = { path = "./macro" }
 assets-common = { path = "./common" }
 
 [workspace]
-members = ["macro", "common", "test-package", "test-package/test-package-dependency", "test-package/test-package-nested-dependency"]
+members = ["macro", "common", "cli-support", "test-package", "test-package/test-package-dependency", "test-package/test-package-nested-dependency"]

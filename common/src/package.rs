@@ -58,9 +58,7 @@ pub struct PackageAssets {
 
 impl PackageAssets {
     pub fn add(&mut self, asset: AssetType) {
-        if !self.assets.contains(&asset) {
-            self.assets.push(asset);
-        }
+        self.assets.push(asset);
     }
 
     pub fn package(&self) -> &str {
