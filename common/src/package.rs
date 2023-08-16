@@ -8,7 +8,7 @@ use crate::{
 /// Clears all assets from the current package
 pub fn clear_assets() {
     let dir = current_package_cache_dir();
-    std::fs::remove_dir_all(dir).unwrap();
+    let _ = std::fs::remove_dir_all(dir);
 }
 
 /// Adds an asset to the current package

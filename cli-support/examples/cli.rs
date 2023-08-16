@@ -25,7 +25,7 @@ fn main() {
     let manifest = AssetManifest::load();
 
     // Remove the old assets
-    std::fs::remove_dir_all(assets_file_location).unwrap();
+    let _ = std::fs::remove_dir_all(assets_file_location);
 
     // And copy the static assets to the public directory
     manifest.copy_static_assets_to(assets_file_location).unwrap();

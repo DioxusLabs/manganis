@@ -70,13 +70,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "assets"
-version = "0.1.0"
-dependencies = [
- "assets-macro",
-]
-
-[[package]]
 name = "assets-cli-support"
 version = "0.1.0"
 dependencies = [
@@ -436,6 +429,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "033f6b7a4acb1f358c742aaca805c939ee73b4c6209ae4318ec7aca81c42e646"
 dependencies = [
  "os_str_bytes",
+]
+
+[[package]]
+name = "collect-assets"
+version = "0.1.0"
+dependencies = [
+ "assets-macro",
 ]
 
 [[package]]
@@ -2558,7 +2558,7 @@ dependencies = [
 name = "test-package"
 version = "0.1.0"
 dependencies = [
- "assets",
+ "collect-assets",
  "test-package-dependency",
 ]
 
@@ -2566,7 +2566,7 @@ dependencies = [
 name = "test-package-dependency"
 version = "0.1.0"
 dependencies = [
- "assets",
+ "collect-assets",
  "test-package-nested-dependency",
 ]
 
@@ -2574,7 +2574,7 @@ dependencies = [
 name = "test-package-nested-dependency"
 version = "0.1.0"
 dependencies = [
- "assets",
+ "collect-assets",
 ]
 
 [[package]]
