@@ -40,6 +40,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     steps:
+      - uses: ilammy/setup-nasm@v1
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: sudo apt-get update
@@ -52,6 +53,7 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
+      - uses: ilammy/setup-nasm@v1
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: sudo apt-get update
@@ -64,6 +66,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
+      - uses: ilammy/setup-nasm@v1
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: rustup component add rustfmt
@@ -75,6 +78,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
+      - uses: ilammy/setup-nasm@v1
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: sudo apt-get update
@@ -82,24 +86,3 @@ jobs:
       - run: rustup component add clippy
       - uses: actions/checkout@v3
       - run: cargo clippy --workspace --examples --tests -- -D warnings
-
-  # Coverage is disabled until we can fix it
-  # coverage:
-  #   name: Coverage
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: xd009642/tarpaulin:develop-nightly
-  #     options: --security-opt seccomp=unconfined
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
-  #     - name: Generate code coverage
-  #       run: |
-  #         apt-get update &&\
-  #         apt-get install build-essential &&\
-  #         apt install libwebkit2gtk-4.0-dev libgtk-3-dev libayatana-appindicator3-dev -y &&\
-  #         cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
-  #     - name: Upload to codecov.io
-  #       uses: codecov/codecov-action@v2
-  #       with:
-  #         fail_ci_if_error: false

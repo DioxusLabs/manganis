@@ -38,6 +38,7 @@ jobs:
     name: Test Suite
     runs-on: macos-latest
     steps:
+      - uses: ilammy/setup-nasm@v1
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: actions/checkout@v3
