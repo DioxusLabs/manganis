@@ -69,7 +69,7 @@ impl Process for ImageOptions {
             }
             ImageType::Webp => {
                 output_location.push(input_location.unique_name());
-                if let Err(err) = image.save(output_location){
+                if let Err(err) = image.save(output_location) {
                     log::error!("Failed to save webp image: {}. You must have the avif feature enabled to use webp assets", err);
                 }
             }

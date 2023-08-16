@@ -1,5 +1,6 @@
 mod file;
-pub use file::IMAGE_ASSET;
+pub use file::*;
+pub use test_package_nested_dependency::*;
 
 const _: &str = collect_assets::classes!("flex flex-col p-1");
 const _: &str = collect_assets::classes!("flex flex-col p-2");
