@@ -63,11 +63,15 @@ impl Process for ImageOptions {
             }
             ImageType::Avif => {
                 output_location.push(input_location.unique_name());
-                image.save(output_location).unwrap();
+                if let Err(error) = image.save(output_location) {
+                    log::error!("Failed to save avif image: {}. You must have the avif feature enabled to use avif assets", error);
+                }
             }
             ImageType::Webp => {
                 output_location.push(input_location.unique_name());
-                image.save(output_location).unwrap();
+                if let Err(err) = image.save(output_location){
+                    log::error!("Failed to save webp image: {}. You must have the avif feature enabled to use webp assets", err);
+                }
             }
         }
 

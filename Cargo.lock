@@ -81,6 +81,7 @@ dependencies = [
  "image",
  "imagequant",
  "lightningcss",
+ "log",
  "mozjpeg",
  "petgraph",
  "png",
