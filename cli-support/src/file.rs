@@ -159,10 +159,12 @@ impl Process for CssOptions {
 }
 
 pub(crate) fn minify_css(css: &str) -> String {
-    let mut stylesheet = StyleSheet::parse(&css, ParserOptions::default()).unwrap();
+    let mut stylesheet = StyleSheet::parse(css, ParserOptions::default()).unwrap();
     stylesheet.minify(MinifyOptions::default()).unwrap();
-    let mut printer = PrinterOptions::default();
-    printer.minify = true;
+    let printer = PrinterOptions {
+        minify: true,
+        ..Default::default()
+    };
     let res = stylesheet.to_css(printer).unwrap();
     res.code
 }

@@ -92,9 +92,9 @@ impl Parse for ImageSize {
     }
 }
 
-impl Into<assets_common::ImageType> for ImageType {
-    fn into(self) -> assets_common::ImageType {
-        match self {
+impl From<ImageType> for assets_common::ImageType {
+    fn from(val: ImageType) -> Self {
+        match val {
             ImageType::Png => assets_common::ImageType::Png,
             ImageType::Jpeg => assets_common::ImageType::Jpg,
             ImageType::Webp => assets_common::ImageType::Webp,

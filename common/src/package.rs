@@ -22,7 +22,7 @@ pub fn add_asset(mut asset: AssetType) -> AssetType {
             assets: vec![],
         })
     } else {
-        std::fs::create_dir_all(&dir.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(dir.parent().unwrap()).unwrap();
         PackageAssets {
             package: current_package_identifier(),
             assets: vec![],

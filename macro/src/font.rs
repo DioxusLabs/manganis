@@ -60,7 +60,7 @@ impl ParseFontOptions {
             .families
             .families
             .iter()
-            .map(|f| f.replace(" ", "+"))
+            .map(|f| f.replace(' ', "+"))
             .collect();
         if !families.is_empty() {
             segments.push(format!("family={}", families.join("&")));
@@ -72,11 +72,11 @@ impl ParseFontOptions {
         }
 
         if let Some(text) = &self.text {
-            segments.push(format!("text={}", text.replace(" ", "+")));
+            segments.push(format!("text={}", text.replace(' ', "+")));
         }
 
         if let Some(display) = &self.display {
-            segments.push(format!("display={}", display.replace(" ", "+")));
+            segments.push(format!("display={}", display.replace(' ', "+")));
         }
 
         let query = if segments.is_empty() {

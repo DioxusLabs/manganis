@@ -6,8 +6,7 @@ use home::cargo_home;
 
 /// The location where assets are cached
 pub fn asset_cache_dir() -> PathBuf {
-    let dir = cargo_home().unwrap();
-    let mut dir = PathBuf::from(dir);
+    let mut dir = cargo_home().unwrap();
     dir.push("assets");
     dir
 }

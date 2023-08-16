@@ -5,10 +5,11 @@ use assets_common::{AssetType, MetadataAsset, TailwindAsset};
 use file::FileAssetParser;
 use font::FontAssetParser;
 use image::ImageAssetParser;
-use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{quote, ToTokens};
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use syn::{parse::Parse, parse_macro_input, LitStr};
 
 mod file;
@@ -17,10 +18,13 @@ mod image;
 
 // It appears rustc uses one instance of the dynamic library for each crate that uses it.
 // We can reset the asset of the current crate the first time the macro is used in the crate.
-static RESET_ASSETS: Lazy<()> = Lazy::new(|| assets_common::clear_assets());
+static INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 fn add_asset(asset: assets_common::AssetType) -> AssetType {
-    let _: () = *RESET_ASSETS;
+    if !INITIALIZED.load(Ordering::Relaxed) {
+        INITIALIZED.store(true, Ordering::Relaxed);
+        assets_common::clear_assets();
+    }
 
     assets_common::add_asset(asset)
 }

@@ -112,7 +112,6 @@ name = "assets-macro"
 version = "0.0.1"
 dependencies = [
  "assets-common",
- "once_cell",
  "proc-macro2",
  "quote",
  "syn 2.0.28",
