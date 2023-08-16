@@ -67,7 +67,7 @@ impl AssetManifestExt for AssetManifest {
     fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> anyhow::Result<()> {
         let location = location.into();
         std::fs::create_dir_all(&location)?;
-        self.assets().par_iter().try_for_each(|package| {
+        self.packages().par_iter().try_for_each(|package| {
             package.assets().par_iter().try_for_each(|asset| {
                 if let AssetType::File(file_asset) = asset {
                     process_file(file_asset, &location)?;
@@ -87,7 +87,7 @@ impl AssetManifestExt for AssetManifest {
     ) -> String {
         let mut all_classes = String::new();
 
-        for package in self.assets() {
+        for package in self.packages() {
             for asset in package.assets() {
                 if let AssetType::Tailwind(classes) = asset {
                     all_classes.push_str(classes.classes());
