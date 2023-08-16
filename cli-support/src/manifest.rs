@@ -118,9 +118,21 @@ fn collect_dependencies(
     ));
     dependency_path.push("assets.toml");
     if dependency_path.exists() {
-        let contents = std::fs::read_to_string(&dependency_path).unwrap();
-        let package_assets: PackageAssets = toml::from_str(&contents).unwrap();
-        all_assets.push(package_assets);
+        match std::fs::read_to_string(&dependency_path) {
+            Ok(contents) => {
+                match toml::from_str(&contents) {
+                    Ok(package_assets) => {
+                        all_assets.push(package_assets);
+                    }
+                    Err(err) => {
+                        log::error!("Failed to parse asset manifest for dependency: {}", err);
+                    }
+                };
+            }
+            Err(err) => {
+                log::error!("Failed to read asset manifest for dependency: {}", err);
+            }
+        }
     }
 
     // Then recurse into its dependencies
