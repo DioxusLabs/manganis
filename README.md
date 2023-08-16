@@ -4,33 +4,33 @@ The Collect Assets allows you to submit assets to a build tool that supports col
 
 If you defined this in a component library:
 ```rust
-const AVIF_ASSET: &str = assets::file!("./rustacean-flat-gesture.png");
+const AVIF_ASSET: &str = collect_assets::file!("./rustacean-flat-gesture.png");
 ```
 
 AVIF_ASSET will be set to a new file name that will be served by some CLI. That file can be collected by any package that depends on the component library.
 
 ```rust
 // You can include tailwind classes that will be collected into the final binary
-const TAILWIND_CLASSES: &str = assets::classes!("flex flex-col p-5");
+const TAILWIND_CLASSES: &str = collect_assets::classes!("flex flex-col p-5");
 
 // You can also collect arbitrary files. Relative paths are resolved relative to the package root
-const _: &str = assets::file!("./src/asset.txt");
+const _: &str = collect_assets::file!("./src/asset.txt");
 // You can use URLs to copy read the asset at build time
-const _: &str = assets::file!("https://rustacean.net/assets/rustacean-flat-happy.png");
+const _: &str = collect_assets::file!("https://rustacean.net/assets/rustacean-flat-happy.png");
 
 // You can collect images which will be automatically optimized
-const _: &str = assets::image!("./rustacean-flat-gesture.png");
+const _: &str = collect_assets::image!("./rustacean-flat-gesture.png");
 // Resize the image at compile time to make the assets smaller
-const _: &str = assets::image!("./rustacean-flat-gesture.png", { size: (52, 52) });
+const _: &str = collect_assets::image!("./rustacean-flat-gesture.png", { size: (52, 52) });
 // Or convert the image at compile time to a web friendly format
-const _: &str = assets::image!("./rustacean-flat-gesture.png", { format: avif, size: (52, 52) });
+const _: &str = collect_assets::image!("./rustacean-flat-gesture.png", { format: avif, size: (52, 52) });
 
 // You can also collect google fonts
-const _: &str = assets::font!({ families: ["Roboto"] });
+const _: &str = collect_assets::font!({ families: ["Roboto"] });
 // Specify weights for fonts to collect
-const _: &str = assets::font!({ families: ["Comfortaa"], weights: [300] });
+const _: &str = collect_assets::font!({ families: ["Comfortaa"], weights: [300] });
 // Or specific text to include fonts for only the characters used in that text
-const _: &str = assets::font!({ families: ["Roboto"], weights: [200], text: "light font" });
+const _: &str = collect_assets::font!({ families: ["Roboto"], weights: [200], text: "light font" });
 ```
 
 ## Adding Support to Your CLI

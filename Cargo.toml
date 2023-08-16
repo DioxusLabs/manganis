@@ -1,5 +1,5 @@
 [package]
-name = "assets"
+name = "collect-assets"
 version = "0.1.0"
 authors = ["Evan Almloff"]
 edition = "2021"
