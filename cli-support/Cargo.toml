@@ -37,3 +37,6 @@ lightningcss = "1.0.0-alpha.44"
 # Remote assets
 url = { version = "2.4.0", features = ["serde"] }
 reqwest = { version = "0.11.18", features = ["blocking"] }
+
+[patch.crates-io]
+built = { git = "https://github.com/lukaslueg/built" }
