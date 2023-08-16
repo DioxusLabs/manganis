@@ -87,6 +87,10 @@ pub fn font(input: TokenStream) -> TokenStream {
 /// ```rust
 /// const _: &str = collect_assets::image!("./rustacean-flat-gesture.png", { format: avif, size: (52, 52) });
 /// ```
+/// You can mark images as preloaded to make them load faster in your app
+/// ```rust
+/// const _: &str = collect_assets::image!("./rustacean-flat-gesture.png", { preload: true });
+/// ```
 #[proc_macro]
 pub fn image(input: TokenStream) -> TokenStream {
     let asset = parse_macro_input!(input as ImageAssetParser);

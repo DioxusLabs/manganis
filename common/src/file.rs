@@ -73,6 +73,7 @@ impl Default for FileOptions {
 pub struct ImageOptions {
     compress: bool,
     size: Option<(u32, u32)>,
+    preload: bool,
     ty: ImageType,
 }
 
@@ -83,7 +84,18 @@ impl ImageOptions {
             compress: true,
             size,
             ty,
+            preload: true,
         }
+    }
+
+    /// Returns whether the image should be preloaded
+    pub fn preload(&self) -> bool {
+        self.preload
+    }
+
+    /// Sets whether the image should be preloaded
+    pub fn set_preload(&mut self, preload: bool) {
+        self.preload = preload;
     }
 
     /// Returns the image type

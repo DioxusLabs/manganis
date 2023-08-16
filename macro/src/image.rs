@@ -34,6 +34,7 @@ impl Parse for ParseImageOptions {
 enum ParseImageOption {
     Format(assets_common::ImageType),
     Size((u32, u32)),
+    Preload(bool),
 }
 
 impl ParseImageOption {
@@ -44,6 +45,9 @@ impl ParseImageOption {
             }
             ParseImageOption::Size(size) => {
                 options.set_size(Some(size));
+            }
+            ParseImageOption::Preload(preload) => {
+                options.set_preload(preload);
             }
         }
     }
@@ -62,10 +66,14 @@ impl Parse for ParseImageOption {
                 let size = input.parse::<ImageSize>()?;
                 Ok(ParseImageOption::Size((size.width, size.height)))
             }
+            "preload" => {
+                let preload = input.parse::<syn::LitBool>()?;
+                Ok(ParseImageOption::Preload(preload.value))
+            }
             _ => Err(syn::Error::new(
                 proc_macro2::Span::call_site(),
                 format!(
-                    "Unknown image option: {}. Supported options are format, size",
+                    "Unknown image option: {}. Supported options are format, size, preload",
                     ident
                 ),
             )),
