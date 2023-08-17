@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 /// The options for a file asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub enum FileOptions {
     /// An image asset
     Image(ImageOptions),
@@ -69,7 +69,7 @@ impl Default for FileOptions {
 }
 
 /// The options for an image asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct ImageOptions {
     compress: bool,
     size: Option<(u32, u32)>,
@@ -130,7 +130,7 @@ impl ImageOptions {
 }
 
 /// The type of an image
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub enum ImageType {
     /// A png image
     Png,
@@ -157,7 +157,7 @@ impl FromStr for ImageType {
 }
 
 /// The options for a video asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct VideoOptions {
     /// Whether the video should be compressed
     compress: bool,
@@ -193,7 +193,7 @@ impl VideoOptions {
 }
 
 /// The type of a video
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub enum VideoType {
     /// An mp4 video
     MP4,
@@ -204,7 +204,7 @@ pub enum VideoType {
 }
 
 /// The options for a font asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct FontOptions {
     ty: FontType,
 }
@@ -222,7 +222,7 @@ impl FontOptions {
 }
 
 /// The type of a font
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub enum FontType {
     /// A ttf (TrueType) font
     TTF,
@@ -233,7 +233,7 @@ pub enum FontType {
 }
 
 /// The options for a css asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct CssOptions {
     minify: bool,
 }
@@ -257,7 +257,7 @@ impl Default for CssOptions {
 }
 
 /// The options for an unknown file asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct UnknownFileOptions {
     extension: Option<String>,
 }

@@ -202,6 +202,7 @@ impl FileAsset {
             .unwrap_or_default();
         let mut hash = std::collections::hash_map::DefaultHasher::new();
         updated.hash(&mut hash);
+        options.hash(&mut hash);
         source.hash(&mut hash);
         let uuid = hash.finish();
         let unique_name = format!("{file_name}{uuid}{extension}");

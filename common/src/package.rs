@@ -29,27 +29,9 @@ pub fn add_asset(mut asset: AssetType) -> AssetType {
         }
     };
 
-    // Deduplicate any files
-    let mut add_asset = true;
-    if let AssetType::File(this_file) = &mut asset {
-        for asset in package_assets.assets() {
-            if let AssetType::File(file) = asset {
-                // If there is another file in the same package with the same path, use that instead
-                if file.location().source() == this_file.location().source()
-                    && file.options() == this_file.options()
-                {
-                    this_file.set_unique_name(file.location().unique_name());
-                    add_asset = false;
-                }
-            }
-        }
-    }
-
-    if add_asset {
-        package_assets.add(asset.clone());
-        let contents = toml::to_string(&package_assets).unwrap();
-        std::fs::write(&dir, contents).unwrap();
-    }
+    package_assets.add(asset.clone());
+    let contents = toml::to_string(&package_assets).unwrap();
+    std::fs::write(&dir, contents).unwrap();
 
     asset
 }
