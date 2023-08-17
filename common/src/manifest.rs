@@ -21,25 +21,29 @@ impl AssetManifest {
     /// Returns the HTML that should be injected into the head of the page
     pub fn head(&self) -> String {
         let mut head = String::new();
-    for package in self.packages() {
-        for asset in package.assets(){
-            if let crate::AssetType::File(file) = asset {
-                match file.options(){
-                    crate::FileOptions::Css(_) => {
-                        let asset_path = file.served_location();
-                        head.push_str(&format!("<link rel=\"stylesheet\" href=\"{asset_path}\">\n"))
-                    }
-                    crate::FileOptions::Image(image_options) => {
-                        if image_options.preload(){
+        for package in self.packages() {
+            for asset in package.assets() {
+                if let crate::AssetType::File(file) = asset {
+                    match file.options() {
+                        crate::FileOptions::Css(_) => {
                             let asset_path = file.served_location();
-                            head.push_str(&format!("<link rel=\"preload\" as=\"image\" href=\"{asset_path}\">\n"))
+                            head.push_str(&format!(
+                                "<link rel=\"stylesheet\" href=\"{asset_path}\">\n"
+                            ))
                         }
+                        crate::FileOptions::Image(image_options) => {
+                            if image_options.preload() {
+                                let asset_path = file.served_location();
+                                head.push_str(&format!(
+                                    "<link rel=\"preload\" as=\"image\" href=\"{asset_path}\">\n"
+                                ))
+                            }
+                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
             }
         }
-    }
-    head
+        head
     }
 }
