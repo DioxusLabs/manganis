@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 serde = { version = "1.0.183", features = ["derive"] }
 toml = "0.7.6"
-uuid = { version = "1.4.1", features = ["v4", "fast-rng", "macro-diagnostics"] }
 anyhow = "1"
 home = "0.5.5"
 

@@ -1,4 +1,8 @@
-use std::{path::PathBuf, str::FromStr};
+use std::{
+    hash::{Hash, Hasher},
+    path::PathBuf,
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -17,7 +21,7 @@ pub enum AssetType {
 }
 
 /// The source of a file asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub enum FileSource {
     /// A local file
     Local(PathBuf),
@@ -49,6 +53,37 @@ impl FileSource {
                                 .to_str()
                                 .ok()
                                 .map(|ty| ext_of_mime(ty).to_string())
+                        })
+                }),
+        }
+    }
+
+    /// Find when the asset was last updated
+    pub fn last_updated(&self) -> Option<String> {
+        match self {
+            Self::Local(path) => path.metadata().ok().and_then(|metadata| {
+                metadata
+                    .modified()
+                    .ok()
+                    .map(|modified| format!("{:?}", modified))
+                    .or_else(|| {
+                        metadata
+                            .created()
+                            .ok()
+                            .map(|created| format!("{:?}", created))
+                    })
+            }),
+            Self::Remote(url) => reqwest::blocking::get(url.as_str())
+                .ok()
+                .and_then(|request| {
+                    request
+                        .headers()
+                        .get("last-modified")
+                        .and_then(|last_modified| {
+                            last_modified
+                                .to_str()
+                                .ok()
+                                .map(|last_modified| last_modified.to_string())
                         })
                 }),
         }
@@ -159,14 +194,17 @@ impl FileAsset {
     pub fn new_with_options(source: FileSource, options: FileOptions) -> std::io::Result<Self> {
         let manifest_dir = manifest_dir();
         let path = manifest_dir.join(source.last_segment());
-        let uuid = uuid::Uuid::new_v4();
+        let updated = source.last_updated();
         let file_name = path.file_stem().unwrap().to_string_lossy();
         let extension = options
             .extension()
             .map(|e| format!(".{e}"))
             .unwrap_or_default();
-        let uuid_hex = uuid.simple().to_string();
-        let unique_name = format!("{file_name}{uuid_hex}{extension}");
+        let mut hash = std::collections::hash_map::DefaultHasher::new();
+        updated.hash(&mut hash);
+        source.hash(&mut hash);
+        let uuid = hash.finish();
+        let unique_name = format!("{file_name}{uuid}{extension}");
 
         Ok(Self {
             location: FileLocation {
