@@ -1,10 +1,10 @@
-# Collect Assets CLI Support
+# Manganis CLI Support
 
-This crate provides utilities to collect assets that integrate with the collect assets macro. It makes it easy to integrate an asset collection and optimization system into a build tool.
+This crate provides utilities to collect assets that integrate with the Manganis macro. It makes it easy to integrate an asset collection and optimization system into a build tool.
 
 ```rust
 use assets_cli_support::AssetManifestExt;
-use assets_common::{AssetManifest, Config};
+use manganis_common::{AssetManifest, Config};
 
 fn main() {
     use std::process::Command;

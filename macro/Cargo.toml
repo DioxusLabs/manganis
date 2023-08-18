@@ -1,5 +1,5 @@
 [package]
-name = "assets-macro"
+name = "manganis-macro"
 version = "0.0.1"
 authors = ["Evan Almloff"]
 edition = "2021"
@@ -16,4 +16,4 @@ proc-macro = true
 proc-macro2 = { version = "1.0" }
 quote = "1.0"
 syn = { version = "2.0", features = ["full", "extra-traits"] }
-assets-common = { path = "../common" }
+manganis-common = { path = "../common" }

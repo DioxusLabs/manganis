@@ -1,4 +1,4 @@
-use assets_common::{FileAsset, FileOptions, FileSource, ImageOptions};
+use manganis_common::{FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{braced, parenthesized, parse::Parse};
 
@@ -32,7 +32,7 @@ impl Parse for ParseImageOptions {
 }
 
 enum ParseImageOption {
-    Format(assets_common::ImageType),
+    Format(manganis_common::ImageType),
     Size((u32, u32)),
     Preload(bool),
 }
@@ -100,13 +100,13 @@ impl Parse for ImageSize {
     }
 }
 
-impl From<ImageType> for assets_common::ImageType {
+impl From<ImageType> for manganis_common::ImageType {
     fn from(val: ImageType) -> Self {
         match val {
-            ImageType::Png => assets_common::ImageType::Png,
-            ImageType::Jpeg => assets_common::ImageType::Jpg,
-            ImageType::Webp => assets_common::ImageType::Webp,
-            ImageType::Avif => assets_common::ImageType::Avif,
+            ImageType::Png => manganis_common::ImageType::Png,
+            ImageType::Jpeg => manganis_common::ImageType::Jpg,
+            ImageType::Webp => manganis_common::ImageType::Webp,
+            ImageType::Avif => manganis_common::ImageType::Avif,
         }
     }
 }
@@ -183,9 +183,9 @@ impl Parse for ImageAssetParser {
         let asset = FileAsset::new_with_options(path, FileOptions::Image(options));
         match asset {
             Ok( this_file) => {
-                let asset = add_asset(assets_common::AssetType::File(this_file.clone()));
+                let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
                 let this_file = match asset {
-                    assets_common::AssetType::File(this_file) => this_file,
+                    manganis_common::AssetType::File(this_file) => this_file,
                     _ => unreachable!(),
                 };
                 let file_name = this_file.served_location();

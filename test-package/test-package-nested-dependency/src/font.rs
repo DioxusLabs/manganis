@@ -1,6 +1,6 @@
 pub const ROBOTO_FONT: &str =
-    collect_assets::font!({ families: ["Roboto"], weights: [400], text: "hello world" });
+    manganis::font!({ families: ["Roboto"], weights: [400], text: "hello world" });
 pub const COMFORTAA_FONT: &str =
-    collect_assets::font!({ families: ["Comfortaa"], weights: [300], text: "testing fonts" });
+    manganis::font!({ families: ["Comfortaa"], weights: [300], text: "testing fonts" });
 pub const ROBOTO_FONT_LIGHT_FONT: &str =
-    collect_assets::font!({ families: ["Roboto"], weights: [200], text: "light font" });
+    manganis::font!({ families: ["Roboto"], weights: [200], text: "light font" });

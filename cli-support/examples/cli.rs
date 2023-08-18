@@ -1,5 +1,5 @@
 use assets_cli_support::AssetManifestExt;
-use assets_common::{AssetManifest, Config};
+use manganis_common::{AssetManifest, Config};
 
 fn main() {
     use std::process::Command;

@@ -1,4 +1,4 @@
-use assets_common::FileAsset;
+use manganis_common::FileAsset;
 use quote::{quote, ToTokens};
 use syn::parse::Parse;
 
@@ -23,9 +23,9 @@ impl Parse for FileAssetParser {
         let asset = FileAsset::new(path);
         match asset {
             Ok( this_file) => {
-                let asset = add_asset(assets_common::AssetType::File(this_file.clone()));
+                let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
                 let this_file = match asset {
-                    assets_common::AssetType::File(this_file) => this_file,
+                    manganis_common::AssetType::File(this_file) => this_file,
                     _ => unreachable!(),
                 };
                 let file_name= this_file.served_location();

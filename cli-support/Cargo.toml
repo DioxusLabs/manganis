@@ -1,12 +1,12 @@
 [package]
-name = "assets-cli-support"
+name = "manganis-cli-support"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-assets-common = { path = "../common" }
+manganis-common = { path = "../common" }
 
 serde = { version = "1.0.183", features = ["derive"] }
 toml = "0.7.6"
@@ -42,4 +42,4 @@ log = "0.4.20"
 default = []
 avif = ["image/avif-encoder"]
 webp = ["image/webp-encoder"]
-html = ["assets-common/html"]
+html = ["manganis-common/html"]

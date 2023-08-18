@@ -70,53 +70,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "assets-cli-support"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assets-common",
- "cargo-lock 9.0.0",
- "cargo_metadata",
- "cargo_toml",
- "image",
- "imagequant",
- "lightningcss",
- "log",
- "mozjpeg",
- "petgraph",
- "png",
- "project-root",
- "railwind",
- "rayon",
- "reqwest",
- "serde",
- "toml 0.7.6",
- "url",
-]
-
-[[package]]
-name = "assets-common"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "home",
- "reqwest",
- "serde",
- "toml 0.7.6",
- "url",
-]
-
-[[package]]
-name = "assets-macro"
-version = "0.0.1"
-dependencies = [
- "assets-common",
- "proc-macro2",
- "quote",
- "syn 2.0.28",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -427,13 +380,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "033f6b7a4acb1f358c742aaca805c939ee73b4c6209ae4318ec7aca81c42e646"
 dependencies = [
  "os_str_bytes",
-]
-
-[[package]]
-name = "collect-assets"
-version = "0.1.0"
-dependencies = [
- "assets-macro",
 ]
 
 [[package]]
@@ -1343,6 +1289,60 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a703804431e5927454bcaf2b2a162595e95db931130c2728c18d050090f69940"
 dependencies = [
  "imgref",
+]
+
+[[package]]
+name = "manganis"
+version = "0.1.0"
+dependencies = [
+ "manganis-macro",
+]
+
+[[package]]
+name = "manganis-cli-support"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cargo-lock 9.0.0",
+ "cargo_metadata",
+ "cargo_toml",
+ "image",
+ "imagequant",
+ "lightningcss",
+ "log",
+ "manganis-common",
+ "mozjpeg",
+ "petgraph",
+ "png",
+ "project-root",
+ "railwind",
+ "rayon",
+ "reqwest",
+ "serde",
+ "toml 0.7.6",
+ "url",
+]
+
+[[package]]
+name = "manganis-common"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "home",
+ "reqwest",
+ "serde",
+ "toml 0.7.6",
+ "url",
+]
+
+[[package]]
+name = "manganis-macro"
+version = "0.0.1"
+dependencies = [
+ "manganis-common",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -2556,7 +2556,7 @@ dependencies = [
 name = "test-package"
 version = "0.1.0"
 dependencies = [
- "collect-assets",
+ "manganis",
  "test-package-dependency",
 ]
 
@@ -2564,7 +2564,7 @@ dependencies = [
 name = "test-package-dependency"
 version = "0.1.0"
 dependencies = [
- "collect-assets",
+ "manganis",
  "test-package-nested-dependency",
 ]
 
@@ -2572,7 +2572,7 @@ dependencies = [
 name = "test-package-nested-dependency"
 version = "0.1.0"
 dependencies = [
- "collect-assets",
+ "manganis",
 ]
 
 [[package]]

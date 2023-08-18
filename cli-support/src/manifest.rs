@@ -1,7 +1,7 @@
 pub use railwind::warning::Warning as TailwindWarning;
 use std::path::{Path, PathBuf};
 
-use assets_common::{
+use manganis_common::{
     cache::asset_cache_dir, cache::package_identifier, AssetManifest, AssetType, PackageAssets,
 };
 use cargo_lock::{

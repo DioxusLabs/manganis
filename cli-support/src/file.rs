@@ -1,4 +1,4 @@
-use assets_common::{CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType};
+use manganis_common::{CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType};
 use image::{DynamicImage, EncodableLayout};
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
 use std::{

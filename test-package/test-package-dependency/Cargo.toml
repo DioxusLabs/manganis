@@ -7,5 +7,5 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-collect-assets = { path = "../../" }
+manganis = { path = "../../" }
 test-package-nested-dependency = { path = "../test-package-nested-dependency" }

@@ -6,6 +6,6 @@ mod file;
 mod manifest;
 mod tailwind;
 
-pub use assets_common::*;
+pub use manganis_common::*;
 pub use manifest::*;
 pub use tailwind::*;
