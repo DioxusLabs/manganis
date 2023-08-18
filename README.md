@@ -52,4 +52,4 @@ TODO:
 - [x] Tailwind
 - [x] Configuration for the final asset serve location
 - [x] `#![deny(missing_docs)]`
-- [ ] Think of a better name
+- [x] Think of a better name
