@@ -3,7 +3,7 @@
 This crate provides utilities to collect assets that integrate with the Manganis macro. It makes it easy to integrate an asset collection and optimization system into a build tool.
 
 ```rust
-use assets_cli_support::AssetManifestExt;
+use manganis_cli_support::AssetManifestExt;
 use manganis_common::{AssetManifest, Config};
 
 fn main() {

@@ -1,4 +1,4 @@
-use assets_cli_support::AssetManifestExt;
+use manganis_cli_support::AssetManifestExt;
 use manganis_common::{AssetManifest, Config};
 
 fn main() {
