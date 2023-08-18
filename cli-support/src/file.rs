@@ -1,6 +1,6 @@
-use manganis_common::{CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType};
 use image::{DynamicImage, EncodableLayout};
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
+use manganis_common::{CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType};
 use std::{
     io::{BufWriter, Write},
     path::{Path, PathBuf},

@@ -3,15 +3,12 @@ pub const CSS_ASSET: &str = manganis::file!("./style.css");
 pub const PNG_ASSET: &str = manganis::file!("./rustacean-flat-gesture.png");
 pub const RESIZED_PNG_ASSET: &str =
     manganis::image!("./rustacean-flat-gesture.png", { size: (52, 52) });
-pub const JPEG_ASSET: &str =
-    manganis::image!("./rustacean-flat-gesture.png", { format: jpeg });
+pub const JPEG_ASSET: &str = manganis::image!("./rustacean-flat-gesture.png", { format: jpeg });
 pub const RESIZED_JPEG_ASSET: &str =
     manganis::image!("./rustacean-flat-gesture.png", { format: jpeg, size: (52, 52) });
-pub const AVIF_ASSET: &str =
-    manganis::image!("./rustacean-flat-gesture.png", { format: avif });
+pub const AVIF_ASSET: &str = manganis::image!("./rustacean-flat-gesture.png", { format: avif });
 pub const RESIZED_AVIF_ASSET: &str =
     manganis::image!("./rustacean-flat-gesture.png", { format: avif, size: (52, 52) });
-pub const WEBP_ASSET: &str =
-    manganis::image!("./rustacean-flat-gesture.png", { format: webp });
+pub const WEBP_ASSET: &str = manganis::image!("./rustacean-flat-gesture.png", { format: webp });
 pub const RESIZED_WEBP_ASSET: &str =
     manganis::image!("./rustacean-flat-gesture.png", { format: webp, size: (52, 52) });

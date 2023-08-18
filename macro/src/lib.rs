@@ -1,10 +1,10 @@
 #![doc = include_str!("../../README.md")]
 #![deny(missing_docs)]
 
-use manganis_common::{AssetType, MetadataAsset, TailwindAsset};
 use file::FileAssetParser;
 use font::FontAssetParser;
 use image::ImageAssetParser;
+use manganis_common::{AssetType, MetadataAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{quote, ToTokens};

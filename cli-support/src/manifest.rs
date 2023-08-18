@@ -1,12 +1,12 @@
 pub use railwind::warning::Warning as TailwindWarning;
 use std::path::{Path, PathBuf};
 
-use manganis_common::{
-    cache::asset_cache_dir, cache::package_identifier, AssetManifest, AssetType, PackageAssets,
-};
 use cargo_lock::{
     dependency::{self, graph::NodeIndex},
     Lockfile,
+};
+use manganis_common::{
+    cache::asset_cache_dir, cache::package_identifier, AssetManifest, AssetType, PackageAssets,
 };
 use petgraph::visit::EdgeRef;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
