@@ -12,7 +12,7 @@ pub fn clear_assets() {
 }
 
 /// Adds an asset to the current package
-pub fn add_asset(mut asset: AssetType) -> AssetType {
+pub fn add_asset(asset: AssetType) -> AssetType {
     let mut dir = current_package_cache_dir();
     dir.push("assets.toml");
     let mut package_assets: PackageAssets = if dir.exists() {
