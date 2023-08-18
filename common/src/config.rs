@@ -39,7 +39,9 @@ impl Config {
     /// The assets macro will read the config from the global config file and set the assets serve location to the value in the config.
     pub fn save(&self) {
         let config = toml::to_string(&self).unwrap();
-        std::fs::write(config_path(), config).unwrap();
+        let config_path = config_path();
+        std::fs::create_dir_all(config_path.parent().unwrap()).unwrap();
+        std::fs::write(config_path, config).unwrap();
     }
 }
 
