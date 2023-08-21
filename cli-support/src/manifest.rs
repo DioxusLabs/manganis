@@ -6,9 +6,7 @@ use cargo_lock::{
     Lockfile,
 };
 use manganis_common::{
-    cache::asset_cache_dir,
-    cache::{package_identifier, push_package_cache_dir},
-    AssetManifest, AssetType, PackageAssets,
+    cache::asset_cache_dir, cache::push_package_cache_dir, AssetManifest, AssetType, PackageAssets,
 };
 use petgraph::visit::EdgeRef;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
