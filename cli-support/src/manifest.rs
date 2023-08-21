@@ -106,39 +106,42 @@ impl AssetManifestExt for AssetManifest {
 
 fn collect_dependencies(
     tree: &cargo_lock::dependency::tree::Tree,
-    package_id: NodeIndex,
+    root_package_id: NodeIndex,
     cache_dir: &Path,
     all_assets: &mut Vec<PackageAssets>,
 ) {
-    let package = tree.graph().node_weight(package_id).unwrap();
-    // Add the assets for this dependency
-    let mut dependency_path = cache_dir.join(package_identifier(
-        package.name.as_str(),
-        &package.version.to_string(),
-    ));
-    dependency_path.push("assets.toml");
-    if dependency_path.exists() {
-        match std::fs::read_to_string(&dependency_path) {
-            Ok(contents) => {
-                match toml::from_str(&contents) {
-                    Ok(package_assets) => {
-                        all_assets.push(package_assets);
-                    }
-                    Err(err) => {
-                        log::error!("Failed to parse asset manifest for dependency: {}", err);
-                    }
-                };
-            }
-            Err(err) => {
-                log::error!("Failed to read asset manifest for dependency: {}", err);
+    let mut packages_to_visit = vec![root_package_id];
+    while let Some(package_id) = packages_to_visit.pop(){
+        let package = tree.graph().node_weight(package_id).unwrap();
+        // Add the assets for this dependency
+        let mut dependency_path = cache_dir.join(package_identifier(
+            package.name.as_str(),
+            &package.version.to_string(),
+        ));
+        dependency_path.push("assets.toml");
+        if dependency_path.exists() {
+            match std::fs::read_to_string(&dependency_path) {
+                Ok(contents) => {
+                    match toml::from_str(&contents) {
+                        Ok(package_assets) => {
+                            all_assets.push(package_assets);
+                        }
+                        Err(err) => {
+                            log::error!("Failed to parse asset manifest for dependency: {}", err);
+                        }
+                    };
+                }
+                Err(err) => {
+                    log::error!("Failed to read asset manifest for dependency: {}", err);
+                }
             }
         }
-    }
-
-    // Then recurse into its dependencies
-    let dependencies = tree.graph().edges(package_id);
-    for dependency in dependencies {
-        let dependency_index = dependency.target();
-        collect_dependencies(tree, dependency_index, cache_dir, all_assets);
+    
+        // Then recurse into its dependencies
+        let dependencies = tree.graph().edges(package_id);
+        for dependency in dependencies {
+            let dependency_index = dependency.target();
+            packages_to_visit.push(dependency_index);
+        }
     }
 }
