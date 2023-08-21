@@ -6,7 +6,7 @@ use cargo_lock::{
     Lockfile,
 };
 use manganis_common::{
-    cache::asset_cache_dir, cache::package_identifier, AssetManifest, AssetType, PackageAssets,
+    cache::asset_cache_dir, cache::{package_identifier, push_package_cache_dir}, AssetManifest, AssetType, PackageAssets,
 };
 use petgraph::visit::EdgeRef;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -111,13 +111,17 @@ fn collect_dependencies(
     all_assets: &mut Vec<PackageAssets>,
 ) {
     let mut packages_to_visit = vec![root_package_id];
+    let mut dependency_path = PathBuf::new();
     while let Some(package_id) = packages_to_visit.pop(){
         let package = tree.graph().node_weight(package_id).unwrap();
         // Add the assets for this dependency
-        let mut dependency_path = cache_dir.join(package_identifier(
+        dependency_path.clear();
+        dependency_path.push(cache_dir);
+        push_package_cache_dir(
             package.name.as_str(),
             &package.version.to_string(),
-        ));
+            &mut dependency_path,
+        );
         dependency_path.push("assets.toml");
         if dependency_path.exists() {
             match std::fs::read_to_string(&dependency_path) {
