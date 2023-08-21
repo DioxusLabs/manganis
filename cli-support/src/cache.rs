@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-use project_root::get_project_root;
-
 pub(crate) fn current_cargo_toml() -> PathBuf {
     cargo_metadata::MetadataCommand::new()
         .exec()
@@ -14,7 +12,10 @@ pub(crate) fn current_cargo_toml() -> PathBuf {
 }
 
 pub(crate) fn root_dir() -> PathBuf {
-    get_project_root().unwrap()
+    cargo_metadata::MetadataCommand::new()
+        .exec()
+        .unwrap()
+        .workspace_root.into()
 }
 
 pub(crate) fn lock_path() -> PathBuf {
