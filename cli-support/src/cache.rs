@@ -15,7 +15,8 @@ pub(crate) fn root_dir() -> PathBuf {
     cargo_metadata::MetadataCommand::new()
         .exec()
         .unwrap()
-        .workspace_root.into()
+        .workspace_root
+        .into()
 }
 
 pub(crate) fn lock_path() -> PathBuf {

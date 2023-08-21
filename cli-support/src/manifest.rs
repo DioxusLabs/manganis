@@ -6,7 +6,9 @@ use cargo_lock::{
     Lockfile,
 };
 use manganis_common::{
-    cache::asset_cache_dir, cache::{package_identifier, push_package_cache_dir}, AssetManifest, AssetType, PackageAssets,
+    cache::asset_cache_dir,
+    cache::{package_identifier, push_package_cache_dir},
+    AssetManifest, AssetType, PackageAssets,
 };
 use petgraph::visit::EdgeRef;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -112,7 +114,7 @@ fn collect_dependencies(
 ) {
     let mut packages_to_visit = vec![root_package_id];
     let mut dependency_path = PathBuf::new();
-    while let Some(package_id) = packages_to_visit.pop(){
+    while let Some(package_id) = packages_to_visit.pop() {
         let package = tree.graph().node_weight(package_id).unwrap();
         // Add the assets for this dependency
         dependency_path.clear();
@@ -140,7 +142,7 @@ fn collect_dependencies(
                 }
             }
         }
-    
+
         // Then recurse into its dependencies
         let dependencies = tree.graph().edges(package_id);
         for dependency in dependencies {
