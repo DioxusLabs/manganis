@@ -2548,6 +2548,8 @@ name = "test-package"
 version = "0.1.0"
 dependencies = [
  "manganis",
+ "manganis-cli-support",
+ "manganis-common",
  "test-package-dependency",
 ]
 

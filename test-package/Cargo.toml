@@ -9,3 +9,5 @@ publish = false
 [dependencies]
 manganis = { path = "../" }
 test-package-dependency = { path = "./test-package-dependency" }
+manganis-cli-support = { path = "../cli-support", features = ["html"]}
+manganis-common = { path = "../common" }

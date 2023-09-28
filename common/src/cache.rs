@@ -29,9 +29,8 @@ pub fn package_identifier(package: &str, version: &str) -> String {
 
 /// Like `package_identifier`, but appends the identifier to the given path
 pub fn push_package_cache_dir(package: &str, version: &str, dir: &mut PathBuf) {
-    dir.push(package);
-    dir.push("-");
-    dir.push(version);
+    let identifier = package_identifier(package, version);
+    dir.push(identifier);
 }
 
 pub(crate) fn current_package_version() -> String {
