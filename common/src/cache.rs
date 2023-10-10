@@ -1,6 +1,9 @@
 //! Utilities for the cache that is used to collect assets
 
-use std::{path::PathBuf, fmt::{Write, Display}, hash::{Hash, Hasher}};
+use std::{
+    fmt::{Display, Write},
+    path::PathBuf,
+};
 
 use home::cargo_home;
 
@@ -28,15 +31,12 @@ pub fn package_identifier(package: &str, version: &str) -> String {
 }
 
 /// Like `package_identifier`, but appends the identifier to the given path
-pub fn push_package_cache_dir(package: &str, version: impl Hash, dir: &mut PathBuf) {
+pub fn push_package_cache_dir(package: &str, version: impl Display, dir: &mut PathBuf) {
     let as_string = dir.as_mut_os_string();
     as_string.write_char(std::path::MAIN_SEPARATOR).unwrap();
     as_string.write_str(&package).unwrap();
     as_string.write_char('-').unwrap();
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    version.hash(&mut hasher);
-    let version = hasher.finish();
-    as_string.write_fmt(format_args!("{:x}", version)).unwrap();
+    as_string.write_fmt(format_args!("{}", version)).unwrap();
 }
 
 pub(crate) fn current_package_version() -> String {

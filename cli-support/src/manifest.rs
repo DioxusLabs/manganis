@@ -1,4 +1,5 @@
 pub use railwind::warning::Warning as TailwindWarning;
+use rustc_hash::FxHashSet;
 use std::path::{Path, PathBuf};
 
 use cargo_lock::{
@@ -111,10 +112,31 @@ fn collect_dependencies(
     cache_dir: &Path,
     all_assets: &mut Vec<PackageAssets>,
 ) {
+    // First find any assets that do have assets. The vast majority of packages will not have any so we can rule them out quickly with a hashset before touching the filesystem
+    let mut packages = FxHashSet::default();
+    if let Ok(read_dir) = cache_dir.read_dir() {
+        for path in read_dir {
+            if let Ok(path) = path {
+                if path.file_type().unwrap().is_dir() {
+                    let file_name = path.file_name();
+                    let package_name = file_name.to_string_lossy();
+                    if let Some((package_name, _)) = package_name.rsplit_once("-") {
+                        packages.insert(package_name.to_string());
+                    }
+                }
+            }
+        }
+    }
+
     let mut packages_to_visit = vec![root_package_id];
     let mut dependency_path = PathBuf::new();
     while let Some(package_id) = packages_to_visit.pop() {
         let package = tree.graph().node_weight(package_id).unwrap();
+        // First make sure this package has assets
+        if !packages.contains(package.name.as_str()) {
+            continue;
+        }
+
         // Add the assets for this dependency
         dependency_path.clear();
         dependency_path.push(cache_dir);
@@ -133,7 +155,10 @@ fn collect_dependencies(
                             all_assets.push(package_assets);
                         }
                         Err(err) => {
-                            tracing::error!("Failed to parse asset manifest for dependency: {}", err);
+                            tracing::error!(
+                                "Failed to parse asset manifest for dependency: {}",
+                                err
+                            );
                         }
                     };
                 }
