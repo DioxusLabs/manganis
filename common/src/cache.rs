@@ -34,7 +34,7 @@ pub fn package_identifier(package: &str, version: &str) -> String {
 pub fn push_package_cache_dir(package: &str, version: impl Display, dir: &mut PathBuf) {
     let as_string = dir.as_mut_os_string();
     as_string.write_char(std::path::MAIN_SEPARATOR).unwrap();
-    as_string.write_str(&package).unwrap();
+    as_string.write_str(package).unwrap();
     as_string.write_char('-').unwrap();
     as_string.write_fmt(format_args!("{}", version)).unwrap();
 }

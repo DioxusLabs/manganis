@@ -115,14 +115,12 @@ fn collect_dependencies(
     // First find any assets that do have assets. The vast majority of packages will not have any so we can rule them out quickly with a hashset before touching the filesystem
     let mut packages = FxHashSet::default();
     if let Ok(read_dir) = cache_dir.read_dir() {
-        for path in read_dir {
-            if let Ok(path) = path {
-                if path.file_type().unwrap().is_dir() {
-                    let file_name = path.file_name();
-                    let package_name = file_name.to_string_lossy();
-                    if let Some((package_name, _)) = package_name.rsplit_once("-") {
-                        packages.insert(package_name.to_string());
-                    }
+        for path in read_dir.flatten() {
+            if path.file_type().unwrap().is_dir() {
+                let file_name = path.file_name();
+                let package_name = file_name.to_string_lossy();
+                if let Some((package_name, _)) = package_name.rsplit_once('-') {
+                    packages.insert(package_name.to_string());
                 }
             }
         }
