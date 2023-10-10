@@ -168,13 +168,16 @@ impl Parse for ImageAssetParser {
             return Err(syn::Error::new(
                 proc_macro2::Span::call_site(),
                 format!("Failed to get extension from path: {}", path_as_str),
-            ))
+            ));
         };
         let Ok(extension) = extension.parse() else {
             return Err(syn::Error::new(
                 proc_macro2::Span::call_site(),
-                format!("Failed to parse extension: {}, supported types are png, jpeg, webp, avif", extension),
-            ))
+                format!(
+                    "Failed to parse extension: {}, supported types are png, jpeg, webp, avif",
+                    extension
+                ),
+            ));
         };
         let mut options = ImageOptions::new(extension, None);
         if let Some(parsed_options) = parsed_options {
