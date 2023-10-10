@@ -1,12 +1,11 @@
 // The assets must be configured with the [CLI](cli-support/examples/cli.rs) before this example can be run.
 
-use std::path::PathBuf;
 use manganis_cli_support::AssetManifestExt;
 use manganis_common::{AssetManifest, Config};
+use std::path::PathBuf;
 use test_package_dependency::IMAGE_ASSET;
 
 fn main() {
-
     // This is the location where the assets will be copied to in the filesystem
     let assets_file_location = "./dist/";
     // This is the location where the assets will be served from
@@ -33,7 +32,7 @@ fn main() {
 
     // And write the CSS to the public directory
     std::fs::write(format!("{}/tailwind.css", assets_file_location), css).unwrap();
-    
+
     let class = manganis::classes!("p-10");
     assert_eq!(class, "p-10");
     let path = manganis::file!("./test-package-dependency/src/asset.txt");

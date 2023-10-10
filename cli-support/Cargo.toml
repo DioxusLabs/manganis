@@ -12,7 +12,7 @@ serde = { version = "1.0.183", features = ["derive"] }
 toml = "0.7.6"
 cargo-lock = { version = "9.0.0", features = ["dependency-tree"] }
 cargo_metadata = "0.17.0"
-cargo_toml = "0.15.3"
+cargo_toml = "0.16.3"
 petgraph = "0.6.3"
 anyhow = "1"
 rayon = "1.7.0"
