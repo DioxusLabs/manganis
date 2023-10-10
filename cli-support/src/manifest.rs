@@ -56,6 +56,7 @@ impl AssetManifestExt for AssetManifest {
             let package = tree.graph().node_weight(p).unwrap();
             package.name.as_str() == this_package.name
         }) else {
+            tracing::error!("Failed to find this package in the lock file");
             return Self::default();
         };
 
@@ -119,9 +120,10 @@ fn collect_dependencies(
         dependency_path.push(cache_dir);
         push_package_cache_dir(
             package.name.as_str(),
-            &package.version.to_string(),
+            &package.version,
             &mut dependency_path,
         );
+        tracing::trace!("Looking for assets in {}", dependency_path.display());
         dependency_path.push("assets.toml");
         if dependency_path.exists() {
             match std::fs::read_to_string(&dependency_path) {
@@ -131,12 +133,12 @@ fn collect_dependencies(
                             all_assets.push(package_assets);
                         }
                         Err(err) => {
-                            log::error!("Failed to parse asset manifest for dependency: {}", err);
+                            tracing::error!("Failed to parse asset manifest for dependency: {}", err);
                         }
                     };
                 }
                 Err(err) => {
-                    log::error!("Failed to read asset manifest for dependency: {}", err);
+                    tracing::error!("Failed to read asset manifest for dependency: {}", err);
                 }
             }
         }
