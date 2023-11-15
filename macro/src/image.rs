@@ -183,23 +183,16 @@ impl Parse for ImageAssetParser {
         if let Some(parsed_options) = parsed_options {
             parsed_options.apply_to_options(&mut options);
         }
-        let asset = FileAsset::new_with_options(path, FileOptions::Image(options));
-        match asset {
-            Ok( this_file) => {
-                let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
-                let this_file = match asset {
-                    manganis_common::AssetType::File(this_file) => this_file,
-                    _ => unreachable!(),
-                };
-                let file_name = this_file.served_location();
+        let this_file = FileAsset::new(path).with_options(FileOptions::Image(options));
 
-                Ok(ImageAssetParser {file_name})
-            }
-            Err(e) => Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to canonicalize path: {path_as_str}\nAny relative paths are resolved relative to the manifest directory\n{e}"),
-            ))
-        }
+        let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
+        let this_file = match asset {
+            manganis_common::AssetType::File(this_file) => this_file,
+            _ => unreachable!(),
+        };
+        let file_name = this_file.served_location();
+
+        Ok(ImageAssetParser { file_name })
     }
 }
 

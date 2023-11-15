@@ -20,23 +20,15 @@ impl Parse for FileAssetParser {
                 format!("Failed to parse path: {path_as_str}\nAny relative paths are resolved relative to the manifest directory\n{e}"),
             ))
         };
-        let asset = FileAsset::new(path);
-        match asset {
-            Ok( this_file) => {
-                let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
-                let this_file = match asset {
-                    manganis_common::AssetType::File(this_file) => this_file,
-                    _ => unreachable!(),
-                };
-                let file_name= this_file.served_location();
+        let this_file = FileAsset::new(path);
+        let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
+        let this_file = match asset {
+            manganis_common::AssetType::File(this_file) => this_file,
+            _ => unreachable!(),
+        };
+        let file_name = this_file.served_location();
 
-                Ok(FileAssetParser {file_name})
-            }
-            Err(e) => Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to canonicalize path: {path_as_str}\nAny relative paths are resolved relative to the manifest directory\n{e}"),
-            ))
-        }
+        Ok(FileAssetParser { file_name })
     }
 }
 

@@ -153,26 +153,16 @@ impl Parse for FontAssetParser {
                 ))
             }
         };
-        let asset = FileAsset::new_with_options(
-            url.clone(),
-            manganis_common::FileOptions::Css(CssOptions::default()),
-        );
-        match asset {
-            Ok( this_file) => {
-                let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
-                let this_file = match asset {
-                    manganis_common::AssetType::File(this_file) => this_file,
-                    _ => unreachable!(),
-                };
-                let file_name = this_file.served_location();
+        let this_file = FileAsset::new(url.clone())
+            .with_options(manganis_common::FileOptions::Css(CssOptions::default()));
+        let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
+        let this_file = match asset {
+            manganis_common::AssetType::File(this_file) => this_file,
+            _ => unreachable!(),
+        };
+        let file_name = this_file.served_location();
 
-                Ok(FontAssetParser {file_name})
-            }
-            Err(e) => Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to locate asset: {url:?}\nAny relative paths are resolved relative to the manifest directory\n{e}"),
-            ))
-        }
+        Ok(FontAssetParser { file_name })
     }
 }
 
