@@ -130,7 +130,7 @@ impl ImageOptions {
 }
 
 /// The type of an image
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Copy, Hash)]
 pub enum ImageType {
     /// A png image
     Png,

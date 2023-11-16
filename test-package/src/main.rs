@@ -8,6 +8,12 @@ use test_package_dependency::IMAGE_ASSET;
 fn main() {
     tracing_subscriber::fmt::init();
 
+    println!(
+        "low quality preview: {:?}",
+        test_package_dependency::AVIF_ASSET.preview()
+    );
+    assert!(test_package_dependency::AVIF_ASSET.preview().is_some());
+
     // This is the location where the assets will be copied to in the filesystem
     let assets_file_location = "./dist/";
     // This is the location where the assets will be served from

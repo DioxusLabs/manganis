@@ -11,9 +11,9 @@ struct ParseImageOptions {
 }
 
 impl ParseImageOptions {
-    fn apply_to_options(self, file: &mut FileAsset) {
+    fn apply_to_options(self, file: &mut FileAsset, low_quality_preview: &mut bool) {
         for option in self.options {
-            option.apply_to_options(file);
+            option.apply_to_options(file, low_quality_preview);
         }
     }
 }
@@ -38,10 +38,11 @@ enum ParseImageOption {
     Size((u32, u32)),
     Preload(bool),
     UrlEncoded(bool),
+    Lqip(bool),
 }
 
 impl ParseImageOption {
-    fn apply_to_options(self, file: &mut FileAsset) {
+    fn apply_to_options(self, file: &mut FileAsset, low_quality_preview: &mut bool) {
         if let FileOptions::Image(options) = file.options_mut() {
             match self {
                 ParseImageOption::Format(format) => {
@@ -55,6 +56,9 @@ impl ParseImageOption {
                 }
                 ParseImageOption::UrlEncoded(url_encoded) => {
                     file.set_url_encoded(url_encoded);
+                }
+                ParseImageOption::Lqip(lqip) => {
+                    *low_quality_preview = lqip;
                 }
             }
         }
@@ -82,10 +86,14 @@ impl Parse for ParseImageOption {
                 let url_encoded = input.parse::<syn::LitBool>()?;
                 Ok(ParseImageOption::UrlEncoded(url_encoded.value))
             }
+            "low_quality_preview" => {
+                let lqip = input.parse::<syn::LitBool>()?;
+                Ok(ParseImageOption::Lqip(lqip.value))
+            }
             _ => Err(syn::Error::new(
                 proc_macro2::Span::call_site(),
                 format!(
-                    "Unknown image option: {}. Supported options are format, size, preload, url_encoded",
+                    "Unknown image option: {}. Supported options are format, size, preload, url_encoded, low_quality_preview",
                     ident
                 ),
             )),
@@ -142,15 +150,18 @@ impl Parse for ImageType {
     }
 }
 
+#[derive(Clone, Copy, Default)]
 enum ImageType {
     Png,
     Jpeg,
     Webp,
+    #[default]
     Avif,
 }
 
 pub struct ImageAssetParser {
     file_name: String,
+    low_quality_preview: Option<String>,
 }
 
 impl Parse for ImageAssetParser {
@@ -176,26 +187,13 @@ impl Parse for ImageAssetParser {
                 ))
             }
         };
-        let Some(extension) = path.extension() else {
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to get extension from path: {}", path_as_str),
+        let mut this_file =
+            FileAsset::new(path.clone()).with_options(manganis_common::FileOptions::Image(
+                ImageOptions::new(manganis_common::ImageType::Avif, None),
             ));
-        };
-        let Ok(extension) = extension.parse() else {
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!(
-                    "Failed to parse extension: {}, supported types are png, jpeg, webp, avif",
-                    extension
-                ),
-            ));
-        };
-        let mut this_file = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
-            ImageOptions::new(extension, None),
-        ));
+        let mut low_quality_preview = false;
         if let Some(parsed_options) = parsed_options {
-            parsed_options.apply_to_options(&mut this_file);
+            parsed_options.apply_to_options(&mut this_file, &mut low_quality_preview);
         }
 
         let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
@@ -204,47 +202,98 @@ impl Parse for ImageAssetParser {
             _ => unreachable!(),
         };
         let file_name = if this_file.url_encoded() {
-            let target_directory =
-                std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
-            let output_folder = std::path::Path::new(&target_directory)
-                .join("manganis")
-                .join("assets");
-            std::fs::create_dir_all(&output_folder).map_err(|e| {
+            url_encoded_asset(&this_file).map_err(|e| {
                 syn::Error::new(
                     proc_macro2::Span::call_site(),
-                    format!("Failed to create output folder: {}", e),
+                    format!("Failed to encode file: {}", e),
                 )
-            })?;
-            process_file(&this_file, &output_folder).map_err(|e| {
-                syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("Failed to process file: {}", e),
-                )
-            })?;
-            let file = output_folder.join(this_file.location().unique_name());
-            let data = std::fs::read(file).map_err(|e| {
-                syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("Failed to read file: {}", e),
-                )
-            })?;
-            let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
-            let mime = this_file.location().source().mime_type().unwrap();
-            format!("data:{mime};base64,{data}")
+            })?
         } else {
             this_file.served_location()
         };
 
-        Ok(ImageAssetParser { file_name })
+        let low_quality_preview = if low_quality_preview {
+            let current_image_size = match this_file.options() {
+                manganis_common::FileOptions::Image(options) => options.size(),
+                _ => None,
+            };
+            let low_quality_preview_size = current_image_size
+                .map(|(width, height)| {
+                    let width = width / 10;
+                    let height = height / 10;
+                    (width, height)
+                })
+                .unwrap_or((32, 32));
+            let lqip = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
+                ImageOptions::new(
+                    manganis_common::ImageType::Jpg,
+                    Some(low_quality_preview_size),
+                ),
+            ));
+            Some(url_encoded_asset(&lqip).map_err(|e| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to encode file: {}", e),
+                )
+            })?)
+        } else {
+            None
+        };
+
+        Ok(ImageAssetParser {
+            file_name,
+            low_quality_preview,
+        })
     }
+}
+
+fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
+    let target_directory =
+        std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
+    let output_folder = std::path::Path::new(&target_directory)
+        .join("manganis")
+        .join("assets");
+    std::fs::create_dir_all(&output_folder).map_err(|e| {
+        syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("Failed to create output folder: {}", e),
+        )
+    })?;
+    process_file(file_asset, &output_folder).map_err(|e| {
+        syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("Failed to process file: {}", e),
+        )
+    })?;
+    let file = output_folder.join(file_asset.location().unique_name());
+    let data = std::fs::read(file).map_err(|e| {
+        syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("Failed to read file: {}", e),
+        )
+    })?;
+    let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
+    let mime = file_asset
+        .location()
+        .source()
+        .mime_type()
+        .ok_or(syn::Error::new(
+            proc_macro2::Span::call_site(),
+            "Failed to get mime type",
+        ))?;
+    Ok(format!("data:{mime};base64,{data}"))
 }
 
 impl ToTokens for ImageAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let file_name = &self.file_name;
+        let low_quality_preview = match &self.low_quality_preview {
+            Some(lqip) => quote! { Some(#lqip) },
+            None => quote! { None },
+        };
 
         tokens.extend(quote! {
-            #file_name
+            manganis::ImageAsset::new(#file_name).with_preview(#low_quality_preview)
         })
     }
 }

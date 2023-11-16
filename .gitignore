@@ -1,3 +1,4 @@
 /target
 /test-package/dist
 /Cargo.lock
+/test-package/test-package-nested-dependency/target
