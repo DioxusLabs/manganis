@@ -300,15 +300,18 @@ impl FileAsset {
     }
 
     /// Set whether the file asset should be url encoded
-    pub fn with_url_encoded(mut self, url_encoded: bool) -> Self {
+    pub fn set_url_encoded(&mut self, url_encoded: bool) {
         self.url_encoded = url_encoded;
-        self
+    }
+
+    /// Returns whether the file asset should be url encoded
+    pub fn url_encoded(&self) -> bool {
+        self.url_encoded
     }
 
     /// Returns the location where the file asset will be served from
     pub fn served_location(&self) -> String {
         if self.url_encoded {
-            // data:[<mediatype>][;base64],<data>
             let data = self.location.read_to_bytes().unwrap();
             let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
             let mime = self.location.source.mime_type().unwrap();
@@ -334,6 +337,11 @@ impl FileAsset {
     /// Returns the options for the file asset
     pub fn options(&self) -> &FileOptions {
         &self.options
+    }
+
+    /// Returns the options for the file asset mutably
+    pub fn options_mut(&mut self) -> &mut FileOptions {
+        &mut self.options
     }
 }
 

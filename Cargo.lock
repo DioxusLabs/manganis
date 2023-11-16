@@ -1358,6 +1358,8 @@ dependencies = [
 name = "manganis-macro"
 version = "0.0.1"
 dependencies = [
+ "base64",
+ "manganis-cli-support",
  "manganis-common",
  "proc-macro2",
  "quote",
