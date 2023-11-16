@@ -7,7 +7,7 @@ mod file;
 mod manifest;
 mod tailwind;
 
+pub use file::process_file;
 pub use manganis_common::*;
 pub use manifest::*;
 pub use tailwind::*;
-pub use file::process_file;

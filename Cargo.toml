@@ -14,6 +14,13 @@ keywords = ["assets"]
 
 [dependencies]
 manganis-macro = { path = "./macro" }
+dioxus-core = { git = "https://github.com/DioxusLabs/dioxus", optional = true }
 
 [workspace]
 members = ["macro", "common", "cli-support", "test-package", "test-package/test-package-dependency", "test-package/test-package-nested-dependency"]
+
+[features]
+default = []
+html = []
+dioxus = ["dioxus-core"]
+
