@@ -150,11 +150,12 @@ impl Parse for ImageType {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 enum ImageType {
     Png,
     Jpeg,
     Webp,
+    #[default]
     Avif,
 }
 
@@ -186,24 +187,10 @@ impl Parse for ImageAssetParser {
                 ))
             }
         };
-        let Some(extension) = path.extension() else {
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to get extension from path: {}", path_as_str),
+        let mut this_file =
+            FileAsset::new(path.clone()).with_options(manganis_common::FileOptions::Image(
+                ImageOptions::new(manganis_common::ImageType::Avif, None),
             ));
-        };
-        let Ok(extension) = extension.parse() else {
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!(
-                    "Failed to parse extension: {}, supported types are png, jpeg, webp, avif",
-                    extension
-                ),
-            ));
-        };
-        let mut this_file = FileAsset::new(path.clone()).with_options(
-            manganis_common::FileOptions::Image(ImageOptions::new(extension, None)),
-        );
         let mut low_quality_preview = false;
         if let Some(parsed_options) = parsed_options {
             parsed_options.apply_to_options(&mut this_file, &mut low_quality_preview);
@@ -238,7 +225,10 @@ impl Parse for ImageAssetParser {
                 })
                 .unwrap_or((32, 32));
             let lqip = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
-                ImageOptions::new(extension, Some(low_quality_preview_size)),
+                ImageOptions::new(
+                    manganis_common::ImageType::Jpg,
+                    Some(low_quality_preview_size),
+                ),
             ));
             Some(url_encoded_asset(&lqip).map_err(|e| {
                 syn::Error::new(
