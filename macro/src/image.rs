@@ -1,6 +1,6 @@
 use base64::Engine;
 use manganis_cli_support::process_file;
-use manganis_common::{Config, FileAsset, FileOptions, FileSource, ImageOptions};
+use manganis_common::{FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{braced, parenthesized, parse::Parse};
 
