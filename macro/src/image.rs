@@ -201,9 +201,9 @@ impl Parse for ImageAssetParser {
                 ),
             ));
         };
-        let mut this_file = FileAsset::new(path.clone()).with_options(manganis_common::FileOptions::Image(
-            ImageOptions::new(extension, None),
-        ));
+        let mut this_file = FileAsset::new(path.clone()).with_options(
+            manganis_common::FileOptions::Image(ImageOptions::new(extension, None)),
+        );
         let mut low_quality_preview = false;
         if let Some(parsed_options) = parsed_options {
             parsed_options.apply_to_options(&mut this_file, &mut low_quality_preview);
@@ -230,16 +230,16 @@ impl Parse for ImageAssetParser {
                 manganis_common::FileOptions::Image(options) => options.size(),
                 _ => None,
             };
-            let low_quality_preview_size = current_image_size.map(|(width, height)| {
-                let width = width / 10;
-                let height = height / 10;
-                (width, height)
-            }).unwrap_or((32, 32));
-            let lqip = FileAsset::new(path)
-                .with_options(manganis_common::FileOptions::Image(ImageOptions::new(
-                    extension,
-                    Some(low_quality_preview_size)
-                )));
+            let low_quality_preview_size = current_image_size
+                .map(|(width, height)| {
+                    let width = width / 10;
+                    let height = height / 10;
+                    (width, height)
+                })
+                .unwrap_or((32, 32));
+            let lqip = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
+                ImageOptions::new(extension, Some(low_quality_preview_size)),
+            ));
             Some(url_encoded_asset(&lqip).map_err(|e| {
                 syn::Error::new(
                     proc_macro2::Span::call_site(),
@@ -250,7 +250,10 @@ impl Parse for ImageAssetParser {
             None
         };
 
-        Ok(ImageAssetParser { file_name, low_quality_preview })
+        Ok(ImageAssetParser {
+            file_name,
+            low_quality_preview,
+        })
     }
 }
 
