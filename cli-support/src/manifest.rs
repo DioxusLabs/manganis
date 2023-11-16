@@ -68,8 +68,8 @@ impl AssetManifestExt for AssetManifest {
 
     fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> anyhow::Result<()> {
         let location = location.into();
-        match std::fs::create_dir_all(&location){
-            Ok(_) => {},
+        match std::fs::create_dir_all(&location) {
+            Ok(_) => {}
             Err(err) => {
                 tracing::error!("Failed to create directory for static assets: {}", err);
                 return Err(err.into());
@@ -78,8 +78,8 @@ impl AssetManifestExt for AssetManifest {
         self.packages().par_iter().try_for_each(|package| {
             package.assets().par_iter().try_for_each(|asset| {
                 if let AssetType::File(file_asset) = asset {
-                    match process_file(file_asset, &location){
-                        Ok(_) => {},
+                    match process_file(file_asset, &location) {
+                        Ok(_) => {}
                         Err(err) => {
                             tracing::error!("Failed to copy static asset: {}", err);
                             return Err(err);

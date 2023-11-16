@@ -10,7 +10,8 @@ pub trait Process {
     fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()>;
 }
 
-pub(crate) fn process_file(file: &FileAsset, output_folder: &Path) -> anyhow::Result<()> {
+/// Process a specific file asset
+pub fn process_file(file: &FileAsset, output_folder: &Path) -> anyhow::Result<()> {
     file.options().process(file.location(), output_folder)
 }
 

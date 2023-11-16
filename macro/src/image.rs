@@ -1,3 +1,5 @@
+use base64::Engine;
+use manganis_cli_support::process_file;
 use manganis_common::{FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{braced, parenthesized, parse::Parse};
@@ -9,9 +11,9 @@ struct ParseImageOptions {
 }
 
 impl ParseImageOptions {
-    fn apply_to_options(self, options: &mut ImageOptions) {
+    fn apply_to_options(self, file: &mut FileAsset) {
         for option in self.options {
-            option.apply_to_options(options);
+            option.apply_to_options(file);
         }
     }
 }
@@ -35,19 +37,25 @@ enum ParseImageOption {
     Format(manganis_common::ImageType),
     Size((u32, u32)),
     Preload(bool),
+    UrlEncoded(bool),
 }
 
 impl ParseImageOption {
-    fn apply_to_options(self, options: &mut ImageOptions) {
-        match self {
-            ParseImageOption::Format(format) => {
-                options.set_ty(format);
-            }
-            ParseImageOption::Size(size) => {
-                options.set_size(Some(size));
-            }
-            ParseImageOption::Preload(preload) => {
-                options.set_preload(preload);
+    fn apply_to_options(self, file: &mut FileAsset) {
+        if let FileOptions::Image(options) = file.options_mut() {
+            match self {
+                ParseImageOption::Format(format) => {
+                    options.set_ty(format);
+                }
+                ParseImageOption::Size(size) => {
+                    options.set_size(Some(size));
+                }
+                ParseImageOption::Preload(preload) => {
+                    options.set_preload(preload);
+                }
+                ParseImageOption::UrlEncoded(url_encoded) => {
+                    file.set_url_encoded(url_encoded);
+                }
             }
         }
     }
@@ -70,10 +78,14 @@ impl Parse for ParseImageOption {
                 let preload = input.parse::<syn::LitBool>()?;
                 Ok(ParseImageOption::Preload(preload.value))
             }
+            "url_encoded" => {
+                let url_encoded = input.parse::<syn::LitBool>()?;
+                Ok(ParseImageOption::UrlEncoded(url_encoded.value))
+            }
             _ => Err(syn::Error::new(
                 proc_macro2::Span::call_site(),
                 format!(
-                    "Unknown image option: {}. Supported options are format, size, preload",
+                    "Unknown image option: {}. Supported options are format, size, preload, url_encoded",
                     ident
                 ),
             )),
@@ -179,27 +191,51 @@ impl Parse for ImageAssetParser {
                 ),
             ));
         };
-        let mut options = ImageOptions::new(extension, None);
+        let mut this_file = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
+            ImageOptions::new(extension, None),
+        ));
         if let Some(parsed_options) = parsed_options {
-            parsed_options.apply_to_options(&mut options);
+            parsed_options.apply_to_options(&mut this_file);
         }
-        let asset = FileAsset::new_with_options(path, FileOptions::Image(options));
-        match asset {
-            Ok( this_file) => {
-                let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
-                let this_file = match asset {
-                    manganis_common::AssetType::File(this_file) => this_file,
-                    _ => unreachable!(),
-                };
-                let file_name = this_file.served_location();
 
-                Ok(ImageAssetParser {file_name})
-            }
-            Err(e) => Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to canonicalize path: {path_as_str}\nAny relative paths are resolved relative to the manifest directory\n{e}"),
-            ))
-        }
+        let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
+        let this_file = match asset {
+            manganis_common::AssetType::File(this_file) => this_file,
+            _ => unreachable!(),
+        };
+        let file_name = if this_file.url_encoded() {
+            let target_directory =
+                std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
+            let output_folder = std::path::Path::new(&target_directory)
+                .join("manganis")
+                .join("assets");
+            std::fs::create_dir_all(&output_folder).map_err(|e| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to create output folder: {}", e),
+                )
+            })?;
+            process_file(&this_file, &output_folder).map_err(|e| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to process file: {}", e),
+                )
+            })?;
+            let file = output_folder.join(this_file.location().unique_name());
+            let data = std::fs::read(file).map_err(|e| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to read file: {}", e),
+                )
+            })?;
+            let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
+            let mime = this_file.location().source().mime_type().unwrap();
+            format!("data:{mime};base64,{data}")
+        } else {
+            this_file.served_location()
+        };
+
+        Ok(ImageAssetParser { file_name })
     }
 }
 
