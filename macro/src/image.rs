@@ -1,6 +1,6 @@
 use base64::Engine;
 use manganis_cli_support::process_file;
-use manganis_common::{FileAsset, FileOptions, FileSource, ImageOptions, Config};
+use manganis_common::{Config, FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{braced, parenthesized, parse::Parse};
 
@@ -11,7 +11,7 @@ struct ParseImageOptions {
 }
 
 impl ParseImageOptions {
-    fn apply_to_options(self,  file: &mut FileAsset) {
+    fn apply_to_options(self, file: &mut FileAsset) {
         for option in self.options {
             option.apply_to_options(file);
         }
@@ -191,7 +191,9 @@ impl Parse for ImageAssetParser {
                 ),
             ));
         };
-        let mut this_file = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(ImageOptions::new(extension, None)));
+        let mut this_file = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
+            ImageOptions::new(extension, None),
+        ));
         if let Some(parsed_options) = parsed_options {
             parsed_options.apply_to_options(&mut this_file);
         }
@@ -201,26 +203,35 @@ impl Parse for ImageAssetParser {
             manganis_common::AssetType::File(this_file) => this_file,
             _ => unreachable!(),
         };
-        let file_name = if this_file.url_encoded(){
-            let target_directory = std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
-            let output_folder = std::path::Path::new(&target_directory).join("manganis").join("assets");
-            std::fs::create_dir_all(&output_folder).map_err(|e| syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to create output folder: {}", e),
-            ))?;
-            process_file(&this_file, &output_folder).map_err(|e| syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to process file: {}", e),
-            ))?;
+        let file_name = if this_file.url_encoded() {
+            let target_directory =
+                std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
+            let output_folder = std::path::Path::new(&target_directory)
+                .join("manganis")
+                .join("assets");
+            std::fs::create_dir_all(&output_folder).map_err(|e| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to create output folder: {}", e),
+                )
+            })?;
+            process_file(&this_file, &output_folder).map_err(|e| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to process file: {}", e),
+                )
+            })?;
             let file = output_folder.join(this_file.location().unique_name());
-            let data = std::fs::read(file).map_err(|e| syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to read file: {}", e),
-            ))?;
+            let data = std::fs::read(file).map_err(|e| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to read file: {}", e),
+                )
+            })?;
             let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
             let mime = this_file.location().source().mime_type().unwrap();
             format!("data:{mime};base64,{data}")
-        }else {
+        } else {
             this_file.served_location()
         };
 
