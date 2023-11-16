@@ -340,8 +340,25 @@ impl FileAsset {
     }
 
     /// Returns the options for the file asset mutably
-    pub fn options_mut(&mut self) -> &mut FileOptions {
-        &mut self.options
+    pub fn with_options_mut(&mut self, with: impl FnOnce(&mut FileOptions)) -> &mut Self {
+        with(&mut self.options);
+        let manifest_dir = manifest_dir();
+        let path = manifest_dir.join(self.location.source.last_segment());
+        let updated = self.location.source.last_updated();
+        let file_name = path.file_stem().unwrap().to_string_lossy();
+        let extension = self
+            .options
+            .extension()
+            .map(|e| format!(".{e}"))
+            .unwrap_or_default();
+        let mut hash = std::collections::hash_map::DefaultHasher::new();
+        updated.hash(&mut hash);
+        self.options.hash(&mut hash);
+        self.location.source.hash(&mut hash);
+        let uuid = hash.finish();
+        let unique_name = format!("{file_name}{uuid}{extension}");
+        self.location.unique_name = unique_name;
+        self
     }
 }
 

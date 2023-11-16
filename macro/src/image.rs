@@ -43,23 +43,33 @@ enum ParseImageOption {
 
 impl ParseImageOption {
     fn apply_to_options(self, file: &mut FileAsset, low_quality_preview: &mut bool) {
-        if let FileOptions::Image(options) = file.options_mut() {
-            match self {
-                ParseImageOption::Format(format) => {
-                    options.set_ty(format);
-                }
-                ParseImageOption::Size(size) => {
-                    options.set_size(Some(size));
-                }
-                ParseImageOption::Preload(preload) => {
-                    options.set_preload(preload);
-                }
-                ParseImageOption::UrlEncoded(url_encoded) => {
-                    file.set_url_encoded(url_encoded);
-                }
-                ParseImageOption::Lqip(lqip) => {
-                    *low_quality_preview = lqip;
-                }
+        match self {
+            ParseImageOption::Format(format) => {
+                file.with_options_mut(|options| {
+                    if let FileOptions::Image(options) = options {
+                        options.set_ty(format);
+                    }
+                });
+            }
+            ParseImageOption::Size(size) => {
+                file.with_options_mut(|options| {
+                    if let FileOptions::Image(options) = options {
+                        options.set_size(Some(size));
+                    }
+                });
+            }
+            ParseImageOption::Preload(preload) => {
+                file.with_options_mut(|options| {
+                    if let FileOptions::Image(options) = options {
+                        options.set_preload(preload);
+                    }
+                });
+            }
+            ParseImageOption::UrlEncoded(url_encoded) => {
+                file.set_url_encoded(url_encoded);
+            }
+            ParseImageOption::Lqip(lqip) => {
+                *low_quality_preview = lqip;
             }
         }
     }
