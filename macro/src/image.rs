@@ -226,7 +226,7 @@ impl Parse for ImageAssetParser {
                 .unwrap_or((32, 32));
             let lqip = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
                 ImageOptions::new(
-                    manganis_common::ImageType::Jpg,
+                    manganis_common::ImageType::Avif,
                     Some(low_quality_preview_size),
                 ),
             ));
