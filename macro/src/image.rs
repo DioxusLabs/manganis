@@ -1,6 +1,6 @@
 use base64::Engine;
 use manganis_cli_support::process_file;
-use manganis_common::{FileAsset, FileOptions, FileSource, ImageOptions};
+use manganis_common::{get_mime_from_ext, FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{braced, parenthesized, parse::Parse};
 
@@ -273,14 +273,7 @@ fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
         )
     })?;
     let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
-    let mime = file_asset
-        .location()
-        .source()
-        .mime_type()
-        .ok_or(syn::Error::new(
-            proc_macro2::Span::call_site(),
-            "Failed to get mime type",
-        ))?;
+    let mime = get_mime_from_ext(file_asset.options().extension());
     Ok(format!("data:{mime};base64,{data}"))
 }
 

@@ -158,7 +158,12 @@ fn get_mime_from_path(trimmed: &Path) -> std::io::Result<&'static str> {
 
 /// Get the mime type from a URI using its extension
 fn get_mime_by_ext(trimmed: &Path) -> &'static str {
-    match trimmed.extension().and_then(|e| e.to_str()) {
+    get_mime_from_ext(trimmed.extension().and_then(|e| e.to_str()))
+}
+
+/// Get the mime type from a URI using its extension
+pub fn get_mime_from_ext(extension: Option<&str>) -> &'static str {
+    match extension {
         Some("bin") => "application/octet-stream",
         Some("css") => "text/css",
         Some("csv") => "text/csv",
