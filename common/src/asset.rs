@@ -176,6 +176,12 @@ pub fn get_mime_from_ext(extension: Option<&str>) -> &'static str {
         Some("rtf") => "application/rtf",
         Some("svg") => "image/svg+xml",
         Some("mp4") => "video/mp4",
+        Some("png") => "image/png",
+        Some("jpg") => "image/jpeg",
+        Some("gif") => "image/gif",
+        Some("webp") => "image/webp",
+        Some("avif") => "image/avif",
+        Some("txt") => "text/plain",
         // Assume HTML when a TLD is found for eg. `dioxus:://dioxuslabs.app` | `dioxus://hello.com`
         Some(_) => "text/html",
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
