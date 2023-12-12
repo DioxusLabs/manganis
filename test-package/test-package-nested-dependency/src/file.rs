@@ -6,12 +6,19 @@ pub const RESIZED_PNG_ASSET: manganis::ImageAsset =
 pub const JPEG_ASSET: manganis::ImageAsset =
     manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Jpg));
 pub const RESIZED_JPEG_ASSET: manganis::ImageAsset =
-    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Jpg).size(52, 52));
-pub const AVIF_ASSET: manganis::ImageAsset =
-    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Avif).low_quality_preview());
+    manganis::mg!(image("./rustacean-flat-gesture.png")
+        .format(ImageType::Jpg)
+        .size(52, 52));
+pub const AVIF_ASSET: manganis::ImageAsset = manganis::mg!(image("./rustacean-flat-gesture.png")
+    .format(ImageType::Avif)
+    .low_quality_preview());
 pub const RESIZED_AVIF_ASSET: manganis::ImageAsset =
-    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Avif).size(52, 52));
+    manganis::mg!(image("./rustacean-flat-gesture.png")
+        .format(ImageType::Avif)
+        .size(52, 52));
 pub const WEBP_ASSET: manganis::ImageAsset =
     manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Webp));
 pub const RESIZED_WEBP_ASSET: manganis::ImageAsset =
-    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Webp).size(52, 52));
+    manganis::mg!(image("./rustacean-flat-gesture.png")
+        .format(ImageType::Webp)
+        .size(52, 52));

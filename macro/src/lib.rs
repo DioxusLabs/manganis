@@ -148,7 +148,6 @@ pub fn mg(input: TokenStream) -> TokenStream {
     }
 }
 
-
 struct MetadataValue {
     key: String,
     value: String,

@@ -1,6 +1,6 @@
 use manganis_common::{CssOptions, FileAsset, FileSource};
 use quote::{quote, ToTokens};
-use syn::{ bracketed, parenthesized, parse::Parse};
+use syn::{bracketed, parenthesized, parse::Parse};
 
 use crate::add_asset;
 
