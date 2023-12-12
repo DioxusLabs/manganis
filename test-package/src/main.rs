@@ -43,7 +43,7 @@ fn main() {
 
     let class = manganis::classes!("p-10");
     assert_eq!(class, "p-10");
-    let path = manganis::file!("./test-package-dependency/src/asset.txt");
+    let path = manganis::mg!(file("./test-package-dependency/src/asset.txt"));
     println!("{}", path);
     assert!(path.starts_with("dist/asset"));
     println!("{}", IMAGE_ASSET);

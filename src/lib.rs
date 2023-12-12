@@ -74,35 +74,60 @@ impl<'a> dioxus_core::prelude::IntoAttributeValue<'a> for ImageAsset {
     }
 }
 
+/// The type of an image
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Hash)]
+pub enum ImageType {
+    /// A png image
+    Png,
+    /// A jpg image
+    Jpg,
+    /// An avif image
+    Avif,
+    /// A webp image
+    Webp,
+}
+
 /// A builder for an image asset. This must be used in the `mg!` macro.
+///
+/// > **Note**: This will do nothing outside of the `mg!` macro
 pub struct ImageAssetBuilder;
 
 impl ImageAssetBuilder {
     /// Sets the preview of the image
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
     #[allow(unused)]
-    pub const fn format(self, format: manganis_common::ImageType) -> Self {
+    pub const fn format(self, format: ImageType) -> Self {
         Self
     }
 
     /// Sets the size of the image
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
     #[allow(unused)]
-    pub const fn size(self, size: Option<manganis_common::ImageType>) -> Self {
+    pub const fn size(self, x: u32, y: u32) -> Self {
         Self
     }
 
     /// Make the image use a low quality preview
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
     #[allow(unused)]
     pub const fn low_quality_preview(self) -> Self {
         Self
     }
 
     /// Make the image preloaded
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
     #[allow(unused)]
     pub const fn preload(self) -> Self {
         Self
     }
 
     /// Make the image URL encoded
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
     #[allow(unused)]
     pub const fn url_encoded(self) -> Self {
         Self
@@ -110,48 +135,82 @@ impl ImageAssetBuilder {
 }
 
 /// Create an image asset from the local path to the image
+///
+/// > **Note**: This will do nothing outside of the `mg!` macro
 #[allow(unused)]
-const fn image(path: &'static str) -> ImageAssetBuilder {
+pub const fn image(path: &'static str) -> ImageAssetBuilder {
     ImageAssetBuilder
 }
 
 /// A builder for a font asset. This must be used in the `mg!` macro.
+///
+/// > **Note**: This will do nothing outside of the `mg!` macro
 pub struct FontAssetBuilder;
 
 impl FontAssetBuilder {
     /// Sets the font family of the font
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
     #[allow(unused)]
-    pub const fn family(self, family: &'static str) -> Self {
+    pub const fn families<const N: usize>(self, families: [&'static str; N]) -> Self {
         Self
     }
 
     /// Sets the font weight of the font
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
     #[allow(unused)]
     pub const fn weights<const N: usize>(self, weights: [u32; N]) -> Self {
         Self
     }
 
     /// Sets the subset of text that the font needs to support
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
     #[allow(unused)]
     pub const fn text(self, text: &'static str) -> Self {
         Self
     }
 
     /// Sets the display of the font
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
     #[allow(unused)]
     pub const fn display(self, display: &'static str) -> Self {
         Self
     }
 }
 
-/// Create a font asset from the local path to the font
+/// Create a font asset
+///
+/// > **Note**: This will do nothing outside of the `mg!` macro
 #[allow(unused)]
-const fn font(path: &'static str) -> FontAssetBuilder {
+pub const fn font() -> FontAssetBuilder {
     FontAssetBuilder
 }
 
+/// Create an file asset from the local path or url to the file
+///
+/// > **Note**: This will do nothing outside of the `mg!` macro
+#[allow(unused)]
+pub const fn file(path: &'static str) -> ImageAssetBuilder {
+    ImageAssetBuilder
+}
+
 /// A trait for something that can be used in the `mg!` macro
-pub trait ForMgMacro {}
+///
+/// > **Note**: These types will do nothing outside of the `mg!` macro
+pub trait ForMgMacro: __private::Sealed + Sync + Send {}
+
+mod __private {
+    use super::*;
+
+    pub trait Sealed {}
+
+    impl Sealed for ImageAssetBuilder {}
+    impl Sealed for FontAssetBuilder {}
+    impl Sealed for &'static str {}
+}
 
 impl ForMgMacro for ImageAssetBuilder {}
 impl ForMgMacro for FontAssetBuilder {}

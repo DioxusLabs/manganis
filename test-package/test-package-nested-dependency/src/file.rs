@@ -1,17 +1,17 @@
 const _: &str = manganis::classes!("flex flex-row p-5");
-pub const CSS_ASSET: &str = manganis::file!("./style.css");
-pub const PNG_ASSET: &str = manganis::file!("./rustacean-flat-gesture.png");
+pub const CSS_ASSET: &str = manganis::mg!(file("./style.css"));
+pub const PNG_ASSET: &str = manganis::mg!(file("./rustacean-flat-gesture.png"));
 pub const RESIZED_PNG_ASSET: manganis::ImageAsset =
-    manganis::image!("./rustacean-flat-gesture.png", { size: (52, 52) });
+    manganis::mg!(image("./rustacean-flat-gesture.png").size(52, 52));
 pub const JPEG_ASSET: manganis::ImageAsset =
-    manganis::image!("./rustacean-flat-gesture.png", { format: jpeg });
+    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Jpg));
 pub const RESIZED_JPEG_ASSET: manganis::ImageAsset =
-    manganis::image!("./rustacean-flat-gesture.png", { format: jpeg, size: (52, 52) });
+    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Jpg).size(52, 52));
 pub const AVIF_ASSET: manganis::ImageAsset =
-    manganis::image!("./rustacean-flat-gesture.png", { format: avif, low_quality_preview: true });
+    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Avif).low_quality_preview());
 pub const RESIZED_AVIF_ASSET: manganis::ImageAsset =
-    manganis::image!("./rustacean-flat-gesture.png", { format: avif, size: (52, 52) });
+    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Avif).size(52, 52));
 pub const WEBP_ASSET: manganis::ImageAsset =
-    manganis::image!("./rustacean-flat-gesture.png", { format: webp });
+    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Webp));
 pub const RESIZED_WEBP_ASSET: manganis::ImageAsset =
-    manganis::image!("./rustacean-flat-gesture.png", { format: webp, size: (52, 52) });
+    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Webp).size(52, 52));
