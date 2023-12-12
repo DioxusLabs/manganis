@@ -56,7 +56,7 @@ pub fn classes(input: TokenStream) -> TokenStream {
 ///
 /// # Files
 ///
-/// The file macro collects an arbitrary file. Relative paths are resolved relative to the package root
+/// The file builder collects an arbitrary file. Relative paths are resolved relative to the package root
 /// ```rust
 /// const _: &str = manganis::mg!(file("./src/asset.txt"));
 /// ```
@@ -86,7 +86,7 @@ pub fn classes(input: TokenStream) -> TokenStream {
 ///
 /// # Fonts
 ///
-/// You can use the font macro to collect fonts that will be included in the final binary from google fonts
+/// You can use the font builder to collect fonts that will be included in the final binary from google fonts
 /// ```rust
 /// const _: &str = manganis::mg!(font().families(["Roboto"]));
 /// ```
