@@ -14,7 +14,6 @@ keywords = ["assets"]
 
 [dependencies]
 manganis-macro = { path = "./macro" }
-manganis-common = { path = "./common" }
 dioxus-core = { git = "https://github.com/DioxusLabs/dioxus", optional = true }
 
 [workspace]
