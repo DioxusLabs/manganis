@@ -2,7 +2,7 @@ use base64::Engine;
 use manganis_cli_support::process_file;
 use manganis_common::{get_mime_from_ext, FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
-use syn::{braced, parenthesized, parse::Parse};
+use syn::{parenthesized, parse::Parse, Token};
 
 use crate::add_asset;
 
@@ -20,14 +20,9 @@ impl ParseImageOptions {
 
 impl Parse for ParseImageOptions {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let inside;
-        braced!(inside in input);
         let mut options = Vec::new();
-        while !inside.is_empty() {
-            options.push(inside.parse::<ParseImageOption>()?);
-            if !inside.is_empty() {
-                let _ = inside.parse::<syn::Token![,]>()?;
-            }
+        while !input.is_empty() {
+            options.push(input.parse::<ParseImageOption>()?);
         }
         Ok(ParseImageOptions { options })
     }
@@ -67,28 +62,27 @@ impl ParseImageOption {
 
 impl Parse for ParseImageOption {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let _ = input.parse::<syn::Token![.]>()?;
         let ident = input.parse::<syn::Ident>()?;
-        let _ = input.parse::<syn::Token![:]>()?;
-        match ident.to_string().to_lowercase().as_str() {
+        let content;
+        parenthesized!(content in input);
+        match ident.to_string().as_str() {
             "format" => {
-                let format = input.parse::<ImageType>()?;
+                let format = content.parse::<ImageType>()?;
                 Ok(ParseImageOption::Format(format.into()))
             }
             "size" => {
-                let size = input.parse::<ImageSize>()?;
+                let size = content.parse::<ImageSize>()?;
                 Ok(ParseImageOption::Size((size.width, size.height)))
             }
             "preload" => {
-                let preload = input.parse::<syn::LitBool>()?;
-                Ok(ParseImageOption::Preload(preload.value))
+                Ok(ParseImageOption::Preload(true))
             }
             "url_encoded" => {
-                let url_encoded = input.parse::<syn::LitBool>()?;
-                Ok(ParseImageOption::UrlEncoded(url_encoded.value))
+                Ok(ParseImageOption::UrlEncoded(true))
             }
             "low_quality_preview" => {
-                let lqip = input.parse::<syn::LitBool>()?;
-                Ok(ParseImageOption::Lqip(lqip.value))
+                Ok(ParseImageOption::Lqip(true))
             }
             _ => Err(syn::Error::new(
                 proc_macro2::Span::call_site(),
@@ -108,11 +102,9 @@ struct ImageSize {
 
 impl Parse for ImageSize {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let inside;
-        parenthesized!(inside  in input);
-        let width = inside.parse::<syn::LitInt>()?;
-        let _ = inside.parse::<syn::Token![,]>()?;
-        let height = inside.parse::<syn::LitInt>()?;
+        let width = input.parse::<syn::LitInt>()?;
+        let _ = input.parse::<syn::Token![,]>()?;
+        let height = input.parse::<syn::LitInt>()?;
         Ok(ImageSize {
             width: width.base10_parse()?,
             height: height.base10_parse()?,
@@ -133,10 +125,12 @@ impl From<ImageType> for manganis_common::ImageType {
 
 impl Parse for ImageType {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let _ = input.parse::<syn::Ident>()?;
+        let _ = input.parse::<Token![::]>()?;
         let ident = input.parse::<syn::Ident>()?;
         match ident.to_string().to_lowercase().as_str() {
             "png" => Ok(ImageType::Png),
-            "jpeg" => Ok(ImageType::Jpeg),
+            "jpg" => Ok(ImageType::Jpeg),
             "webp" => Ok(ImageType::Webp),
             "avif" => Ok(ImageType::Avif),
             _ => Err(syn::Error::new(
@@ -166,10 +160,18 @@ pub struct ImageAssetParser {
 
 impl Parse for ImageAssetParser {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let path = input.parse::<syn::LitStr>()?;
+        let image = input.parse::<syn::Ident>()?;
+        if image != "image" {
+            return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                format!("Expected image, found {}", image),
+            ));
+        }
+        let inside;
+        parenthesized!(inside in input);
+        let path = inside.parse::<syn::LitStr>()?;
 
         let parsed_options = {
-            let _ = input.parse::<syn::Token![,]>();
             if input.is_empty() {
                 None
             } else {

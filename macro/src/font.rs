@@ -1,6 +1,6 @@
 use manganis_common::{CssOptions, FileAsset, FileSource};
 use quote::{quote, ToTokens};
-use syn::{braced, bracketed, parse::Parse};
+use syn::{bracketed, parenthesized, parse::Parse};
 
 use crate::add_asset;
 
@@ -91,18 +91,18 @@ impl ParseFontOptions {
 
 impl Parse for ParseFontOptions {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let inside;
-        braced!(inside in input);
         let mut families = None;
         let mut weights = None;
         let mut text = None;
         let mut display = None;
         loop {
-            if inside.is_empty() {
+            if input.is_empty() {
                 break;
             }
-            let ident = inside.parse::<syn::Ident>()?;
-            let _ = inside.parse::<syn::Token![:]>()?;
+            let _ = input.parse::<syn::Token![.]>()?;
+            let ident = input.parse::<syn::Ident>()?;
+            let inside;
+            parenthesized!(inside in input);
             match ident.to_string().to_lowercase().as_str() {
                 "families" => {
                     families = Some(inside.parse::<FontFamilies>()?);
@@ -123,7 +123,6 @@ impl Parse for ParseFontOptions {
                     ))
                 }
             }
-            let _ = inside.parse::<syn::Token![,]>();
         }
 
         Ok(ParseFontOptions {
@@ -141,6 +140,16 @@ pub struct FontAssetParser {
 
 impl Parse for FontAssetParser {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let image = input.parse::<syn::Ident>()?;
+        if image != "font" {
+            return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                format!("Expected font, found {}", image),
+            ));
+        }
+        let _inside;
+        parenthesized!(_inside in input);
+
         let options = input.parse::<ParseFontOptions>()?;
 
         let url = options.url();

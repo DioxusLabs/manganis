@@ -52,73 +52,100 @@ pub fn classes(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// You can use the font macro to collect fonts that will be included in the final binary from google fonts
+/// The mg macro collects assets that will be included in the final binary
+///
+/// # Files
+///
+/// The file builder collects an arbitrary file. Relative paths are resolved relative to the package root
 /// ```rust
-/// const _: &str = manganis::font!({ families: ["Roboto"] });
+/// const _: &str = manganis::mg!(file("./src/asset.txt"));
 /// ```
-/// You can specify weights for the fonts
+/// Or you can use URLs to read the asset at build time from a remote location
 /// ```rust
-/// const _: &str = manganis::font!({ families: ["Comfortaa"], weights: [300] });
+/// const _: &str = manganis::mg!(file("https://rustacean.net/assets/rustacean-flat-happy.png"));
 /// ```
-/// Or set the text to only include the characters you need
+///
+/// # Images
+///
+/// You can collect images which will be automatically optimized with the image builder:
 /// ```rust
-/// const _: &str = manganis::font!({ families: ["Roboto"], weights: [200], text: "light font" });
-/// ```
-#[proc_macro]
-pub fn font(input: TokenStream) -> TokenStream {
-    let asset = parse_macro_input!(input as FontAssetParser);
-
-    quote! {
-        #asset
-    }
-    .into_token_stream()
-    .into()
-}
-
-/// You can collect images which will be automatically optimized with the image macro:
-/// ```rust
-/// const _: &str = manganis::image!("./rustacean-flat-gesture.png");
+/// const _: &str = manganis::mg!(image("./rustacean-flat-gesture.png"));
 /// ```
 /// Resize the image at compile time to make the assets file size smaller:
 /// ```rust
-/// const _: &str = manganis::image!("./rustacean-flat-gesture.png", { size: (52, 52) });
+/// const _: &str = manganis::mg!(image("./rustacean-flat-gesture.png").size(52, 52));
 /// ```
 /// Or convert the image at compile time to a web friendly format:
 /// ```rust
-/// const _: &str = manganis::image!("./rustacean-flat-gesture.png", { format: avif, size: (52, 52) });
+/// const _: &str = manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageFormat::Avif).size(52, 52));
 /// ```
 /// You can mark images as preloaded to make them load faster in your app
 /// ```rust
-/// const _: &str = manganis::image!("./rustacean-flat-gesture.png", { preload: true });
+/// const _: &str = manganis::mg!(image("./rustacean-flat-gesture.png").preload());
+/// ```
+///
+/// # Fonts
+///
+/// You can use the font builder to collect fonts that will be included in the final binary from google fonts
+/// ```rust
+/// const _: &str = manganis::mg!(font().families(["Roboto"]));
+/// ```
+/// You can specify weights for the fonts
+/// ```rust
+/// const _: &str = manganis::mg!(font().families(["Roboto"]).weights([200]));
+/// ```
+/// Or set the text to only include the characters you need
+/// ```rust
+/// const _: &str = manganis::mg!(font().families(["Roboto"]).weights([200]).text("Hello, world!"));
 /// ```
 #[proc_macro]
-pub fn image(input: TokenStream) -> TokenStream {
-    let asset = parse_macro_input!(input as ImageAssetParser);
+pub fn mg(input: TokenStream) -> TokenStream {
+    use proc_macro2::TokenStream as TokenStream2;
 
-    quote! {
-        #asset
+    let builder_tokens = {
+        let input = input.clone();
+        parse_macro_input!(input as TokenStream2)
+    };
+
+    let builder_output = quote! {
+        const _: &dyn manganis::ForMgMacro = {
+            use manganis::*;
+            &#builder_tokens
+        };
+    };
+
+    let asset = syn::parse::<ImageAssetParser>(input.clone())
+        .ok()
+        .map(ToTokens::into_token_stream)
+        .or_else(|| {
+            syn::parse::<FontAssetParser>(input.clone())
+                .ok()
+                .map(ToTokens::into_token_stream)
+        })
+        .or_else(|| {
+            syn::parse::<FileAssetParser>(input.clone())
+                .ok()
+                .map(ToTokens::into_token_stream)
+        });
+
+    match asset {
+        Some(asset) => quote! {
+            {
+                #builder_output
+                #asset
+            }
+        }
+        .into_token_stream()
+        .into(),
+        None => quote! {
+            {
+                #builder_output
+                compile_error!("Expected an image, font or file asset")
+            }
+        }
+        .into_token_stream()
+        .into(),
     }
-    .into_token_stream()
-    .into()
-}
-
-/// The file macro collects an arbitrary file. Relative paths are resolved relative to the package root
-/// ```rust
-/// const _: &str = manganis::file!("./src/asset.txt");
-/// ```
-/// You can use URLs to read the asset at build time from a remote location
-/// ```rust
-/// const _: &str = manganis::file!("https://rustacean.net/assets/rustacean-flat-happy.png");
-/// ```
-#[proc_macro]
-pub fn file(input: TokenStream) -> TokenStream {
-    let asset = parse_macro_input!(input as FileAssetParser);
-
-    quote! {
-        #asset
-    }
-    .into_token_stream()
-    .into()
 }
 
 struct MetadataValue {
