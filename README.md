@@ -14,42 +14,38 @@ AVIF_ASSET will be set to a new file name that will be served by some CLI. That 
 const TAILWIND_CLASSES: &str = manganis::classes!("flex flex-col p-5");
 
 // You can also collect arbitrary files. Relative paths are resolved relative to the package root
-const _: &str = manganis::file!("./src/asset.txt");
+const _: &str = manganis::mg!(file("./test-package-dependency/src/asset.txt"));
 // You can use URLs to copy read the asset at build time
-const _: &str = manganis::file!("https://rustacean.net/assets/rustacean-flat-happy.png");
+const _: &str = manganis::mg!(file("https://rustacean.net/assets/rustacean-flat-happy.png"));
 
 // You can collect images which will be automatically optimized
-const _: &str = manganis::image!("./rustacean-flat-gesture.png");
+pub const RESIZED_PNG_ASSET: manganis::ImageAsset =
+    manganis::mg!(image("./rustacean-flat-gesture.png"));
 // Resize the image at compile time to make the assets smaller
-const _: &str = manganis::image!("./rustacean-flat-gesture.png", { size: (52, 52) });
+pub const RESIZED_PNG_ASSET: manganis::ImageAsset =
+    manganis::mg!(image("./rustacean-flat-gesture.png").size(52, 52));
 // Or convert the image at compile time to a web friendly format
-const _: &str = manganis::image!("./rustacean-flat-gesture.png", { format: avif, size: (52, 52) });
+pub const AVIF_ASSET: manganis::ImageAsset = manganis::mg!(image("./rustacean-flat-gesture.png")
+    .format(ImageType::Avif));
+// You can even include a low quality preview of the image embedded into the url
+pub const AVIF_ASSET: manganis::ImageAsset = manganis::mg!(image("./rustacean-flat-gesture.png")
+	.format(ImageType::Avif)
+	.low_quality_preview());
 
 // You can also collect google fonts
-const _: &str = manganis::font!({ families: ["Roboto"] });
+pub const ROBOTO_FONT: &str = manganis::mg!(font()
+    .families(["Roboto"]));
 // Specify weights for fonts to collect
-const _: &str = manganis::font!({ families: ["Comfortaa"], weights: [300] });
-// Or specific text to include fonts for only the characters used in that text
-const _: &str = manganis::font!({ families: ["Roboto"], weights: [200], text: "light font" });
+pub const COMFORTAA_FONT: &str = manganis::mg!(font()
+    .families(["Comfortaa"])
+    .weights([400]));
+// Or specific text to include only the characters used in that text
+pub const ROBOTO_FONT_LIGHT_FONT: &str = manganis::mg!(font()
+    .families(["Roboto"])
+    .weights([200])
+    .text("hello world"));
 ```
 
 ## Adding Support to Your CLI
 
-To add support for 
-
-TODO:
-- [x] Support optimizing assets
-- - [x] PNG
-- - [x] JPG
-- - [x] Convert images
-- - [x] Resize images
-- - [x] CSS
-- - [x] Self-host remote assets (fonts)
-- - [ ] JS (?)
-- [x] Google Fonts Integration
-- [x] Deduplicate assets
-- [x] Collect assets from dependencies
-- [x] Tailwind
-- [x] Configuration for the final asset serve location
-- [x] `#![deny(missing_docs)]`
-- [x] Think of a better name
+To add support for your CLI, you need to integrate with the [manganis_cli_support](https://github.com/DioxusLabs/collect-assets/tree/master/cli-support) crate. This crate provides utilities to collect assets that integrate with the Manganis macro. It makes it easy to integrate an asset collection and optimization system into a build tool.
