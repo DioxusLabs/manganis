@@ -57,7 +57,7 @@ impl AssetManifestExt for AssetManifest {
             let package = tree.graph().node_weight(p).unwrap();
             package.name.as_str() == this_package.name
         }) else {
-            tracing::error!("Failed to find this package in the lock file");
+            tracing::error!("Manganis: Failed to find this package in the lock file");
             return Self::default();
         };
 

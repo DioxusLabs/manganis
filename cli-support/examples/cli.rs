@@ -1,4 +1,4 @@
-use manganis_cli_support::AssetManifestExt;
+use manganis_cli_support::{AssetManifestExt, ManganisSupportGuard};
 use manganis_common::{AssetManifest, Config};
 
 fn main() {
@@ -14,6 +14,10 @@ fn main() {
         .with_assets_serve_location(assets_serve_location)
         .save();
 
+    // Next, tell manganis that you support assets
+    let _guard = ManganisSupportGuard::default();
+
+    // Then build your application
     Command::new("cargo")
         .args(["build"])
         .spawn()
