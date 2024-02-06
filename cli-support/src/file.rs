@@ -151,7 +151,7 @@ fn compress_png(image: DynamicImage, output_location: PathBuf) {
 
 impl Process for CssOptions {
     fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
-        let css = input_location.read_to_string().unwrap();
+        let css = input_location.read_to_string()?;
 
         let css = if self.minify() { minify_css(&css) } else { css };
 
