@@ -4,6 +4,7 @@ use std::{
     str::FromStr,
 };
 
+use anyhow::Context;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -211,10 +212,15 @@ impl FileLocation {
     /// Reads the file to a string
     pub fn read_to_string(&self) -> anyhow::Result<String> {
         match &self.source {
-            FileSource::Local(path) => Ok(std::fs::read_to_string(path)?),
+            FileSource::Local(path) => Ok(std::fs::read_to_string(path).with_context(|| {
+                format!("Failed to read file from location: {}", path.display())
+            })?),
             FileSource::Remote(url) => {
-                let response = reqwest::blocking::get(url.as_str())?;
-                Ok(response.text()?)
+                let response = reqwest::blocking::get(url.as_str())
+                    .with_context(|| format!("Failed to asset from url: {}", url.as_str()))?;
+                Ok(response.text().with_context(|| {
+                    format!("Failed to read text for asset from url: {}", url.as_str())
+                })?)
             }
         }
     }

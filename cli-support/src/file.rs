@@ -1,3 +1,4 @@
+use anyhow::Context;
 use image::{DynamicImage, EncodableLayout};
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
 use manganis_common::{CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType};
@@ -22,7 +23,12 @@ impl Process for FileOptions {
                 let mut output_location = output_folder.to_path_buf();
                 output_location.push(input_location.unique_name());
                 let bytes = input_location.read_to_bytes()?;
-                std::fs::write(output_location, bytes)?;
+                std::fs::write(&output_location, bytes).with_context(|| {
+                    format!(
+                        "Failed to write file to output location: {}",
+                        output_location.display()
+                    )
+                })?;
             }
             Self::Css(options) => {
                 options.process(input_location, output_folder)?;
@@ -157,7 +163,12 @@ impl Process for CssOptions {
 
         let mut output_location = output_folder.to_path_buf();
         output_location.push(input_location.unique_name());
-        std::fs::write(output_location, css)?;
+        std::fs::write(&output_location, css).with_context(|| {
+            format!(
+                "Failed to write css to output location: {}",
+                output_location.display()
+            )
+        })?;
 
         Ok(())
     }
