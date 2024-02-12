@@ -65,12 +65,9 @@ impl std::fmt::Display for ImageAsset {
 }
 
 #[cfg(feature = "dioxus")]
-impl<'a> dioxus_core::prelude::IntoAttributeValue<'a> for ImageAsset {
-    fn into_value(
-        self,
-        _: &'a dioxus_core::exports::bumpalo::Bump,
-    ) -> dioxus_core::AttributeValue<'a> {
-        dioxus_core::AttributeValue::Text(self.path)
+impl dioxus_core::prelude::IntoAttributeValue for ImageAsset {
+    fn into_value(self) -> dioxus_core::AttributeValue {
+        dioxus_core::AttributeValue::Text(self.path.to_string())
     }
 }
 

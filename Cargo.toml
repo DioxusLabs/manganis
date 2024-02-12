@@ -20,7 +20,7 @@ dioxus-core = { git = "https://github.com/DioxusLabs/dioxus", optional = true }
 members = ["macro", "common", "cli-support", "test-package", "test-package/test-package-dependency", "test-package/test-package-nested-dependency"]
 
 [features]
-default = []
+default = ["dioxus"]
 html = []
 dioxus = ["dioxus-core"]
 
