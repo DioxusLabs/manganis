@@ -70,8 +70,8 @@ impl Process for ImageOptions {
             }
             ImageType::Avif => {
                 output_location.push(input_location.unique_name());
-                if let Err(error) = image.save(output_location) {
-                    tracing::error!("Failed to save avif image: {}. You must have the avif feature enabled to use avif assets", error);
+                if let Err(error) = image.save(&output_location) {
+                    tracing::error!("Failed to save avif image: {} with path {}. You must have the avif feature enabled to use avif assets", error, output_location.display());
                 }
             }
             ImageType::Webp => {

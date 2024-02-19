@@ -6,23 +6,23 @@ use crate::{
 };
 
 /// Clears all assets from the current package
-pub fn clear_assets() {
+pub fn clear_assets() -> std::io::Result<()> {
     let dir = current_package_cache_dir();
-    let _ = std::fs::remove_dir_all(dir);
+    std::fs::remove_dir_all(dir)
 }
 
 /// Adds an asset to the current package
-pub fn add_asset(asset: AssetType) -> AssetType {
+pub fn add_asset(asset: AssetType) -> std::io::Result<AssetType> {
     let mut dir = current_package_cache_dir();
     dir.push("assets.toml");
     let mut package_assets: PackageAssets = if dir.exists() {
-        let contents = std::fs::read_to_string(&dir).unwrap();
+        let contents = std::fs::read_to_string(&dir)?;
         toml::from_str(&contents).unwrap_or_else(|_| PackageAssets {
             package: current_package_identifier(),
             assets: vec![],
         })
     } else {
-        std::fs::create_dir_all(dir.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(dir.parent().unwrap())?;
         PackageAssets {
             package: current_package_identifier(),
             assets: vec![],
@@ -31,9 +31,9 @@ pub fn add_asset(asset: AssetType) -> AssetType {
 
     package_assets.add(asset.clone());
     let contents = toml::to_string(&package_assets).unwrap();
-    std::fs::write(&dir, contents).unwrap();
+    std::fs::write(&dir, contents)?;
 
-    asset
+    Ok(asset)
 }
 
 /// All assets collected from a specific package

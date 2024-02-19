@@ -20,10 +20,10 @@ mod image;
 // We can reset the asset of the current crate the first time the macro is used in the crate.
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
 
-fn add_asset(asset: manganis_common::AssetType) -> AssetType {
+fn add_asset(asset: manganis_common::AssetType) -> std::io::Result<AssetType> {
     if !INITIALIZED.load(Ordering::Relaxed) {
         INITIALIZED.store(true, Ordering::Relaxed);
-        manganis_common::clear_assets();
+        manganis_common::clear_assets()?;
     }
 
     manganis_common::add_asset(asset)
@@ -41,12 +41,28 @@ pub fn classes(input: TokenStream) -> TokenStream {
     let input_as_str = parse_macro_input!(input as LitStr);
     let input_as_str = input_as_str.value();
 
-    add_asset(manganis_common::AssetType::Tailwind(TailwindAsset::new(
+    let result = add_asset(manganis_common::AssetType::Tailwind(TailwindAsset::new(
         &input_as_str,
-    )));
+    )))
+    .map_err(|e| {
+        syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("Failed to add asset: {e}"),
+        )
+        .into_compile_error()
+    });
+
+    let result = match result {
+        Ok(_) => quote! {
+            #input_as_str
+        },
+        Err(e) => quote! {
+            #e
+        },
+    };
 
     quote! {
-        #input_as_str
+        #result
     }
     .into_token_stream()
     .into()
@@ -170,10 +186,18 @@ impl Parse for MetadataValue {
 pub fn meta(input: TokenStream) -> TokenStream {
     let md = parse_macro_input!(input as MetadataValue);
 
-    add_asset(manganis_common::AssetType::Metadata(MetadataAsset::new(
+    let result = add_asset(manganis_common::AssetType::Metadata(MetadataAsset::new(
         md.key.as_str(),
         md.value.as_str(),
-    )));
+    )))
+    .map_err(|e| {
+        syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("Failed to add asset: {e}"),
+        )
+        .into_compile_error()
+    })
+    .err();
 
-    quote! {}.into_token_stream().into()
+    quote! {#result}.into_token_stream().into()
 }

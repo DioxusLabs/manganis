@@ -164,7 +164,13 @@ impl Parse for FontAssetParser {
         };
         let this_file = FileAsset::new(url.clone())
             .with_options(manganis_common::FileOptions::Css(CssOptions::default()));
-        let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
+        let asset =
+            add_asset(manganis_common::AssetType::File(this_file.clone())).map_err(|e| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to add asset: {e}"),
+                )
+            })?;
         let this_file = match asset {
             manganis_common::AssetType::File(this_file) => this_file,
             _ => unreachable!(),

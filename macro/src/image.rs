@@ -198,7 +198,13 @@ impl Parse for ImageAssetParser {
             parsed_options.apply_to_options(&mut this_file, &mut low_quality_preview);
         }
 
-        let asset = add_asset(manganis_common::AssetType::File(this_file.clone()));
+        let asset =
+            add_asset(manganis_common::AssetType::File(this_file.clone())).map_err(|e| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("Failed to add asset: {e}"),
+                )
+            })?;
         let this_file = match asset {
             manganis_common::AssetType::File(this_file) => this_file,
             _ => unreachable!(),

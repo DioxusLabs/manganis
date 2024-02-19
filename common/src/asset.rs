@@ -246,7 +246,10 @@ impl FromStr for FileSource {
             Err(_) => {
                 let manifest_dir = manifest_dir();
                 let path = manifest_dir.join(PathBuf::from(s));
-                Ok(Self::Local(path.canonicalize()?))
+                let path = path
+                    .canonicalize()
+                    .with_context(|| format!("Failed to canonicalize path: {}", path.display()))?;
+                Ok(Self::Local(path))
             }
         }
     }
@@ -264,56 +267,32 @@ impl FileAsset {
     /// Creates a new file asset
     pub fn new(source: FileSource) -> Self {
         let options = FileOptions::default_for_extension(source.extension().as_deref());
-        let manifest_dir = manifest_dir();
-        let path = manifest_dir.join(source.last_segment());
-        let updated = source.last_updated();
-        let file_name = path.file_stem().unwrap().to_string_lossy();
-        let extension = options
-            .extension()
-            .map(|e| format!(".{e}"))
-            .unwrap_or_default();
-        let mut hash = std::collections::hash_map::DefaultHasher::new();
-        updated.hash(&mut hash);
-        options.hash(&mut hash);
-        source.hash(&mut hash);
-        let uuid = hash.finish();
-        let unique_name = format!("{file_name}{uuid}{extension}");
 
-        Self {
+        let mut myself = Self {
             location: FileLocation {
-                unique_name,
+                unique_name: Default::default(),
                 source,
             },
             options,
             url_encoded: false,
-        }
+        };
+
+        myself.regenerate_unique_name();
+
+        myself
     }
 
     /// Set the file options
     pub fn with_options(self, options: FileOptions) -> Self {
-        let manifest_dir = manifest_dir();
-        let path = manifest_dir.join(self.location.source.last_segment());
-        let updated = self.location.source.last_updated();
-        let file_name = path.file_stem().unwrap().to_string_lossy();
-        let extension = options
-            .extension()
-            .map(|e| format!(".{e}"))
-            .unwrap_or_default();
-        let mut hash = std::collections::hash_map::DefaultHasher::new();
-        updated.hash(&mut hash);
-        options.hash(&mut hash);
-        self.location.source.hash(&mut hash);
-        let uuid = hash.finish();
-        let unique_name = format!("{file_name}{uuid}{extension}");
-
-        Self {
-            location: FileLocation {
-                unique_name,
-                source: self.location.source,
-            },
+        let mut myself = Self {
+            location: self.location,
             options,
             url_encoded: false,
-        }
+        };
+
+        myself.regenerate_unique_name();
+
+        myself
     }
 
     /// Set whether the file asset should be url encoded
@@ -346,11 +325,6 @@ impl FileAsset {
         &self.location
     }
 
-    /// Returns the location of the file asset
-    pub fn set_unique_name(&mut self, unique_name: &str) {
-        self.location.unique_name = unique_name.to_string();
-    }
-
     /// Returns the options for the file asset
     pub fn options(&self) -> &FileOptions {
         &self.options
@@ -359,6 +333,47 @@ impl FileAsset {
     /// Returns the options for the file asset mutably
     pub fn options_mut(&mut self) -> &mut FileOptions {
         &mut self.options
+    }
+
+    /// Regenerates the unique name of the file asset
+    fn regenerate_unique_name(&mut self) {
+        const MAX_PATH_LENGTH: usize = 128;
+        const HASH_SIZE: usize = 16;
+
+        let manifest_dir = manifest_dir();
+        let last_segment = self
+            .location
+            .source
+            .last_segment()
+            .chars()
+            .filter(|c| c.is_alphanumeric())
+            .collect::<String>();
+        let path = manifest_dir.join(last_segment);
+        let updated = self.location.source.last_updated();
+        let extension = self
+            .options
+            .extension()
+            .map(|e| format!(".{e}"))
+            .unwrap_or_default();
+        let extension_and_hash_size = extension.len() + HASH_SIZE;
+        let mut file_name = path
+            .file_stem()
+            .unwrap()
+            .to_string_lossy()
+            .chars()
+            .filter(|c| c.is_alphanumeric())
+            .collect::<String>();
+        // If the file name is too long, we need to truncate it
+        if file_name.len() + extension_and_hash_size > MAX_PATH_LENGTH {
+            file_name = file_name[..MAX_PATH_LENGTH - extension_and_hash_size].to_string();
+        }
+        let mut hash = std::collections::hash_map::DefaultHasher::new();
+        updated.hash(&mut hash);
+        self.options.hash(&mut hash);
+        self.location.source.hash(&mut hash);
+        let uuid = hash.finish();
+        self.location.unique_name = format!("{file_name}{uuid:x}{extension}");
+        assert!(self.location.unique_name.len() <= MAX_PATH_LENGTH);
     }
 }
 
