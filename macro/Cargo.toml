@@ -16,6 +16,6 @@ proc-macro = true
 proc-macro2 = { version = "1.0" }
 quote = "1.0"
 syn = { version = "2.0", features = ["full", "extra-traits"] }
-manganis-common = { path = "../common" }
-manganis-cli-support = { path = "../cli-support" }
+manganis-common = { path = "../common", version = "0.1.0" }
+manganis-cli-support = { path = "../cli-support", version = "0.1.0" }
 base64 = "0.21.5"
