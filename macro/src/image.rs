@@ -1,6 +1,4 @@
-use base64::Engine;
-use manganis_cli_support::process_file;
-use manganis_common::{get_mime_from_ext, FileAsset, FileOptions, FileSource, ImageOptions};
+use manganis_common::{ FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, Token};
 
@@ -210,6 +208,12 @@ impl Parse for ImageAssetParser {
             _ => unreachable!(),
         };
         let file_name = if this_file.url_encoded() {
+            #[cfg(not(feature = "url-encoding"))]
+            return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                "URL encoding is not enabled. Enable the url-encoding feature to use this feature",
+            ));
+            #[cfg(feature = "url-encoding")]
             url_encoded_asset(&this_file).map_err(|e| {
                 syn::Error::new(
                     proc_macro2::Span::call_site(),
@@ -221,29 +225,39 @@ impl Parse for ImageAssetParser {
         };
 
         let low_quality_preview = if low_quality_preview {
-            let current_image_size = match this_file.options() {
-                manganis_common::FileOptions::Image(options) => options.size(),
-                _ => None,
-            };
-            let low_quality_preview_size = current_image_size
-                .map(|(width, height)| {
-                    let width = width / 10;
-                    let height = height / 10;
-                    (width, height)
-                })
-                .unwrap_or((32, 32));
-            let lqip = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
-                ImageOptions::new(
-                    manganis_common::ImageType::Avif,
-                    Some(low_quality_preview_size),
-                ),
+            #[cfg(not(feature = "url-encoding"))]
+            return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                "Low quality previews require URL encoding. Enable the url-encoding feature to use this feature",
             ));
-            Some(url_encoded_asset(&lqip).map_err(|e| {
-                syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("Failed to encode file: {}", e),
-                )
-            })?)
+
+            #[cfg(feature = "url-encoding")]
+            {
+                let current_image_size = match this_file.options() {
+                    manganis_common::FileOptions::Image(options) => options.size(),
+                    _ => None,
+                };
+                let low_quality_preview_size = current_image_size
+                    .map(|(width, height)| {
+                        let width = width / 10;
+                        let height = height / 10;
+                        (width, height)
+                    })
+                    .unwrap_or((32, 32));
+                let lqip = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
+                    ImageOptions::new(
+                        manganis_common::ImageType::Avif,
+                        Some(low_quality_preview_size),
+                    ),
+                ));
+
+                Some(url_encoded_asset(&lqip).map_err(|e| {
+                    syn::Error::new(
+                        proc_macro2::Span::call_site(),
+                        format!("Failed to encode file: {}", e),
+                    )
+                })?)
+            }
         } else {
             None
         };
@@ -255,7 +269,10 @@ impl Parse for ImageAssetParser {
     }
 }
 
+#[cfg(feature = "url-encoding")]
 fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
+    use base64::Engine;
+
     let target_directory =
         std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
     let output_folder = std::path::Path::new(&target_directory)
@@ -267,7 +284,7 @@ fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
             format!("Failed to create output folder: {}", e),
         )
     })?;
-    process_file(file_asset, &output_folder).map_err(|e| {
+    manganis_cli_support::process_file(file_asset, &output_folder).map_err(|e| {
         syn::Error::new(
             proc_macro2::Span::call_site(),
             format!("Failed to process file: {}", e),
@@ -281,7 +298,7 @@ fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
         )
     })?;
     let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
-    let mime = get_mime_from_ext(file_asset.options().extension());
+    let mime = manganis_common::get_mime_from_ext(file_asset.options().extension());
     Ok(format!("data:{mime};base64,{data}"))
 }
 

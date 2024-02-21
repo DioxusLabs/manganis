@@ -1,5 +1,5 @@
-#![doc = include_str!("../../../README.md")]
 #![deny(missing_docs)]
+//! Common types and methods for the manganis asset system
 
 mod asset;
 pub mod cache;
