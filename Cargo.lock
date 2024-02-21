@@ -501,19 +501,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dioxus-core"
-version = "0.4.3"
-source = "git+https://github.com/DioxusLabs/dioxus#6c6df1e2fd4eb039368fe69a41ba69a50d32a29a"
-dependencies = [
- "futures-channel",
- "futures-util",
- "longest-increasing-subsequence",
- "rustc-hash",
- "slab",
- "tracing",
-]
-
-[[package]]
 name = "dtoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1140,12 +1127,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
-name = "longest-increasing-subsequence"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3bd0dd2cd90571056fdb71f6275fada10131182f84899f4b2a916e565d81d86"
-
-[[package]]
 name = "loop9"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1158,7 +1139,6 @@ dependencies = [
 name = "manganis"
 version = "0.1.0"
 dependencies = [
- "dioxus-core",
  "manganis-macro",
 ]
 
@@ -1203,7 +1183,7 @@ dependencies = [
 
 [[package]]
 name = "manganis-macro"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "base64",
  "manganis-cli-support",
