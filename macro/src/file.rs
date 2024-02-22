@@ -10,13 +10,6 @@ pub struct FileAssetParser {
 
 impl Parse for FileAssetParser {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let image = input.parse::<syn::Ident>()?;
-        if image != "file" {
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Expected file, found {}", image),
-            ));
-        }
         let inside;
         parenthesized!(inside in input);
         let path = inside.parse::<syn::LitStr>()?;

@@ -140,13 +140,6 @@ pub struct FontAssetParser {
 
 impl Parse for FontAssetParser {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let image = input.parse::<syn::Ident>()?;
-        if image != "font" {
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Expected font, found {}", image),
-            ));
-        }
         let _inside;
         parenthesized!(_inside in input);
 

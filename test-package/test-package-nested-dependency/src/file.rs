@@ -9,9 +9,8 @@ pub const RESIZED_JPEG_ASSET: manganis::ImageAsset =
     manganis::mg!(image("./rustacean-flat-gesture.png")
         .format(ImageType::Jpg)
         .size(52, 52));
-pub const AVIF_ASSET: manganis::ImageAsset = manganis::mg!(image("./rustacean-flat-gesture.png")
-    .format(ImageType::Avif)
-    .low_quality_preview());
+pub const AVIF_ASSET: manganis::ImageAsset =
+    manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageType::Avif));
 pub const RESIZED_AVIF_ASSET: manganis::ImageAsset =
     manganis::mg!(image("./rustacean-flat-gesture.png")
         .format(ImageType::Avif)

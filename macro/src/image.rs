@@ -1,4 +1,4 @@
-use manganis_common::{ FileAsset, FileOptions, FileSource, ImageOptions};
+use manganis_common::{FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, Token};
 
@@ -158,13 +158,6 @@ pub struct ImageAssetParser {
 
 impl Parse for ImageAssetParser {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let image = input.parse::<syn::Ident>()?;
-        if image != "image" {
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Expected image, found {}", image),
-            ));
-        }
         let inside;
         parenthesized!(inside in input);
         let path = inside.parse::<syn::LitStr>()?;

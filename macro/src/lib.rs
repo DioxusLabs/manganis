@@ -7,6 +7,7 @@ use image::ImageAssetParser;
 use manganis_common::{AssetType, MetadataAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
@@ -116,8 +117,6 @@ pub fn classes(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn mg(input: TokenStream) -> TokenStream {
-    use proc_macro2::TokenStream as TokenStream2;
-
     let builder_tokens = {
         let input = input.clone();
         parse_macro_input!(input as TokenStream2)
@@ -130,37 +129,58 @@ pub fn mg(input: TokenStream) -> TokenStream {
         };
     };
 
-    let asset = syn::parse::<ImageAssetParser>(input.clone())
-        .ok()
-        .map(ToTokens::into_token_stream)
-        .or_else(|| {
-            syn::parse::<FontAssetParser>(input.clone())
-                .ok()
-                .map(ToTokens::into_token_stream)
-        })
-        .or_else(|| {
-            syn::parse::<FileAssetParser>(input.clone())
-                .ok()
-                .map(ToTokens::into_token_stream)
-        });
+    let asset = parse_macro_input!(input as AnyAssetParser);
 
-    match asset {
-        Some(asset) => quote! {
-            {
-                #builder_output
-                #asset
+    quote! {
+        {
+            #builder_output
+            #asset
+        }
+    }
+    .into_token_stream()
+    .into()
+}
+
+enum AnyAssetParser {
+    File(FileAssetParser),
+    Image(ImageAssetParser),
+    Font(FontAssetParser),
+}
+
+impl Parse for AnyAssetParser {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let ident = input.parse::<syn::Ident>()?;
+        let as_string = ident.to_string();
+
+        Ok(match &*as_string {
+            "file" => Self::File(input.parse::<FileAssetParser>()?),
+            "image" => Self::Image(input.parse::<ImageAssetParser>()?),
+            "font" => Self::Font(input.parse::<FontAssetParser>()?),
+            _ => {
+                return Err(syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!(
+                        "Unknown asset type: {as_string}. Supported types are file, image, font"
+                    ),
+                ))
+            }
+        })
+    }
+}
+
+impl ToTokens for AnyAssetParser {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        match self {
+            Self::File(file) => {
+                file.to_tokens(tokens);
+            }
+            Self::Image(image) => {
+                image.to_tokens(tokens);
+            }
+            Self::Font(font) => {
+                font.to_tokens(tokens);
             }
         }
-        .into_token_stream()
-        .into(),
-        None => quote! {
-            {
-                #builder_output
-                compile_error!("Expected an image, font or file asset")
-            }
-        }
-        .into_token_stream()
-        .into(),
     }
 }
 
