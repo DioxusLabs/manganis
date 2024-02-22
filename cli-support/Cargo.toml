@@ -1,6 +1,6 @@
 [package]
 name = "manganis-cli-support"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Evan Almloff"]
 description = "Ergonomic, Automatic, cross crate asset collection"
@@ -12,7 +12,7 @@ keywords = ["assets"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-manganis-common = { path = "../common", version = "0.1.0" }
+manganis-common = { path = "../common", version = "0.1.1" }
 
 serde = { version = "1.0.183", features = ["derive"] }
 toml = "0.7.6"
