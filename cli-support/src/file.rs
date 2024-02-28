@@ -45,13 +45,10 @@ impl Process for FileOptions {
 
 impl Process for ImageOptions {
     fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
-        let mut image = image::io::Reader::new(std::io::Cursor::new(
-            &*input_location.read_to_bytes().unwrap(),
-        ))
-        .with_guessed_format()
-        .unwrap()
-        .decode()
-        .unwrap();
+        let mut image =
+            image::io::Reader::new(std::io::Cursor::new(&*input_location.read_to_bytes()?))
+                .with_guessed_format()?
+                .decode()?;
 
         if let Some(size) = self.size() {
             image = image.resize_exact(size.0, size.1, image::imageops::FilterType::Lanczos3);

@@ -1156,7 +1156,7 @@ dependencies = [
 
 [[package]]
 name = "manganis"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dioxus-core",
  "manganis-macro",
@@ -1164,7 +1164,7 @@ dependencies = [
 
 [[package]]
 name = "manganis-cli-support"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "cargo-lock 9.0.0",
@@ -1189,7 +1189,7 @@ dependencies = [
 
 [[package]]
 name = "manganis-common"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "base64",
@@ -1203,7 +1203,7 @@ dependencies = [
 
 [[package]]
 name = "manganis-macro"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base64",
  "manganis-cli-support",
@@ -2414,7 +2414,7 @@ dependencies = [
 
 [[package]]
 name = "test-package"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "manganis",
  "manganis-cli-support",
@@ -2425,7 +2425,7 @@ dependencies = [
 
 [[package]]
 name = "test-package-dependency"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "manganis",
  "test-package-nested-dependency",
@@ -2433,7 +2433,7 @@ dependencies = [
 
 [[package]]
 name = "test-package-nested-dependency"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "manganis",
 ]

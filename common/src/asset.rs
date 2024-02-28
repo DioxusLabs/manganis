@@ -228,10 +228,15 @@ impl FileLocation {
     /// Reads the file to bytes
     pub fn read_to_bytes(&self) -> anyhow::Result<Vec<u8>> {
         match &self.source {
-            FileSource::Local(path) => Ok(std::fs::read(path)?),
+            FileSource::Local(path) => Ok(std::fs::read(path).with_context(|| {
+                format!("Failed to read file from location: {}", path.display())
+            })?),
             FileSource::Remote(url) => {
-                let response = reqwest::blocking::get(url.as_str())?;
-                Ok(response.bytes().map(|b| b.to_vec())?)
+                let response = reqwest::blocking::get(url.as_str())
+                    .with_context(|| format!("Failed to asset from url: {}", url.as_str()))?;
+                Ok(response.bytes().map(|b| b.to_vec()).with_context(|| {
+                    format!("Failed to read text for asset from url: {}", url.as_str())
+                })?)
             }
         }
     }
