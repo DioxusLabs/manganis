@@ -26,7 +26,7 @@ fn main() {
         .unwrap();
 
     // Then collect the assets
-    let manifest = AssetManifest::load();
+    let manifest = AssetManifest::load(Some("test-package"));
 
     // Remove the old assets
     let _ = std::fs::remove_dir_all(assets_file_location);

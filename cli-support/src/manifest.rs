@@ -20,10 +20,12 @@ use crate::{
 /// An extension trait CLI support for the asset manifest
 pub trait AssetManifestExt {
     /// Loads the asset manifest for the current working directory
-    fn load() -> Self;
+    fn load(
+        bin: Option<&str>,
+    ) -> Self;
 
     /// Loads the asset manifest from the cargo toml and lock file
-    fn load_from_path(cargo_toml: PathBuf, cargo_lock: PathBuf) -> Self;
+    fn load_from_path(bin: Option<&str>, cargo_toml: PathBuf, cargo_lock: PathBuf) -> Self;
 
     /// Copies all static assets to the given location
     fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> anyhow::Result<()>;
@@ -37,13 +39,15 @@ pub trait AssetManifestExt {
 }
 
 impl AssetManifestExt for AssetManifest {
-    fn load() -> Self {
+    fn load(bin: Option<&str>,) -> Self {
         let lock_path = lock_path();
         let cargo_toml = current_cargo_toml();
-        Self::load_from_path(cargo_toml, lock_path)
+        Self::load_from_path(bin,cargo_toml, lock_path)
     }
 
-    fn load_from_path(cargo_toml: PathBuf, cargo_lock: PathBuf) -> Self {
+    fn load_from_path(
+        bin: Option<&str>,
+        cargo_toml: PathBuf, cargo_lock: PathBuf) -> Self {
         let lockfile = Lockfile::load(cargo_lock).unwrap();
 
         let cargo_toml = cargo_toml::Manifest::from_path(cargo_toml).unwrap();
@@ -61,7 +65,7 @@ impl AssetManifestExt for AssetManifest {
             return Self::default();
         };
 
-        collect_dependencies(&tree, this_package_lock, &cache_dir, &mut all_assets);
+        collect_dependencies(&tree, this_package_lock, bin, &cache_dir, &mut all_assets);
 
         Self::new(all_assets)
     }
@@ -121,6 +125,7 @@ impl AssetManifestExt for AssetManifest {
 fn collect_dependencies(
     tree: &cargo_lock::dependency::tree::Tree,
     root_package_id: NodeIndex,
+    bin: Option<&str>,
     cache_dir: &Path,
     all_assets: &mut Vec<PackageAssets>,
 ) {
@@ -152,6 +157,7 @@ fn collect_dependencies(
         dependency_path.push(cache_dir);
         push_package_cache_dir(
             package.name.as_str(),
+            bin.filter(|_| package_id == root_package_id),
             &package.version,
             &mut dependency_path,
         );
