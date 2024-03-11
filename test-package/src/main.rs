@@ -9,10 +9,9 @@ fn main() {
     tracing_subscriber::fmt::init();
 
     println!(
-        "low quality preview: {:?}",
-        test_package_dependency::AVIF_ASSET.preview()
+        "{:?}",
+        test_package_dependency::AVIF_ASSET
     );
-    assert!(test_package_dependency::AVIF_ASSET.preview().is_some());
 
     // This is the location where the assets will be copied to in the filesystem
     let assets_file_location = "./dist/";
@@ -25,7 +24,7 @@ fn main() {
         .save();
 
     // Then collect the assets
-    let manifest = AssetManifest::load();
+    let manifest = AssetManifest::load(Some("test-package"));
 
     // Remove the old assets
     let _ = std::fs::remove_dir_all(assets_file_location);
