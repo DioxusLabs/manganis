@@ -1,6 +1,6 @@
 [package]
 name = "manganis-common"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["Evan Almloff"]
 description = "Ergonomic, Automatic, cross crate asset collection"

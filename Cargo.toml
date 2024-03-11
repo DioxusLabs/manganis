@@ -1,7 +1,7 @@
 [package]
 # Manganese is a rusting catalyst. Manganis makes it faster to collect rust assets (and has almost no google search results)
 name = "manganis"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Evan Almloff"]
 edition = "2021"
 description = "Ergonomic, Automatic, cross crate asset collection"
@@ -13,7 +13,7 @@ keywords = ["assets"]
 [lib]
 
 [dependencies]
-manganis-macro = { path = "./macro", version = "0.1.1" }
+manganis-macro = { path = "./macro", version = "0.2.0" }
 dioxus-core = { git = "https://github.com/DioxusLabs/dioxus", optional = true }
 
 [workspace]

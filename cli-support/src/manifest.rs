@@ -20,9 +20,7 @@ use crate::{
 /// An extension trait CLI support for the asset manifest
 pub trait AssetManifestExt {
     /// Loads the asset manifest for the current working directory
-    fn load(
-        bin: Option<&str>,
-    ) -> Self;
+    fn load(bin: Option<&str>) -> Self;
 
     /// Loads the asset manifest from the cargo toml and lock file
     fn load_from_path(bin: Option<&str>, cargo_toml: PathBuf, cargo_lock: PathBuf) -> Self;
@@ -39,15 +37,13 @@ pub trait AssetManifestExt {
 }
 
 impl AssetManifestExt for AssetManifest {
-    fn load(bin: Option<&str>,) -> Self {
+    fn load(bin: Option<&str>) -> Self {
         let lock_path = lock_path();
         let cargo_toml = current_cargo_toml();
-        Self::load_from_path(bin,cargo_toml, lock_path)
+        Self::load_from_path(bin, cargo_toml, lock_path)
     }
 
-    fn load_from_path(
-        bin: Option<&str>,
-        cargo_toml: PathBuf, cargo_lock: PathBuf) -> Self {
+    fn load_from_path(bin: Option<&str>, cargo_toml: PathBuf, cargo_lock: PathBuf) -> Self {
         let lockfile = Lockfile::load(cargo_lock).unwrap();
 
         let cargo_toml = cargo_toml::Manifest::from_path(cargo_toml).unwrap();

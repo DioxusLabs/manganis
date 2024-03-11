@@ -27,9 +27,7 @@ pub(crate) fn current_package_identifier() -> String {
 }
 
 /// The identifier for a package used to cache assets
-pub fn package_identifier(package: &str, bin: 
-    Option<&str>
-    , version: &str) -> String {
+pub fn package_identifier(package: &str, bin: Option<&str>, version: &str) -> String {
     let mut string = package.to_string();
     if let Some(bin) = bin {
         string.push('-');
@@ -41,9 +39,12 @@ pub fn package_identifier(package: &str, bin:
 }
 
 /// Like `package_identifier`, but appends the identifier to the given path
-pub fn push_package_cache_dir(package: &str, 
+pub fn push_package_cache_dir(
+    package: &str,
     bin: Option<&str>,
-    version: impl Display, dir: &mut PathBuf) {
+    version: impl Display,
+    dir: &mut PathBuf,
+) {
     let as_string = dir.as_mut_os_string();
     as_string.write_char(std::path::MAIN_SEPARATOR).unwrap();
     as_string.write_str(package).unwrap();
