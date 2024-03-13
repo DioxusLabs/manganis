@@ -336,8 +336,9 @@ impl FileAsset {
     }
 
     /// Returns the options for the file asset mutably
-    pub fn options_mut(&mut self) -> &mut FileOptions {
-        &mut self.options
+    pub fn with_options_mut(&mut self, f: impl FnOnce(&mut FileOptions)) {
+        f(&mut self.options);
+        self.regenerate_unique_name();
     }
 
     /// Regenerates the unique name of the file asset
