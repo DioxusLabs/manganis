@@ -63,7 +63,7 @@ impl Process for ImageOptions {
             }
             ImageType::Jpg => {
                 output_location.push(input_location.unique_name());
-                compress_jpg(image, output_location);
+                compress_jpg(image, output_location)?;
             }
             ImageType::Avif => {
                 output_location.push(input_location.unique_name());
@@ -83,24 +83,22 @@ impl Process for ImageOptions {
     }
 }
 
-fn compress_jpg(image: DynamicImage, output_location: PathBuf) {
+fn compress_jpg(image: DynamicImage, output_location: PathBuf) -> anyhow::Result<()> {
     let mut comp = mozjpeg::Compress::new(mozjpeg::ColorSpace::JCS_EXT_RGBX);
     let width = image.width() as usize;
     let height = image.height() as usize;
 
     comp.set_size(width, height);
-    comp.set_optimize_scans(true);
-    comp.set_mem_dest();
-    comp.start_compress();
+    let mut comp = comp.start_compress(Vec::new())?; // any io::Write will work
 
-    comp.write_scanlines(image.to_rgba8().as_bytes());
+    comp.write_scanlines(image.to_rgba8().as_bytes())?;
 
-    comp.finish_compress();
-    let jpeg_bytes = comp.data_to_vec().unwrap();
+    let jpeg_bytes = comp.finish()?;
 
-    let file = std::fs::File::create(output_location).unwrap();
+    let file = std::fs::File::create(output_location)?;
     let w = &mut BufWriter::new(file);
-    w.write_all(&jpeg_bytes).unwrap();
+    w.write_all(&jpeg_bytes)?;
+    Ok(())
 }
 
 fn compress_png(image: DynamicImage, output_location: PathBuf) {
