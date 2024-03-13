@@ -29,12 +29,13 @@ railwind = "0.1.5"
 
 # Image compression/conversion
 # JPEG
-mozjpeg = "0.9.6"
+mozjpeg = { version = "0.10.7", default-features = false, features = ["parallel"] }
 # PNG
 imagequant = "4.2.0"
 png = "0.17.9"
 # Conversion
-image = { version = "0.24.7" }
+image = { version = "0.25" }
+ravif = "0.11"
 
 # CSS Minification
 lightningcss = "1.0.0-alpha.44"
@@ -45,7 +46,6 @@ reqwest = { version = "0.11.18", features = ["blocking"] }
 tracing = "0.1.37"
 
 [features]
-default = ["avif"]
-avif = ["image/avif-encoder"]
-webp = ["image/webp-encoder"]
+default = []
+asm = ["ravif/asm", "mozjpeg/nasm_simd"]
 html = ["manganis-common/html"]
