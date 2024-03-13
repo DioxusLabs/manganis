@@ -51,7 +51,6 @@ jobs:
         cfg_release_channel: [stable]
 
     steps:
-      - uses: ilammy/setup-nasm@v1
       # The Windows runners have autocrlf enabled by default
       # which causes failures for some of rustfmt's line-ending sensitive tests
       - name: disable git eol translation
@@ -92,6 +91,8 @@ jobs:
           rustc -Vv
           cargo -V
           set RUST_BACKTRACE=1
+          cargo tree -e features --package manganis-macro
+          cargo tree -e features --package manganis-cli-support
           cargo build --all --tests --examples
           cargo test --all --tests
         shell: cmd
