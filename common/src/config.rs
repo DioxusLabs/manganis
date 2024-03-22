@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::cache::config_path;
 
 fn default_assets_serve_location() -> String {
-    "dist/".to_string()
+    "/".to_string()
 }
 
 /// The configuration for collecting assets
