@@ -28,32 +28,25 @@ pub(crate) fn current_package_identifier() -> String {
 
 /// The identifier for a package used to cache assets
 pub fn package_identifier(package: &str, bin: Option<&str>, version: &str) -> String {
-    let mut string = package.to_string();
-    if let Some(bin) = bin {
-        string.push('-');
-        string.push_str(bin);
-    }
-    string.push('-');
-    string.push_str(version);
-    string
+    let mut id = String::new();
+    push_package_identifier(package, bin, version, &mut id);
+    id
 }
 
-/// Like `package_identifier`, but appends the identifier to the given path
-pub fn push_package_cache_dir(
+/// Like `package_identifier`, but appends the identifier to the given writer
+pub fn push_package_identifier(
     package: &str,
     bin: Option<&str>,
     version: impl Display,
-    dir: &mut PathBuf,
+    to: &mut impl Write,
 ) {
-    let as_string = dir.as_mut_os_string();
-    as_string.write_char(std::path::MAIN_SEPARATOR).unwrap();
-    as_string.write_str(package).unwrap();
+    to.write_str(package).unwrap();
     if let Some(bin) = bin {
-        as_string.write_char('-').unwrap();
-        as_string.write_str(bin).unwrap();
+        to.write_char('-').unwrap();
+        to.write_str(bin).unwrap();
     }
-    as_string.write_char('-').unwrap();
-    as_string.write_fmt(format_args!("{}", version)).unwrap();
+    to.write_char('-').unwrap();
+    to.write_fmt(format_args!("{}", version)).unwrap();
 }
 
 pub(crate) fn current_package_version() -> String {
@@ -66,6 +59,20 @@ pub(crate) fn manifest_dir() -> PathBuf {
 
 pub(crate) fn current_package_cache_dir() -> PathBuf {
     let mut dir = asset_cache_dir();
+    dir.push(current_package_identifier());
+    dir
+}
+
+/// The location where logs are stored while expanding macros
+pub fn macro_log_directory() -> PathBuf {
+    let mut dir = asset_cache_dir();
+    dir.push("logs");
+    dir
+}
+
+/// The current log file for the macro expansion
+pub fn macro_log_file() -> PathBuf {
+    let mut dir = macro_log_directory();
     dir.push(current_package_identifier());
     dir
 }

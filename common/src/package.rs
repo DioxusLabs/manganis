@@ -9,6 +9,7 @@ use crate::{
 pub fn clear_assets() -> std::io::Result<()> {
     let dir = current_package_cache_dir();
     if dir.exists() {
+        tracing::info!("Clearing assets in {:?}", dir);
         std::fs::remove_dir_all(dir)?;
     }
     Ok(())
@@ -18,6 +19,7 @@ pub fn clear_assets() -> std::io::Result<()> {
 pub fn add_asset(asset: AssetType) -> std::io::Result<AssetType> {
     let mut dir = current_package_cache_dir();
     dir.push("assets.toml");
+    tracing::info!("Adding asset {:?} to {:?}", asset, dir);
     let mut package_assets: PackageAssets = if dir.exists() {
         let contents = std::fs::read_to_string(&dir)?;
         toml::from_str(&contents).unwrap_or_else(|_| PackageAssets {

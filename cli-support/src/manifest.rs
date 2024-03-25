@@ -1,13 +1,13 @@
 pub use railwind::warning::Warning as TailwindWarning;
 use rustc_hash::FxHashSet;
-use std::path::{Path, PathBuf};
+use std::{fmt::Write, path::{Path, PathBuf}};
 
 use cargo_lock::{
     dependency::{self, graph::NodeIndex},
     Lockfile,
 };
 use manganis_common::{
-    cache::asset_cache_dir, cache::push_package_cache_dir, AssetManifest, AssetType, PackageAssets,
+    cache::{asset_cache_dir, push_package_identifier}, AssetManifest, AssetType, PackageAssets,
 };
 use petgraph::visit::EdgeRef;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -151,11 +151,13 @@ fn collect_dependencies(
         // Add the assets for this dependency
         dependency_path.clear();
         dependency_path.push(cache_dir);
-        push_package_cache_dir(
+        let os_string = dependency_path.as_mut_os_string();
+        os_string.write_char(std::path::MAIN_SEPARATOR).unwrap();
+        push_package_identifier(
             package.name.as_str(),
             bin.filter(|_| package_id == root_package_id),
             &package.version,
-            &mut dependency_path,
+            os_string,
         );
         tracing::trace!("Looking for assets in {}", dependency_path.display());
         dependency_path.push("assets.toml");

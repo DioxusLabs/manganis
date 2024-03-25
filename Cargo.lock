@@ -1193,6 +1193,7 @@ dependencies = [
  "reqwest",
  "serde",
  "toml 0.7.8",
+ "tracing",
  "url",
 ]
 
@@ -1206,6 +1207,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.48",
+ "tracing-subscriber",
 ]
 
 [[package]]
