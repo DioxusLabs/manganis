@@ -22,7 +22,7 @@ pub(crate) fn current_package_identifier() -> String {
     package_identifier(
         &std::env::var("CARGO_PKG_NAME").unwrap(),
         std::env::var("CARGO_BIN_NAME").ok().as_deref(),
-        &current_package_version(),
+        current_package_version(),
     )
 }
 

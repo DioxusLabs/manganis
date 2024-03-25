@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     hash::{Hash, Hasher},
     path::{Path, PathBuf},
     str::FromStr,
@@ -29,6 +30,15 @@ pub enum FileSource {
     Local(PathBuf),
     /// A remote file
     Remote(Url),
+}
+
+impl Display for FileSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Local(path) => write!(f, "{}", path.display()),
+            Self::Remote(url) => write!(f, "{}", url.as_str()),
+        }
+    }
 }
 
 impl FileSource {
@@ -266,6 +276,23 @@ pub struct FileAsset {
     location: FileLocation,
     options: FileOptions,
     url_encoded: bool,
+}
+
+impl Display for FileAsset {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let url_encoded = if self.url_encoded {
+            " [url encoded]"
+        } else {
+            ""
+        };
+        write!(
+            f,
+            "{} [{}]{}",
+            self.location.source(),
+            self.options,
+            url_encoded
+        )
+    }
 }
 
 impl FileAsset {

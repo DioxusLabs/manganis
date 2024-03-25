@@ -80,14 +80,11 @@ impl AssetManifestExt for AssetManifest {
             }
         }
         self.packages().par_iter().try_for_each(|package| {
-            tracing::info!("Copying static assets for package {}", package.package());
+            tracing::trace!("Copying static assets for package {}", package.package());
             package.assets().par_iter().try_for_each(|asset| {
                 if let AssetType::File(file_asset) = asset {
-                    tracing::info!(
-                        "Copying static asset from {:?} to {:?}",
-                        file_asset,
-                        location
-                    );
+                    tracing::info!("Optimizing and bundling {}", file_asset);
+                    tracing::trace!("Copying asset from {:?} to {:?}", file_asset, location);
                     match process_file(file_asset, &location) {
                         Ok(_) => {}
                         Err(err) => {
@@ -151,7 +148,7 @@ fn collect_dependencies(
             tracing::error!("Failed to read asset cache directory: {}", err);
         }
     }
-    tracing::info!(
+    tracing::trace!(
         "Found packages with assets: {:?}",
         packages.iter().cloned().collect::<Vec<_>>().join(", ")
     );
