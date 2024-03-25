@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 /// The options for a file asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
@@ -14,6 +14,18 @@ pub enum FileOptions {
     Css(CssOptions),
     /// Any other asset
     Other(UnknownFileOptions),
+}
+
+impl Display for FileOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Image(options) => write!(f, "{}", options),
+            Self::Video(options) => write!(f, "{}", options),
+            Self::Font(options) => write!(f, "{}", options),
+            Self::Css(options) => write!(f, "{}", options),
+            Self::Other(options) => write!(f, "{}", options),
+        }
+    }
 }
 
 impl FileOptions {
@@ -75,6 +87,23 @@ pub struct ImageOptions {
     size: Option<(u32, u32)>,
     preload: bool,
     ty: ImageType,
+}
+
+impl Display for ImageOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some((x, y)) = self.size {
+            write!(f, "{} ({}x{})", self.ty, x, y)?;
+        } else {
+            write!(f, "{}", self.ty)?;
+        }
+        if self.compress {
+            write!(f, " (compressed)")?;
+        }
+        if self.preload {
+            write!(f, " (preload)")?;
+        }
+        Ok(())
+    }
 }
 
 impl ImageOptions {
@@ -142,6 +171,17 @@ pub enum ImageType {
     Webp,
 }
 
+impl Display for ImageType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Png => write!(f, "png"),
+            Self::Jpg => write!(f, "jpg"),
+            Self::Avif => write!(f, "avif"),
+            Self::Webp => write!(f, "webp"),
+        }
+    }
+}
+
 impl FromStr for ImageType {
     type Err = ();
 
@@ -163,6 +203,16 @@ pub struct VideoOptions {
     compress: bool,
     /// The type of the video
     ty: VideoType,
+}
+
+impl Display for VideoOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.ty)?;
+        if self.compress {
+            write!(f, " (compressed)")?;
+        }
+        Ok(())
+    }
 }
 
 impl VideoOptions {
@@ -203,10 +253,26 @@ pub enum VideoType {
     GIF,
 }
 
+impl Display for VideoType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MP4 => write!(f, "mp4"),
+            Self::Webm => write!(f, "webm"),
+            Self::GIF => write!(f, "gif"),
+        }
+    }
+}
+
 /// The options for a font asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct FontOptions {
     ty: FontType,
+}
+
+impl Display for FontOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.ty)
+    }
 }
 
 impl FontOptions {
@@ -232,10 +298,29 @@ pub enum FontType {
     WOFF2,
 }
 
+impl Display for FontType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::TTF => write!(f, "ttf"),
+            Self::WOFF => write!(f, "woff"),
+            Self::WOFF2 => write!(f, "woff2"),
+        }
+    }
+}
+
 /// The options for a css asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct CssOptions {
     minify: bool,
+}
+
+impl Display for CssOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.minify {
+            write!(f, "minified")?;
+        }
+        Ok(())
+    }
 }
 
 impl CssOptions {
@@ -260,6 +345,15 @@ impl Default for CssOptions {
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct UnknownFileOptions {
     extension: Option<String>,
+}
+
+impl Display for UnknownFileOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(extension) = &self.extension {
+            write!(f, "{}", extension)?;
+        }
+        Ok(())
+    }
 }
 
 impl UnknownFileOptions {

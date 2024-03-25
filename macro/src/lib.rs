@@ -4,6 +4,7 @@
 use file::FileAssetParser;
 use font::FontAssetParser;
 use image::ImageAssetParser;
+use manganis_common::cache::macro_log_file;
 use manganis_common::{AssetType, MetadataAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
@@ -17,13 +18,29 @@ mod file;
 mod font;
 mod image;
 
+static LOG_FILE_FRESH: AtomicBool = AtomicBool::new(false);
+
+fn trace_to_file() {
+    // If this is the first time the macro is used in the crate, set the subscriber to write to a file
+    if !LOG_FILE_FRESH.fetch_or(true, Ordering::Relaxed) {
+        let path = macro_log_file();
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let file = std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(path)
+            .unwrap();
+        tracing_subscriber::fmt::fmt().with_writer(file).init();
+    }
+}
+
 // It appears rustc uses one instance of the dynamic library for each crate that uses it.
 // We can reset the asset of the current crate the first time the macro is used in the crate.
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 fn add_asset(asset: manganis_common::AssetType) -> std::io::Result<AssetType> {
-    if !INITIALIZED.load(Ordering::Relaxed) {
-        INITIALIZED.store(true, Ordering::Relaxed);
+    if !INITIALIZED.fetch_or(true, Ordering::Relaxed) {
         manganis_common::clear_assets()?;
     }
 
@@ -39,6 +56,8 @@ fn add_asset(asset: manganis_common::AssetType) -> std::io::Result<AssetType> {
 /// ```
 #[proc_macro]
 pub fn classes(input: TokenStream) -> TokenStream {
+    trace_to_file();
+
     let input_as_str = parse_macro_input!(input as LitStr);
     let input_as_str = input_as_str.value();
 
@@ -117,6 +136,8 @@ pub fn classes(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn mg(input: TokenStream) -> TokenStream {
+    trace_to_file();
+
     let builder_tokens = {
         let input = input.clone();
         parse_macro_input!(input as TokenStream2)
@@ -204,6 +225,8 @@ impl Parse for MetadataValue {
 /// ```
 #[proc_macro]
 pub fn meta(input: TokenStream) -> TokenStream {
+    trace_to_file();
+
     let md = parse_macro_input!(input as MetadataValue);
 
     let result = add_asset(manganis_common::AssetType::Metadata(MetadataAsset::new(
