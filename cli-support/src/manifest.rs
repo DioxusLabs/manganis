@@ -76,8 +76,10 @@ impl AssetManifestExt for AssetManifest {
             }
         }
         self.packages().par_iter().try_for_each(|package| {
+            tracing::info!("Copying static assets for package {}", package.package());
             package.assets().par_iter().try_for_each(|asset| {
                 if let AssetType::File(file_asset) = asset {
+                    tracing::info!("Copying static asset from {:?} to {:?}", file_asset, location);
                     match process_file(file_asset, &location) {
                         Ok(_) => {}
                         Err(err) => {
@@ -127,15 +129,20 @@ fn collect_dependencies(
 ) {
     // First find any assets that do have assets. The vast majority of packages will not have any so we can rule them out quickly with a hashset before touching the filesystem
     let mut packages = FxHashSet::default();
-    if let Ok(read_dir) = cache_dir.read_dir() {
-        for path in read_dir.flatten() {
-            if path.file_type().unwrap().is_dir() {
-                let file_name = path.file_name();
-                let package_name = file_name.to_string_lossy();
-                if let Some((package_name, _)) = package_name.rsplit_once('-') {
-                    packages.insert(package_name.to_string());
+    match cache_dir.read_dir() {
+        Ok(read_dir) =>{
+            for path in read_dir.flatten() {
+                if path.file_type().unwrap().is_dir() {
+                    let file_name = path.file_name();
+                    let package_name = file_name.to_string_lossy();
+                    if let Some((package_name, _)) = package_name.rsplit_once('-') {
+                        packages.insert(package_name.to_string());
+                    }
                 }
             }
+        }
+        Err(err) => {
+            tracing::error!("Failed to read asset cache directory: {}", err);
         }
     }
 
