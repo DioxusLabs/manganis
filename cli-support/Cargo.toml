@@ -1,6 +1,6 @@
 [package]
 name = "manganis-cli-support"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 authors = ["Evan Almloff"]
 description = "Ergonomic, automatic, cross crate asset collection and optimization"
@@ -49,3 +49,6 @@ tracing = "0.1.37"
 default = []
 asm = ["ravif/asm", "mozjpeg/nasm_simd"]
 html = ["manganis-common/html"]
+# Note: this feature now enables nothing and should be removed in the next major version
+webp = []
+avif = []
