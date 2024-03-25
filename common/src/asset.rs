@@ -34,9 +34,14 @@ pub enum FileSource {
 
 impl Display for FileSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Local(path) => write!(f, "{}", path.display()),
-            Self::Remote(url) => write!(f, "{}", url.as_str()),
+        let as_string = match self {
+            Self::Local(path) => path.display().to_string(),
+            Self::Remote(url) => url.as_str().to_string(),
+        };
+        if as_string.len() > 25 {
+            write!(f, "{}...", &as_string[..25])
+        } else {
+            write!(f, "{}", as_string)
         }
     }
 }
