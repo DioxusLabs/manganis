@@ -18,6 +18,9 @@ pub fn process_file(file: &FileAsset, output_folder: &Path) -> anyhow::Result<()
 
 impl Process for FileOptions {
     fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
+        if output_folder.join(input_location.unique_name()).exists() {
+            return Ok(());
+        }
         match self {
             Self::Other { .. } => {
                 let mut output_location = output_folder.to_path_buf();
