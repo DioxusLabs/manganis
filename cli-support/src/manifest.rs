@@ -1,13 +1,17 @@
 pub use railwind::warning::Warning as TailwindWarning;
 use rustc_hash::FxHashSet;
-use std::{fmt::Write, path::{Path, PathBuf}};
+use std::{
+    fmt::Write,
+    path::{Path, PathBuf},
+};
 
 use cargo_lock::{
     dependency::{self, graph::NodeIndex},
     Lockfile,
 };
 use manganis_common::{
-    cache::{asset_cache_dir, push_package_identifier}, AssetManifest, AssetType, PackageAssets,
+    cache::{asset_cache_dir, package_identifier, push_package_identifier},
+    AssetManifest, AssetType, PackageAssets,
 };
 use petgraph::visit::EdgeRef;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -79,7 +83,11 @@ impl AssetManifestExt for AssetManifest {
             tracing::info!("Copying static assets for package {}", package.package());
             package.assets().par_iter().try_for_each(|asset| {
                 if let AssetType::File(file_asset) = asset {
-                    tracing::info!("Copying static asset from {:?} to {:?}", file_asset, location);
+                    tracing::info!(
+                        "Copying static asset from {:?} to {:?}",
+                        file_asset,
+                        location
+                    );
                     match process_file(file_asset, &location) {
                         Ok(_) => {}
                         Err(err) => {
@@ -130,14 +138,12 @@ fn collect_dependencies(
     // First find any assets that do have assets. The vast majority of packages will not have any so we can rule them out quickly with a hashset before touching the filesystem
     let mut packages = FxHashSet::default();
     match cache_dir.read_dir() {
-        Ok(read_dir) =>{
+        Ok(read_dir) => {
             for path in read_dir.flatten() {
                 if path.file_type().unwrap().is_dir() {
                     let file_name = path.file_name();
                     let package_name = file_name.to_string_lossy();
-                    if let Some((package_name, _)) = package_name.rsplit_once('-') {
-                        packages.insert(package_name.to_string());
-                    }
+                    packages.insert(package_name.to_string());
                 }
             }
         }
@@ -145,14 +151,22 @@ fn collect_dependencies(
             tracing::error!("Failed to read asset cache directory: {}", err);
         }
     }
-    tracing::info!("Found {} packages with assets: {:?}", packages.len(), packages);
+    tracing::info!(
+        "Found packages with assets: {:?}",
+        packages.iter().cloned().collect::<Vec<_>>().join(", ")
+    );
 
     let mut packages_to_visit = vec![root_package_id];
     let mut dependency_path = PathBuf::new();
     while let Some(package_id) = packages_to_visit.pop() {
         let package = tree.graph().node_weight(package_id).unwrap();
         // First make sure this package has assets
-        if !packages.contains(package.name.as_str()) {
+        let identifier = package_identifier(
+            package.name.as_str(),
+            bin.filter(|_| package_id == root_package_id),
+            &package.version,
+        );
+        if !packages.contains(&identifier) {
             continue;
         }
 

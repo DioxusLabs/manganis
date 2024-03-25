@@ -31,9 +31,7 @@ fn trace_to_file() {
             .truncate(true)
             .open(path)
             .unwrap();
-        tracing_subscriber::fmt::fmt()
-            .with_writer(file)
-            .init();
+        tracing_subscriber::fmt::fmt().with_writer(file).init();
     }
 }
 

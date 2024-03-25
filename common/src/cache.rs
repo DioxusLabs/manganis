@@ -27,7 +27,7 @@ pub(crate) fn current_package_identifier() -> String {
 }
 
 /// The identifier for a package used to cache assets
-pub fn package_identifier(package: &str, bin: Option<&str>, version: &str) -> String {
+pub fn package_identifier(package: &str, bin: Option<&str>, version: impl Display) -> String {
     let mut id = String::new();
     push_package_identifier(package, bin, version, &mut id);
     id
