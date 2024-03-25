@@ -145,6 +145,7 @@ fn collect_dependencies(
             tracing::error!("Failed to read asset cache directory: {}", err);
         }
     }
+    tracing::info!("Found {} packages with assets: {:?}", packages.len(), packages);
 
     let mut packages_to_visit = vec![root_package_id];
     let mut dependency_path = PathBuf::new();
