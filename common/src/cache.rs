@@ -33,6 +33,17 @@ pub fn package_identifier(package: &str, bin: Option<&str>, version: impl Displa
     id
 }
 
+#[deprecated(since = "0.2.3", note = "Use `push_package_identifier` instead")]
+/// Like `package_identifier`, but appends the identifier to the given writer
+pub fn push_package_cache_dir(
+    package: &str,
+    bin: Option<&str>,
+    version: impl Display,
+    to: &mut impl Write,
+) {
+    push_package_identifier(package, bin, version, to);
+}
+
 /// Like `package_identifier`, but appends the identifier to the given writer
 pub fn push_package_identifier(
     package: &str,
