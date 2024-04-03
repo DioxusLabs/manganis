@@ -23,3 +23,4 @@ members = ["macro", "common", "cli-support", "test-package", "test-package/test-
 default = ["dioxus"]
 html = []
 dioxus = ["dioxus-core"]
+url-encoding = ["manganis-macro/url-encoding"]
