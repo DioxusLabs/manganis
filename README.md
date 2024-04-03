@@ -19,7 +19,7 @@ const _: &str = manganis::mg!(file("test-package-dependency/src/asset.txt"));
 const _: &str = manganis::mg!(file("https://rustacean.net/assets/rustacean-flat-happy.png"));
 
 // You can collect images which will be automatically optimized
-pub const RESIZED_PNG_ASSET: manganis::ImageAsset =
+pub const PNG_ASSET: manganis::ImageAsset =
     manganis::mg!(image("rustacean-flat-gesture.png"));
 // Resize the image at compile time to make the assets smaller
 pub const RESIZED_PNG_ASSET: manganis::ImageAsset =
@@ -28,7 +28,7 @@ pub const RESIZED_PNG_ASSET: manganis::ImageAsset =
 pub const AVIF_ASSET: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png")
     .format(ImageType::Avif));
 // You can even include a low quality preview of the image embedded into the url
-pub const AVIF_ASSET: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png")
+pub const AVIF_ASSET_LOW: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png")
 	.format(ImageType::Avif)
 	.low_quality_preview());
 
