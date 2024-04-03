@@ -94,7 +94,7 @@ pub fn classes(input: TokenStream) -> TokenStream {
 ///
 /// The file builder collects an arbitrary file. Relative paths are resolved relative to the package root
 /// ```rust
-/// const _: &str = manganis::mg!(file("./src/asset.txt"));
+/// const _: &str = manganis::mg!(file("src/asset.txt"));
 /// ```
 /// Or you can use URLs to read the asset at build time from a remote location
 /// ```rust
@@ -105,19 +105,19 @@ pub fn classes(input: TokenStream) -> TokenStream {
 ///
 /// You can collect images which will be automatically optimized with the image builder:
 /// ```rust
-/// const _: &str = manganis::mg!(image("./rustacean-flat-gesture.png"));
+/// const _: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png"));
 /// ```
 /// Resize the image at compile time to make the assets file size smaller:
 /// ```rust
-/// const _: &str = manganis::mg!(image("./rustacean-flat-gesture.png").size(52, 52));
+/// const _: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png").size(52, 52));
 /// ```
 /// Or convert the image at compile time to a web friendly format:
 /// ```rust
-/// const _: &str = manganis::mg!(image("./rustacean-flat-gesture.png").format(ImageFormat::Avif).size(52, 52));
+/// const _: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png").format(ImageFormat::Avif).size(52, 52));
 /// ```
 /// You can mark images as preloaded to make them load faster in your app
 /// ```rust
-/// const _: &str = manganis::mg!(image("./rustacean-flat-gesture.png").preload());
+/// const _: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png").preload());
 /// ```
 ///
 /// # Fonts
