@@ -15,12 +15,14 @@ impl Parse for FileAssetParser {
         let path = inside.parse::<syn::LitStr>()?;
 
         let path_as_str = path.value();
-        let path = match path_as_str.parse(){
+        let path = match path_as_str.parse() {
             Ok(path) => path,
-            Err(e) => return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!("Failed to parse path: {path_as_str}\nAny relative paths are resolved relative to the manifest directory\n{e}"),
-            ))
+            Err(e) => {
+                return Err(syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("{e}"),
+                ))
+            }
         };
         let this_file = FileAsset::new(path);
         let asset =
