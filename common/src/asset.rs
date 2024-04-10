@@ -276,12 +276,12 @@ impl Display for AssetError {
             AssetError::NotFoundAbsolute(x) =>
                 write!(f,"File `{}` not found, please make sure it exists", x.display()),
             AssetError::NotFoundRelative(manifest_dir, path) =>
-                write!(f,"cannot find file `{}` in `{}`, please make sure the file exists.\nAny relative paths are resolved relative to the manifest directory.", 
+                write!(f,"cannot find file `{}` in `{}`, please make sure it exists.\nAny relative paths are resolved relative to the manifest directory.", 
                        path,
                        manifest_dir.display()
                 ),
             AssetError::NotFile(absolute_path) =>
-                write!(f, "`{}` is not a file, please choose a valid asset.\nAry relative paths are resolved relative to the manifest directory.", absolute_path.display()),
+                write!(f, "`{}` is not a file, please choose a valid asset.\nAny relative paths are resolved relative to the manifest directory.", absolute_path.display()),
             AssetError::IO(absolute_path, err) =>
                 write!(f, "unknown error when accessing `{}`: \n{}", absolute_path.display(), err)
         }
