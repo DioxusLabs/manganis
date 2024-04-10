@@ -281,7 +281,7 @@ impl Display for AssetError {
                        manifest_dir.display()
                 ),
             AssetError::NotFile(absolute_path) =>
-                write!(f, "`{}` is not a file, please choose a valid asset.", absolute_path.display()),
+                write!(f, "`{}` is not a file, please choose a valid asset.\nAry relative paths are resolved relative to the manifest directory.", absolute_path.display()),
             AssetError::IO(absolute_path, err) =>
                 write!(f, "unknown error when accessing `{}`: \n{}", absolute_path.display(), err)
         }
