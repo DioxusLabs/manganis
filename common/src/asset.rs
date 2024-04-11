@@ -267,7 +267,7 @@ pub enum AssetError {
     /// The path exist but is not a file
     NotFile(PathBuf),
     /// Unknown IO error
-    IO(PathBuf, String),
+    IO(PathBuf, std::io::Error),
 }
 
 impl Display for AssetError {
@@ -312,7 +312,7 @@ impl FromStr for FileSource {
                         Err(AssetError::NotFoundRelative(manifest_dir, s.into()))
                     }
                     // other error
-                    Err(e) => Err(AssetError::IO(path, e.to_string())),
+                    Err(e) => Err(AssetError::IO(path, e)),
                 }
             }
         }
