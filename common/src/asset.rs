@@ -257,8 +257,39 @@ impl FileLocation {
     }
 }
 
+/// Error while checking an asset exists
+#[derive(Debug)]
+pub enum AssetError {
+    /// The absolute path does not exist
+    NotFoundAbsolute(PathBuf),
+    /// The relative path does not exist
+    NotFoundRelative(PathBuf, String),
+    /// The path exist but is not a file
+    NotFile(PathBuf),
+    /// Unknown IO error
+    IO(PathBuf, std::io::Error),
+}
+
+impl Display for AssetError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AssetError::NotFoundAbsolute(x) =>
+                write!(f,"File `{}` not found, please make sure it exists", x.display()),
+            AssetError::NotFoundRelative(manifest_dir, path) =>
+                write!(f,"cannot find file `{}` in `{}`, please make sure it exists.\nAny relative paths are resolved relative to the manifest directory.", 
+                       path,
+                       manifest_dir.display()
+                ),
+            AssetError::NotFile(absolute_path) =>
+                write!(f, "`{}` is not a file, please choose a valid asset.\nAny relative paths are resolved relative to the manifest directory.", absolute_path.display()),
+            AssetError::IO(absolute_path, err) =>
+                write!(f, "unknown error when accessing `{}`: \n{}", absolute_path.display(), err)
+        }
+    }
+}
+
 impl FromStr for FileSource {
-    type Err = anyhow::Error;
+    type Err = AssetError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match Url::parse(s) {
@@ -266,10 +297,23 @@ impl FromStr for FileSource {
             Err(_) => {
                 let manifest_dir = manifest_dir();
                 let path = manifest_dir.join(PathBuf::from(s));
-                let path = path
-                    .canonicalize()
-                    .with_context(|| format!("Failed to canonicalize path: {}", path.display()))?;
-                Ok(Self::Local(path))
+                let is_absolute = PathBuf::from(s).is_absolute();
+
+                match path.canonicalize() {
+                    Ok(x) if x.is_file() => Ok(Self::Local(x)),
+                    // path exists but is not a file
+                    Ok(x) => Err(AssetError::NotFile(x)),
+                    // absolute path does not exist
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound && is_absolute => {
+                        Err(AssetError::NotFoundAbsolute(s.into()))
+                    }
+                    // relative path does not exist
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                        Err(AssetError::NotFoundRelative(manifest_dir, s.into()))
+                    }
+                    // other error
+                    Err(e) => Err(AssetError::IO(path, e)),
+                }
             }
         }
     }
