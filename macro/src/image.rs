@@ -180,10 +180,10 @@ impl Parse for ImageAssetParser {
         let path_as_str = path.value();
         let path: FileSource = match path_as_str.parse() {
             Ok(path) => path,
-            Err(_) => {
+            Err(e) => {
                 return Err(syn::Error::new(
                     proc_macro2::Span::call_site(),
-                    format!("Failed to parse path: {}", path_as_str),
+                    format!("{e}"),
                 ))
             }
         };
