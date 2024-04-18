@@ -6,20 +6,8 @@ use std::path::PathBuf;
 use std::env;
 use test_package_dependency::IMAGE_ASSET;
 
-// this is necessary so that the the linker
-// merge all the `link_section`s of this code and all its dependencies.
-// This variable must be used in the main, otherwise rust will
-// figure out it is not used and remove everything
-extern "Rust" {
-    #[link_name = "__start_manganis"]
-    static MANGANIS_START: u8;
-}
-
-
 fn main() {
-    unsafe {
-        assert!(MANGANIS_START != 0);
-    }
+    manganis::init();
 
     tracing_subscriber::fmt::init();
 

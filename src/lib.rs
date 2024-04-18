@@ -297,3 +297,24 @@ mod __private {
 impl ForMgMacro for ImageAssetBuilder {}
 impl ForMgMacro for FontAssetBuilder {}
 impl ForMgMacro for &'static str {}
+
+#[cfg(target_os="linux")]
+// this is necessary so that the the linker
+// merge all the `link_section`s of this code and all its dependencies.
+// This variable must be used in the main, otherwise rust will
+// figure out it is not used and remove everything
+extern "Rust" {
+    #[link_name = "__start_manganis"]
+    static MANGANIS_START: u8;
+}
+
+#[cfg(not(target_os="linux"))]
+compile_error!("this only works on linux right now");
+
+/// call this function in your main to use manganis.
+/// This will make rust include all the assets for you
+pub fn init(){
+    unsafe {
+        assert!(MANGANIS_START != 0);
+    }
+}
