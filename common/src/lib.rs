@@ -7,6 +7,7 @@ mod config;
 mod file;
 mod manifest;
 mod package;
+pub mod linker;
 
 pub use asset::*;
 pub use config::*;
