@@ -55,6 +55,11 @@ fn main() {
     assert!(path.starts_with("dist/asset"));
     println!("{}", IMAGE_ASSET);
     assert!(IMAGE_ASSET.starts_with("dist/rustacean"));
+
+
+    // FIXME: the data stored in the link_section of the nested dependencies
+    // is not merged in the final executable.
+    // I have to figure out why it works for `linkme`
     let path = PathBuf::from(format!("./{IMAGE_ASSET}"));
     println!("{:?}", path);
     println!("contents: {:?}", std::fs::read(path).unwrap());
