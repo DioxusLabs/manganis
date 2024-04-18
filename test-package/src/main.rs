@@ -6,14 +6,21 @@ use std::path::PathBuf;
 use std::env;
 use test_package_dependency::IMAGE_ASSET;
 
-// this is necessary so that the compiler / the linker
-// don't remove the "manganis" section in the executable.
-// Some part of this section must be used in the main
-#[link_section = "manganis"]
-static USELESS_DATA: u8 = 32;
+// this is necessary so that the the linker
+// merge all the `link_section`s of this code and all its dependencies.
+// This variable must be used in the main, otherwise rust will
+// figure out it is not used and remove everything
+extern "Rust" {
+    #[link_name = "__start_manganis"]
+    static MANGANIS_START: u8;
+}
+
 
 fn main() {
-    assert!(USELESS_DATA == 32);
+    unsafe {
+        assert!(MANGANIS_START != 0);
+    }
+
     tracing_subscriber::fmt::init();
 
     println!("{:?}", test_package_dependency::AVIF_ASSET);
@@ -56,10 +63,6 @@ fn main() {
     println!("{}", IMAGE_ASSET);
     assert!(IMAGE_ASSET.starts_with("dist/rustacean"));
 
-
-    // FIXME: the data stored in the link_section of the nested dependencies
-    // is not merged in the final executable.
-    // I have to figure out why it works for `linkme`
     let path = PathBuf::from(format!("./{IMAGE_ASSET}"));
     println!("{:?}", path);
     println!("contents: {:?}", std::fs::read(path).unwrap());
