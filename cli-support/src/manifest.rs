@@ -49,8 +49,6 @@ impl AssetManifestExt for AssetManifest {
 
         let manganis_data = get_string_manganis(&file).unwrap();
 
-        tracing::info!("I found manganis data:\n```\n{manganis_data}\n```");
-
         let deserializer = serde_json::Deserializer::from_str(&manganis_data);
         let assets = deserializer
             .into_iter::<AssetType>()
