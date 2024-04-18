@@ -13,7 +13,7 @@ use url::Url;
 use crate::{cache::manifest_dir, Config, FileOptions};
 
 /// The type of asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub enum AssetType {
     /// A file asset
     File(FileAsset),
@@ -207,7 +207,7 @@ pub fn get_mime_from_ext(extension: Option<&str>) -> &'static str {
 }
 
 /// The location of an asset before and after it is collected
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct FileLocation {
     unique_name: String,
     source: FileSource,
@@ -320,7 +320,7 @@ impl FromStr for FileSource {
 }
 
 /// A file asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct FileAsset {
     location: FileLocation,
     options: FileOptions,
@@ -460,7 +460,7 @@ impl FileAsset {
 }
 
 /// A metadata asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct MetadataAsset {
     key: String,
     value: String,
@@ -487,7 +487,7 @@ impl MetadataAsset {
 }
 
 /// A tailwind class asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct TailwindAsset {
     classes: String,
 }

@@ -3,9 +3,17 @@
 use manganis_cli_support::AssetManifestExt;
 use manganis_common::{AssetManifest, Config};
 use std::path::PathBuf;
+use std::env;
 use test_package_dependency::IMAGE_ASSET;
 
+// this is necessary so that the compiler / the linker
+// don't remove the "manganis" section in the executable.
+// Some part of this section must be used in the main
+#[link_section = "manganis"]
+static USELESS_DATA: u8 = 32;
+
 fn main() {
+    assert!(USELESS_DATA == 32);
     tracing_subscriber::fmt::init();
 
     println!("{:?}", test_package_dependency::AVIF_ASSET);
@@ -20,8 +28,11 @@ fn main() {
         .with_assets_serve_location(assets_serve_location)
         .save();
 
+    let path_of_exe = env::current_exe().unwrap();
+    println!("I am {path_of_exe:?}");
+
     // Then collect the assets
-    let manifest = AssetManifest::load(Some("test-package"));
+    let manifest = AssetManifest::load(&path_of_exe);
 
     // Remove the old assets
     let _ = std::fs::remove_dir_all(assets_file_location);

@@ -1,8 +1,8 @@
-use manganis_common::{FileAsset, FileOptions, FileSource, ImageOptions};
+use manganis_common::{FileAsset, FileOptions, FileSource, ImageOptions, AssetType};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, Token};
 
-use crate::add_asset;
+use crate::generate_link_section;
 
 struct ParseImageOptions {
     options: Vec<ParseImageOption>,
@@ -161,6 +161,7 @@ enum ImageType {
 pub struct ImageAssetParser {
     file_name: String,
     low_quality_preview: Option<String>,
+    asset: AssetType,
 }
 
 impl Parse for ImageAssetParser {
@@ -196,17 +197,8 @@ impl Parse for ImageAssetParser {
             parsed_options.apply_to_options(&mut this_file, &mut low_quality_preview);
         }
 
-        let asset =
-            add_asset(manganis_common::AssetType::File(this_file.clone())).map_err(|e| {
-                syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("Failed to add asset: {e}"),
-                )
-            })?;
-        let this_file = match asset {
-            manganis_common::AssetType::File(this_file) => this_file,
-            _ => unreachable!(),
-        };
+        let asset = manganis_common::AssetType::File(this_file.clone());
+
         let file_name = if this_file.url_encoded() {
             #[cfg(not(feature = "url-encoding"))]
             return Err(syn::Error::new(
@@ -265,6 +257,7 @@ impl Parse for ImageAssetParser {
         Ok(ImageAssetParser {
             file_name,
             low_quality_preview,
+            asset
         })
     }
 }
@@ -310,7 +303,10 @@ impl ToTokens for ImageAssetParser {
             None => quote! { None },
         };
 
+        let link_section = generate_link_section(self.asset.clone());
+
         tokens.extend(quote! {
+            #link_section
             manganis::ImageAsset::new(#file_name).with_preview(#low_quality_preview)
         })
     }

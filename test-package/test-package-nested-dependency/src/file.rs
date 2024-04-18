@@ -1,4 +1,4 @@
-const _: &str = manganis::classes!("flex flex-row p-5");
+const _: &str = manganis::classes!("flex flex-row p-4");
 pub const CSS_ASSET: &str = manganis::mg!(file("style.css"));
 pub const PNG_ASSET: &str = manganis::mg!(file("rustacean-flat-gesture.png"));
 pub const RESIZED_PNG_ASSET: manganis::ImageAsset =

@@ -5,7 +5,7 @@ use file::FileAssetParser;
 use font::FontAssetParser;
 use image::ImageAssetParser;
 use manganis_common::cache::macro_log_file;
-use manganis_common::{AssetType, MetadataAsset, TailwindAsset};
+use manganis_common::{MetadataAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::TokenStream as TokenStream2;
@@ -13,6 +13,10 @@ use quote::{quote, ToTokens};
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use syn::{parse::Parse, parse_macro_input, LitStr};
+use serde_json;
+
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 mod file;
 mod font;
@@ -35,16 +39,42 @@ fn trace_to_file() {
     }
 }
 
-// It appears rustc uses one instance of the dynamic library for each crate that uses it.
-// We can reset the asset of the current crate the first time the macro is used in the crate.
-static INITIALIZED: AtomicBool = AtomicBool::new(false);
+fn generate_link_section(asset: manganis_common::AssetType) -> TokenStream2 {
+    let position = proc_macro2::Span::call_site();
 
-fn add_asset(asset: manganis_common::AssetType) -> std::io::Result<AssetType> {
-    if !INITIALIZED.fetch_or(true, Ordering::Relaxed) {
-        manganis_common::clear_assets()?;
+    let mut hasher = DefaultHasher::new();
+    asset.hash(&mut hasher);
+
+    let ident = syn::Ident::new(
+        &format!("ASSET_{}", hasher.finish()),
+        position
+    );
+
+    let asset_description = serde_json::to_string(&asset)
+        .unwrap();
+
+    let len = asset_description.as_bytes().len();
+
+    let asset_bytes = syn::LitByteStr::new(asset_description.as_bytes(), position);
+
+    quote! {
+        // it may be useless, but this is what `linkme` does.
+        // No idea why
+        #[link_section = "manganis"]
+        pub static mut LINKME_PLEASE : [u8; 0] = [];
+
+        #[link_section = "manganis"]
+        #[used]
+        static #ident: [u8; #len] = {
+
+            // FIXME: the link sections of the nested dependencies
+            // are not merged together after compilation.
+            // `linkme` does something strange in the definition, I don't know if it is related
+            // https://github.com/dtolnay/linkme/blob/6f479888fb546769277be9197f34e8400f430c2a/src/distributed_slice.rs#L215
+            * #asset_bytes
+        };
+
     }
-
-    manganis_common::add_asset(asset)
 }
 
 /// Collects tailwind classes that will be included in the final binary and returns them unmodified
@@ -61,28 +91,17 @@ pub fn classes(input: TokenStream) -> TokenStream {
     let input_as_str = parse_macro_input!(input as LitStr);
     let input_as_str = input_as_str.value();
 
-    let result = add_asset(manganis_common::AssetType::Tailwind(TailwindAsset::new(
+    let asset = manganis_common::AssetType::Tailwind(TailwindAsset::new(
         &input_as_str,
-    )))
-    .map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to add asset: {e}"),
-        )
-        .into_compile_error()
-    });
+    ));
 
-    let result = match result {
-        Ok(_) => quote! {
-            #input_as_str
-        },
-        Err(e) => quote! {
-            #e
-        },
-    };
+    let link_section = generate_link_section(asset);
 
     quote! {
-        #result
+        {
+        #link_section
+        #input_as_str
+        }
     }
     .into_token_stream()
     .into()
@@ -229,18 +248,18 @@ pub fn meta(input: TokenStream) -> TokenStream {
 
     let md = parse_macro_input!(input as MetadataValue);
 
-    let result = add_asset(manganis_common::AssetType::Metadata(MetadataAsset::new(
+    let asset = manganis_common::AssetType::Metadata(MetadataAsset::new(
         md.key.as_str(),
         md.value.as_str(),
-    )))
-    .map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to add asset: {e}"),
-        )
-        .into_compile_error()
-    })
-    .err();
+    ));
 
-    quote! {#result}.into_token_stream().into()
+    let link_section = generate_link_section(asset);
+
+    quote! {
+        {
+            #link_section
+        }
+    }
+    .into_token_stream()
+    .into()
 }
