@@ -15,9 +15,6 @@ use std::sync::atomic::Ordering;
 use syn::{parse::Parse, parse_macro_input, LitStr};
 use serde_json;
 
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-
 mod file;
 mod font;
 mod image;
@@ -39,16 +36,13 @@ fn trace_to_file() {
     }
 }
 
+/// this new approach will store the assets descriptions *inside the executable*.
+/// The trick is to use the `link_section` attribute.
+/// We force rust to store a json representation of the asset description
+/// inside a particular region of the binary, with the label "manganis".
+/// After linking, the "manganis" sections of the different executables will be merged.
 fn generate_link_section(asset: manganis_common::AssetType) -> TokenStream2 {
     let position = proc_macro2::Span::call_site();
-
-    let mut hasher = DefaultHasher::new();
-    asset.hash(&mut hasher);
-
-    let ident = syn::Ident::new(
-        &format!("ASSET_{}", hasher.finish()),
-        position
-    );
 
     let asset_description = serde_json::to_string(&asset)
         .unwrap();
@@ -58,22 +52,9 @@ fn generate_link_section(asset: manganis_common::AssetType) -> TokenStream2 {
     let asset_bytes = syn::LitByteStr::new(asset_description.as_bytes(), position);
 
     quote! {
-        // it may be useless, but this is what `linkme` does.
-        // No idea why
-        #[link_section = "manganis"]
-        pub static mut LINKME_PLEASE : [u8; 0] = [];
-
         #[link_section = "manganis"]
         #[used]
-        static #ident: [u8; #len] = {
-
-            // FIXME: the link sections of the nested dependencies
-            // are not merged together after compilation.
-            // `linkme` does something strange in the definition, I don't know if it is related
-            // https://github.com/dtolnay/linkme/blob/6f479888fb546769277be9197f34e8400f430c2a/src/distributed_slice.rs#L215
-            * #asset_bytes
-        };
-
+        static ASSET: [u8; #len] = * #asset_bytes;
     }
 }
 
