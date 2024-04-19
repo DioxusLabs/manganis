@@ -1,24 +1,20 @@
 pub use railwind::warning::Warning as TailwindWarning;
 use std::path::{Path, PathBuf};
 
-use manganis_common::{AssetManifest, AssetType};
+use manganis_common::{AssetManifest, AssetType, linker};
 
 use crate::file::process_file;
 
 use object::{File, Object, ObjectSection};
-use serde_json;
 use std::fs;
 
 // get the text containing all the asset descriptions
 // in the "link section" of the binary
 fn get_string_manganis(file: &File) -> Option<String> {
     for section in file.sections() {
-        match section.name() {
-            Ok(n) if n == "manganis" => {
-                let bytes = section.uncompressed_data().ok()?;
-                return Some(std::str::from_utf8(&bytes).ok()?.to_string());
-            }
-            _ => {}
+        if let Ok(linker::SECTION) = section.name() {
+            let bytes = section.uncompressed_data().ok()?;
+            return Some(std::str::from_utf8(&bytes).ok()?.to_string());
         }
     }
     None
