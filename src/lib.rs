@@ -298,11 +298,30 @@ impl ForMgMacro for ImageAssetBuilder {}
 impl ForMgMacro for FontAssetBuilder {}
 impl ForMgMacro for &'static str {}
 
-// this is necessary so that the the linker
-// merge all the `link_section`s of this code and all its dependencies.
-// This variable must be used in the main, otherwise rust will
-// figure out it is not used and remove everything
-manganis_common::link_section_start_offset!(MANGANIS_START);
+
+/// expose the manganis section to the rust linker
+/// this have to be in sync with `common/src/linker.rs`
+extern "Rust" {
+    #[cfg_attr(
+        any(
+            target_os = "none",
+            target_os = "linux",
+            target_os = "android",
+            target_os = "fuchsia",
+            target_os = "psp",
+            target_os = "freebsd",
+            target_os = "wasm"
+           ),
+           link_name = "__start_manganis"
+           )]
+        #[cfg_attr(
+            any(target_os = "macos", target_os = "ios", target_os = "tvos"),
+            link_name = "\x01section$start$__DATA$__manganis"
+            )]
+        #[cfg_attr(target_os = "windows", link_name = ".manganis$a")]
+        #[cfg_attr(target_os = "illumos", link_name = "__start_set_manganis")]
+        static MANGANIS_START: u8;
+}
 
 /// call this function in your main to use manganis.
 /// This will make rust include all the assets for you
