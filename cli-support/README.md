@@ -2,7 +2,7 @@
 
 This crate provides utilities to collect assets that integrate with the Manganis macro. It makes it easy to integrate an asset collection and optimization system into a build tool.
 
-```rust
+```rust, no_run
 use manganis_cli_support::{AssetManifestExt, ManganisSupportGuard};
 use manganis_common::{AssetManifest, Config};
 
@@ -32,10 +32,10 @@ fn main() {
 
     // the location where cargo built your binary.
     // you can use the `cargo-metadata` crate for this
-    let executable_path = "./target/debug/my_binary";
+    let executable_path = std::path::PathBuf::from("./target/debug/my_binary");
 
     // Then collect the assets
-    let manifest = AssetManifest::load(executable_path);
+    let manifest = AssetManifest::load(&executable_path);
 
     // Remove the old assets
     let _ = std::fs::remove_dir_all(assets_file_location);

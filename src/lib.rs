@@ -298,9 +298,8 @@ impl ForMgMacro for ImageAssetBuilder {}
 impl ForMgMacro for FontAssetBuilder {}
 impl ForMgMacro for &'static str {}
 
-
-/// expose the manganis section to the rust linker
-/// this have to be in sync with `common/src/linker.rs`
+// expose the manganis section to the rust linker
+// this have to be in sync with `common/src/linker.rs`
 extern "Rust" {
     #[cfg_attr(
         any(
@@ -311,16 +310,16 @@ extern "Rust" {
             target_os = "psp",
             target_os = "freebsd",
             target_os = "wasm"
-           ),
-           link_name = "__start_manganis"
-           )]
-        #[cfg_attr(
-            any(target_os = "macos", target_os = "ios", target_os = "tvos"),
-            link_name = "\x01section$start$__DATA$__manganis"
-            )]
-        #[cfg_attr(target_os = "windows", link_name = ".manganis$a")]
-        #[cfg_attr(target_os = "illumos", link_name = "__start_set_manganis")]
-        static MANGANIS_START: u8;
+        ),
+        link_name = "__start_manganis"
+    )]
+    #[cfg_attr(
+        any(target_os = "macos", target_os = "ios", target_os = "tvos"),
+        link_name = "\x01section$start$__DATA$__manganis"
+    )]
+    #[cfg_attr(target_os = "windows", link_name = ".manganis$a")]
+    #[cfg_attr(target_os = "illumos", link_name = "__start_set_manganis")]
+    static MANGANIS_START: u8;
 }
 
 /// call this function in your main to use manganis.

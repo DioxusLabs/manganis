@@ -44,7 +44,10 @@ impl AssetManifestExt for AssetManifest {
         let binary_data = fs::read(executable).unwrap();
         let file = object::File::parse(&*binary_data).unwrap();
 
-        let manganis_data = get_string_manganis(&file).unwrap();
+        let Some(manganis_data) = get_string_manganis(&file) else {
+            // If we don't see any manganis assets used in the binary, just return an empty manifest
+            return Self::default();
+        };
 
         let deserializer = serde_json::Deserializer::from_str(&manganis_data);
         let assets = deserializer
