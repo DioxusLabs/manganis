@@ -30,8 +30,12 @@ fn main() {
         .wait()
         .unwrap();
 
+    // the location where cargo built your binary.
+    // you can use the `cargo-metadata` crate for this
+    let executable_path = "./target/debug/my_binary";
+
     // Then collect the assets
-    let manifest = AssetManifest::load();
+    let manifest = AssetManifest::load(executable_path);
 
     // Remove the old assets
     let _ = std::fs::remove_dir_all(assets_file_location);
