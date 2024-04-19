@@ -27,15 +27,15 @@ impl AssetManifest {
                     crate::FileOptions::Css(_) => {
                         let asset_path = file.served_location();
                         head.push_str(&format!(
-                                "<link rel=\"stylesheet\" href=\"{asset_path}\">\n"
-                                ))
+                            "<link rel=\"stylesheet\" href=\"{asset_path}\">\n"
+                        ))
                     }
                     crate::FileOptions::Image(image_options) => {
                         if image_options.preload() {
                             let asset_path = file.served_location();
                             head.push_str(&format!(
-                                    "<link rel=\"preload\" as=\"image\" href=\"{asset_path}\">\n"
-                                    ))
+                                "<link rel=\"preload\" as=\"image\" href=\"{asset_path}\">\n"
+                            ))
                         }
                     }
                     _ => {}

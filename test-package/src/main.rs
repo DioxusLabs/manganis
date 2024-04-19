@@ -2,8 +2,8 @@
 
 use manganis_cli_support::AssetManifestExt;
 use manganis_common::{AssetManifest, Config};
-use std::path::PathBuf;
 use std::env;
+use std::path::PathBuf;
 use test_package_dependency::IMAGE_ASSET;
 
 fn main() {

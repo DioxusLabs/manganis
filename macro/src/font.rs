@@ -1,4 +1,4 @@
-use manganis_common::{CssOptions, FileAsset, FileSource, AssetType};
+use manganis_common::{AssetType, CssOptions, FileAsset, FileSource};
 use quote::{quote, ToTokens};
 use syn::{bracketed, parenthesized, parse::Parse};
 

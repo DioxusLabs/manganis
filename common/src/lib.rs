@@ -5,8 +5,8 @@ mod asset;
 pub mod cache;
 mod config;
 mod file;
-mod manifest;
 pub mod linker;
+mod manifest;
 
 pub use asset::*;
 pub use config::*;

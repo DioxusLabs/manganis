@@ -1,4 +1,4 @@
-use manganis_common::{FileAsset, AssetType};
+use manganis_common::{AssetType, FileAsset};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse};
 

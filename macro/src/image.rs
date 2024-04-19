@@ -1,4 +1,4 @@
-use manganis_common::{FileAsset, FileOptions, FileSource, ImageOptions, AssetType};
+use manganis_common::{AssetType, FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, Token};
 
@@ -257,7 +257,7 @@ impl Parse for ImageAssetParser {
         Ok(ImageAssetParser {
             file_name,
             low_quality_preview,
-            asset
+            asset,
         })
     }
 }

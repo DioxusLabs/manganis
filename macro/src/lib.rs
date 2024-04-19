@@ -10,10 +10,10 @@ use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
+use serde_json;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use syn::{parse::Parse, parse_macro_input, LitStr};
-use serde_json;
 
 mod file;
 mod font;
@@ -44,17 +44,13 @@ fn trace_to_file() {
 fn generate_link_section(asset: manganis_common::AssetType) -> TokenStream2 {
     let position = proc_macro2::Span::call_site();
 
-    let asset_description = serde_json::to_string(&asset)
-        .unwrap();
+    let asset_description = serde_json::to_string(&asset).unwrap();
 
     let len = asset_description.as_bytes().len();
 
     let asset_bytes = syn::LitByteStr::new(asset_description.as_bytes(), position);
 
-    let section_name = syn::LitStr::new(
-        manganis_common::linker::SECTION,
-        position
-    );
+    let section_name = syn::LitStr::new(manganis_common::linker::SECTION, position);
 
     quote! {
         #[link_section = #section_name]
@@ -77,9 +73,7 @@ pub fn classes(input: TokenStream) -> TokenStream {
     let input_as_str = parse_macro_input!(input as LitStr);
     let input_as_str = input_as_str.value();
 
-    let asset = manganis_common::AssetType::Tailwind(TailwindAsset::new(
-        &input_as_str,
-    ));
+    let asset = manganis_common::AssetType::Tailwind(TailwindAsset::new(&input_as_str));
 
     let link_section = generate_link_section(asset);
 

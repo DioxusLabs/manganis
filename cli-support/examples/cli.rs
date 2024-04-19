@@ -1,7 +1,7 @@
 use manganis_cli_support::{AssetManifestExt, ManganisSupportGuard};
 use manganis_common::{AssetManifest, Config};
-use std::process::{ChildStdout, Stdio};
 use std::path::PathBuf;
+use std::process::{ChildStdout, Stdio};
 
 use cargo_metadata::Message;
 
@@ -11,10 +11,10 @@ fn get_executable_location(cargo_output: std::io::BufReader<ChildStdout>) -> Pat
         Some(Ok(Message::CompilerArtifact(artifact))) => {
             println!("{artifact:?}");
             if let Some(path) = artifact.executable {
-                return path.into_std_path_buf()
+                return path.into_std_path_buf();
             }
-        },
-        _ => () // Unknown message
+        }
+        _ => (), // Unknown message
     }
     panic!("cargo didn't return where the executable is")
 }
@@ -52,9 +52,7 @@ fn main() {
     let _ = std::fs::remove_dir_all(assets_file_location);
 
     // And copy the static assets to the public directory
-    assets
-        .copy_static_assets_to(assets_file_location)
-        .unwrap();
+    assets.copy_static_assets_to(assets_file_location).unwrap();
 
     // Then collect the tailwind CSS
     let css = assets.collect_tailwind_css(true, &mut Vec::new());

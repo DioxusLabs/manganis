@@ -306,7 +306,7 @@ manganis_common::link_section_start_offset!(MANGANIS_START);
 
 /// call this function in your main to use manganis.
 /// This will make rust include all the assets for you
-pub fn init(){
+pub fn init() {
     unsafe {
         assert!(MANGANIS_START != 0);
     }

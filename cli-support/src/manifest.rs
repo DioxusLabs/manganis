@@ -1,15 +1,13 @@
 pub use railwind::warning::Warning as TailwindWarning;
 use std::path::{Path, PathBuf};
 
-use manganis_common::{
-    AssetManifest, AssetType
-};
+use manganis_common::{AssetManifest, AssetType};
 
 use crate::file::process_file;
 
 use object::{File, Object, ObjectSection};
-use std::fs;
 use serde_json;
+use std::fs;
 
 // get the text containing all the asset descriptions
 // in the "link section" of the binary
@@ -26,7 +24,6 @@ fn get_string_manganis(file: &File) -> Option<String> {
     None
 }
 
-
 /// An extension trait CLI support for the asset manifest
 pub trait AssetManifestExt {
     /// Load a manifest from the assets in the executable at the given path
@@ -38,7 +35,7 @@ pub trait AssetManifestExt {
     fn collect_tailwind_css(
         &self,
         include_preflight: bool,
-        warnings: &mut Vec<TailwindWarning>
+        warnings: &mut Vec<TailwindWarning>,
     ) -> String;
 }
 
