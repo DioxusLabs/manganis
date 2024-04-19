@@ -1,7 +1,7 @@
 pub use railwind::warning::Warning as TailwindWarning;
 use std::path::{Path, PathBuf};
 
-use manganis_common::{AssetManifest, AssetType, linker};
+use manganis_common::{linker, AssetManifest, AssetType};
 
 use crate::file::process_file;
 
