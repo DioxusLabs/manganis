@@ -10,7 +10,6 @@ use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-use serde_json;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use syn::{parse::Parse, parse_macro_input, LitStr};
