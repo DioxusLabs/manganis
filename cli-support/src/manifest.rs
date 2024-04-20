@@ -12,9 +12,16 @@ use std::fs;
 // in the "link section" of the binary
 fn get_string_manganis(file: &File) -> Option<String> {
     for section in file.sections() {
-        if let Ok(linker::SECTION) = section.name() {
+        if let Ok(linker::SECTION_NAME) = section.name() {
             let bytes = section.uncompressed_data().ok()?;
-            return Some(std::str::from_utf8(&bytes).ok()?.to_string());
+            // Some platforms (e.g. macOS) start the manganis section with a null byte, we need to filter that out before we deserialize the JSON
+            return Some(
+                std::str::from_utf8(&bytes)
+                    .ok()?
+                    .chars()
+                    .filter(|c| !c.is_control())
+                    .collect::<String>(),
+            );
         }
     }
     None
@@ -35,6 +42,14 @@ pub trait AssetManifestExt {
     ) -> String;
 }
 
+fn deserialize_assets(json: &str) -> Vec<AssetType> {
+    let deserializer = serde_json::Deserializer::from_str(json);
+    deserializer
+        .into_iter::<AssetType>()
+        .map(|x| x.unwrap())
+        .collect()
+}
+
 impl AssetManifestExt for AssetManifest {
     fn load(executable: &Path) -> Self {
         let binary_data = fs::read(executable).unwrap();
@@ -45,11 +60,7 @@ impl AssetManifestExt for AssetManifest {
             return Self::default();
         };
 
-        let deserializer = serde_json::Deserializer::from_str(&manganis_data);
-        let assets = deserializer
-            .into_iter::<AssetType>()
-            .map(|x| x.unwrap())
-            .collect();
+        let assets = deserialize_assets(&manganis_data);
 
         Self::new(assets)
     }

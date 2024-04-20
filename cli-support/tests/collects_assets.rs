@@ -1,5 +1,6 @@
 use manganis_cli_support::{AssetManifestExt, ManganisSupportGuard};
-use manganis_common::{AssetManifest, Config};
+use manganis_common::{AssetManifest, AssetType, Config};
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::process::{ChildStdout, Stdio};
 
@@ -22,8 +23,6 @@ fn get_executable_location(cargo_output: std::io::BufReader<ChildStdout>) -> Pat
 
 #[test]
 fn collects_assets() {
-    // This is the location where the assets will be copied to in the filesystem
-    let assets_file_location = "./assets";
     // This is the location where the assets will be served from
     let assets_serve_location = "/assets";
 
@@ -46,7 +45,11 @@ fn collects_assets() {
 
     // Then build your application
     let mut command = Command::new("cargo")
-        .args(["build", "--message-format=json-render-diagnostics"])
+        .args([
+            "build",
+            "--message-format=json-render-diagnostics",
+            "--release",
+        ])
         .current_dir(test_package_dir)
         .stdout(Stdio::piped())
         .spawn()
@@ -58,15 +61,17 @@ fn collects_assets() {
     // Then collect the assets
     let assets = AssetManifest::load(&path);
 
-    // And copy the static assets to the public directory
-    assets.copy_static_assets_to(assets_file_location).unwrap();
+    let all_assets = assets.assets();
 
-    // Then collect the tailwind CSS
-    let css = assets.collect_tailwind_css(true, &mut Vec::new());
+    println!("{:#?}", all_assets);
 
-    // And write the CSS to the public directory
-    std::fs::write(format!("{}/tailwind.css", assets_file_location), css).unwrap();
+    let locations = all_assets
+        .iter()
+        .filter_map(|a| match a {
+            AssetType::File(f) => Some(f.location()),
+            _ => None,
+        })
+        .collect::<HashSet<_>>();
 
-    // Remove the assets
-    let _ = std::fs::remove_dir_all(assets_file_location);
+    assert_eq!(locations.len(), 16);
 }

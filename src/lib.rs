@@ -315,7 +315,7 @@ extern "Rust" {
     )]
     #[cfg_attr(
         any(target_os = "macos", target_os = "ios", target_os = "tvos"),
-        link_name = "\x01section$start$__DATA$__manganis"
+        link_name = "\x01section$start$__DATA$manganis"
     )]
     #[cfg_attr(target_os = "windows", link_name = ".manganis$a")]
     #[cfg_attr(target_os = "illumos", link_name = "__start_set_manganis")]

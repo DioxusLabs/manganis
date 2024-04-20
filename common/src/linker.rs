@@ -21,7 +21,38 @@ pub const SECTION: &str = {
 
     #[cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos"))]
     {
-        "__DATA,__manganis,regular,no_dead_strip"
+        "__DATA,manganis,regular,no_dead_strip"
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        ".manganis$b"
+    }
+
+    #[cfg(target_os = "illumos")]
+    {
+        "set_manganis"
+    }
+};
+
+/// The name of the section used by the linker on this platform
+pub const SECTION_NAME: &str = {
+    #[cfg(any(
+        target_os = "none",
+        target_os = "linux",
+        target_os = "android",
+        target_os = "fuchsia",
+        target_os = "psp",
+        target_os = "freebsd",
+        target_os = "wasm"
+    ))]
+    {
+        "manganis"
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos"))]
+    {
+        "manganis"
     }
 
     #[cfg(target_os = "windows")]
@@ -52,7 +83,7 @@ pub const SECTION_START: &str = {
 
     #[cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos"))]
     {
-        "\x01section$start$__DATA$__manganis"
+        "\x01section$start$__DATA$manganis"
     }
 
     #[cfg(target_os = "windows")]
