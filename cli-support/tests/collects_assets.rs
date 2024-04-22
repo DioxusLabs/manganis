@@ -1,6 +1,5 @@
 use manganis_cli_support::{AssetManifestExt, ManganisSupportGuard};
 use manganis_common::{AssetManifest, AssetType, Config};
-use std::collections::HashSet;
 use std::path::PathBuf;
 use std::process::{ChildStdout, Stdio};
 
@@ -23,8 +22,10 @@ fn get_executable_location(cargo_output: std::io::BufReader<ChildStdout>) -> Pat
 
 #[test]
 fn collects_assets() {
+    tracing_subscriber::fmt::init();
+
     // This is the location where the assets will be served from
-    let assets_serve_location = "/assets";
+    let assets_serve_location = "/";
 
     // First set any settings you need for the build
     Config::default()
@@ -43,6 +44,8 @@ fn collects_assets() {
 
     println!("running the CLI from {test_package_dir:?}");
 
+    Config::default().save();
+
     // Then build your application
     let mut command = Command::new("cargo")
         .args([
@@ -50,8 +53,10 @@ fn collects_assets() {
             "--message-format=json-render-diagnostics",
             "--release",
         ])
-        .current_dir(test_package_dir)
+        .current_dir(&test_package_dir)
         .stdout(Stdio::piped())
+        // On macOS we need to set lto to thin to make the assets work
+        .env("RUSTFLAGS", "-C embed-bitcode=yes -C lto=true")
         .spawn()
         .unwrap();
 
@@ -71,7 +76,18 @@ fn collects_assets() {
             AssetType::File(f) => Some(f.location()),
             _ => None,
         })
-        .collect::<HashSet<_>>();
+        .collect::<Vec<_>>();
 
+    // Make sure the right number of assets were collected
     assert_eq!(locations.len(), 16);
+
+    // Then copy the assets to a temporary directory and run the application
+    let assets_dir = PathBuf::from("./assets");
+    assets.copy_static_assets_to(assets_dir).unwrap();
+
+    // Then run the application
+    let status = Command::new(path).stdout(Stdio::piped()).status().unwrap();
+
+    // Make sure the application exited successfully
+    assert!(status.success());
 }

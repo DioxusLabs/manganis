@@ -1,6 +1,10 @@
 // Check if the MANGANIS_SUPPORT environment variable is set to true. If it is not found, then warn the user that the assets macro will not work.
 
 fn main() {
+    // Rerun the macro if the config file changes
+    let config_path = manganis_common::Config::config_path();
+    println!("cargo:rerun-if-changed={}", config_path.display());
+
     let manganis_support = std::env::var("MANGANIS_SUPPORT");
     println!("cargo:rerun-if-env-changed=MANGANIS_SUPPORT");
     if manganis_support.as_deref() != Ok("true") {
