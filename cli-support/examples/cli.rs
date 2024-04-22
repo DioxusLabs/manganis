@@ -44,6 +44,7 @@ fn main() {
         ])
         .stdout(Stdio::piped())
         // On macOS we need to set lto to thin to make sure assets link correctly
+        // See https://github.com/dtolnay/linkme/issues/61 for more information
         .env("RUSTFLAGS", "-C embed-bitcode=yes -C lto=true")
         .spawn()
         .unwrap();

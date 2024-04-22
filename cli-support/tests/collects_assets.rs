@@ -56,6 +56,7 @@ fn collects_assets() {
         .current_dir(&test_package_dir)
         .stdout(Stdio::piped())
         // On macOS we need to set lto to thin to make the assets work
+        // See https://github.com/dtolnay/linkme/issues/61 for more information
         .env("RUSTFLAGS", "-C embed-bitcode=yes -C lto=true")
         .spawn()
         .unwrap();
