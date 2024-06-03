@@ -502,16 +502,18 @@ dependencies = [
 
 [[package]]
 name = "dioxus-core"
-version = "0.5.0-alpha.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f39bef0484998f724622964f04468ddfde7fd550f5f0f1aef9394306e9caba44"
+checksum = "088daa3f45aaa729e9eef32dc0a9393dd709ee906b092089e5839cad1cad7c85"
 dependencies = [
  "futures-channel",
  "futures-util",
+ "generational-box",
  "longest-increasing-subsequence",
  "rustc-hash",
  "slab",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -713,6 +715,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
 dependencies = [
  "byteorder",
+]
+
+[[package]]
+name = "generational-box"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f132919c96b85c02a067ceae965fd50ace57111e2f55c7384b95ac191f4d966b"
+dependencies = [
+ "parking_lot",
 ]
 
 [[package]]
@@ -1520,6 +1531,16 @@ dependencies = [
  "serde",
  "serde_json",
  "vlq",
+]
+
+[[package]]
+name = "parking_lot"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1bf18183cf54e8d6059647fc3063646a1801cf30896933ec2311622cc4b9a27"
+dependencies = [
+ "lock_api",
+ "parking_lot_core",
 ]
 
 [[package]]
