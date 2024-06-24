@@ -38,14 +38,13 @@ fn main() {
     // Then build your application
     let mut command = Command::new("cargo")
         .args([
-            "build",
+            "rustc",
             "--message-format=json-render-diagnostics",
             "--release",
+            "--",
+            "--emit=obj"
         ])
         .stdout(Stdio::piped())
-        // On macOS we need to set lto to thin to make sure assets link correctly
-        // See https://github.com/dtolnay/linkme/issues/61 for more information
-        .env("RUSTFLAGS", "-C embed-bitcode=yes -C lto=thin")
         .spawn()
         .unwrap();
 

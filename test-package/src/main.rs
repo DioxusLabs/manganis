@@ -28,8 +28,6 @@ const ALL_ASSETS: &[&str] = &[
 ];
 
 fn main() {
-    manganis::init();
-
     tracing_subscriber::fmt::init();
 
     let cwd = std::env::current_dir().unwrap();

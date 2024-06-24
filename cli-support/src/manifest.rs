@@ -52,17 +52,86 @@ fn deserialize_assets(json: &str) -> Vec<AssetType> {
 
 impl AssetManifestExt for AssetManifest {
     fn load(executable: &Path) -> Self {
-        let binary_data = fs::read(executable).unwrap();
-        let file = object::File::parse(&*binary_data).unwrap();
+        let deps_path = executable.join("../deps");
 
-        let Some(manganis_data) = get_string_manganis(&file) else {
-            // If we don't see any manganis assets used in the binary, just return an empty manifest
+        let files = fs::read_dir(deps_path).unwrap();
+        let mut all_assets = Vec::new();
+
+        for file in files {
+            let Ok(file) = file else {
+                continue;
+            };
+
+            let path = file.path();
+
+            let Some(ext) = path.extension() else {
+                continue;
+            };
+
+            let Some(ext) = ext.to_str() else {
+                continue;
+            };
+
+            let is_rlib = match ext {
+                "rlib" => true,
+                "o" => false,
+                _ => continue,
+            };
+
+            // Read binary data and try getting assets from manganis string
+            let binary_data = fs::read(path).unwrap();
+
+            // rlibs are archives with object files inside.
+            let data = match is_rlib {
+                false => {
+                    // Parse an unarchived object file. We use a Vec to match the return types.
+                    let file = object::File::parse(&*binary_data).unwrap();
+                    let mut data = Vec::new();
+                    if let Some(string) = get_string_manganis(&file) {
+                        data.push(string);
+                    }
+                    data
+                }
+                true => {
+                    let file = object::read::archive::ArchiveFile::parse(&*binary_data).unwrap();
+
+                    // rlibs can contain many object files so we collect each manganis string here.
+                    let mut manganis_strings = Vec::new(); 
+
+                    // Look through each archive member for object files.
+                    // Read the archive member's binary data (we know it's an object file)
+                    // And parse it with the normal `object::File::parse` to find the manganis string.
+                    for member in file.members() {
+                        let member = member.unwrap();
+                        let name = String::from_utf8_lossy(member.name()).to_string();
+
+                        // Check if the archive member is an object file and parse it.
+                        if name.ends_with(".o") {
+                            let data = member.data(&*binary_data).unwrap();
+                            let o_file = object::File::parse(&*data).unwrap();
+                            if let Some(manganis_str) = get_string_manganis(&o_file) {
+                                manganis_strings.push(manganis_str);
+                            }
+                        }
+                    }
+
+                    manganis_strings
+                }
+            };
+
+            // Collect all assets for each manganis string found.
+            for item in data {
+                let mut assets = deserialize_assets(item.as_str());
+                all_assets.append(&mut assets);
+            }
+        }
+
+        // If we don't see any manganis assets used in the binary, just return an empty manifest
+        if all_assets.is_empty() {
             return Self::default();
         };
 
-        let assets = deserialize_assets(&manganis_data);
-
-        Self::new(assets)
+        Self::new(all_assets)
     }
 
     fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> anyhow::Result<()> {

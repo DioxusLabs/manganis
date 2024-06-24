@@ -26,7 +26,7 @@ pub const SECTION: &str = {
 
     #[cfg(target_os = "windows")]
     {
-        ".manganis$b"
+        "mg"
     }
 
     #[cfg(target_os = "illumos")]
@@ -57,7 +57,7 @@ pub const SECTION_NAME: &str = {
 
     #[cfg(target_os = "windows")]
     {
-        ".manganis$b"
+        "mg"
     }
 
     #[cfg(target_os = "illumos")]
@@ -66,33 +66,33 @@ pub const SECTION_NAME: &str = {
     }
 };
 
-/// section name used by the linker on this platform
-pub const SECTION_START: &str = {
-    #[cfg(any(
-        target_os = "none",
-        target_os = "linux",
-        target_os = "android",
-        target_os = "fuchsia",
-        target_os = "psp",
-        target_os = "freebsd",
-        target_os = "wasm"
-    ))]
-    {
-        "__start_manganis"
-    }
+// section name used by the linker on this platform
+// pub const SECTION_START: &str = {
+//     #[cfg(any(
+//         target_os = "none",
+//         target_os = "linux",
+//         target_os = "android",
+//         target_os = "fuchsia",
+//         target_os = "psp",
+//         target_os = "freebsd",
+//         target_os = "wasm"
+//     ))]
+//     {
+//         "__start_manganis"
+//     }
 
-    #[cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos"))]
-    {
-        "\x01section$start$__DATA$manganis"
-    }
+//     #[cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos"))]
+//     {
+//         "\x01section$start$__DATA$manganis"
+//     }
 
-    #[cfg(target_os = "windows")]
-    {
-        ".manganis$a"
-    }
+//     #[cfg(target_os = "windows")]
+//     {
+//         "mg_s"
+//     }
 
-    #[cfg(target_os = "illumos")]
-    {
-        "__start_set_manganis"
-    }
-};
+//     #[cfg(target_os = "illumos")]
+//     {
+//         "__start_set_manganis"
+//     }
+// };
