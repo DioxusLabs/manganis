@@ -4,12 +4,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
+// The prefix to the link arg for a path to the current working directory.
+const MG_WORKDIR_ARG_NAME: &str = "mg-working-dir;";
+
 /// Intercept the linker for object files.
 ///
 /// Takes the arguments used in a CLI and returns a list of paths to `.rlib` or `.o` files to be searched for asset sections.
-pub fn linker_intercept(args: std::env::Args) -> (PathBuf, Vec<PathBuf>) {
-    // TODO: Convert to Result for error messages.
-
+pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)> {
     let args = args.collect::<Vec<String>>();
 
     // let data = format!("{:?}", args);
@@ -18,7 +19,10 @@ pub fn linker_intercept(args: std::env::Args) -> (PathBuf, Vec<PathBuf>) {
 
     let mut working_dir = std::env::current_dir().unwrap();
 
-    let is_command_file = args.get(1).unwrap().starts_with("@");
+    let Some(arg1) = args.get(1) else {
+        return None;
+    };
+    let is_command_file = arg1.starts_with("@");
 
     let linker_args = match is_command_file {
         true => {
@@ -49,15 +53,7 @@ pub fn linker_intercept(args: std::env::Args) -> (PathBuf, Vec<PathBuf>) {
                 let line_parsed = line_parsed.trim_end_matches("\"").to_string();
                 let line_parsed = line_parsed.trim_start_matches("\"").to_string();
 
-                if line_parsed.starts_with("mg-working-dir;") {
-                    let split: Vec<_> = line_parsed.split(";").collect();
-                    working_dir = PathBuf::from(split[1]);
-                    continue;
-                }
-                
-                if line_parsed.ends_with(".o") || line_parsed.ends_with(".rlib") {
-                    linker_args.push(line_parsed);
-                }
+                linker_args.push(line_parsed);
             }
 
             linker_args
@@ -68,11 +64,16 @@ pub fn linker_intercept(args: std::env::Args) -> (PathBuf, Vec<PathBuf>) {
         }
     };
 
-    println!("{:?}", linker_args);
-
     // Parse through linker args for `.o` or `.rlib` files.
     let mut object_files: Vec<PathBuf> = Vec::new();
     for item in linker_args {
+        // Get the working directory so it isn't lost.
+        if item.starts_with(MG_WORKDIR_ARG_NAME) {
+            let split: Vec<_> = item.split(";").collect();
+            working_dir = PathBuf::from(split[1]);
+            continue;
+        }
+
         if item.ends_with(".o") || item.ends_with(".rlib") {
             object_files.push(PathBuf::from(item));
         }
@@ -80,9 +81,13 @@ pub fn linker_intercept(args: std::env::Args) -> (PathBuf, Vec<PathBuf>) {
 
     // debugging
     let data = format!("{:?}", object_files);
-    fs::write(format!("{}/mg-linker-intercept-out", working_dir.display()), data).unwrap();
+    fs::write(
+        format!("{}/mg-linker-intercept-out", working_dir.display()),
+        data,
+    )
+    .unwrap();
 
-    (working_dir, object_files)
+    Some((working_dir, object_files))
 }
 
 /// Calls cargo to build the project, passing this current executable as the linker.
@@ -108,7 +113,7 @@ where
     // Since we have some serious child process stuff going on, (About 3 levels deep)
     // we need to make sure the current working directory makes it through correctly.
     let working_dir = std::env::current_dir().unwrap();
-    let working_dir_arg = format!("-Clink-arg=mg-working-dir;{}",working_dir.display());
+    let working_dir_arg = format!("-Clink-arg=mg-working-dir;{}", working_dir.display());
     cmd.arg(working_dir_arg);
 
     cmd.spawn()?.wait()?;
