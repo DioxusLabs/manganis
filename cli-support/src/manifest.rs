@@ -1,5 +1,5 @@
 pub use railwind::warning::Warning as TailwindWarning;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use manganis_common::{linker, AssetManifest, AssetType};
 
@@ -29,9 +29,9 @@ fn get_string_manganis(file: &File) -> Option<String> {
 
 /// An extension trait CLI support for the asset manifest
 pub trait AssetManifestExt {
-    /// Load a manifest from the assets in the executable at the given path
-    /// The asset descriptions are stored inside the binary, in the link-section
-    fn load(executable: &Path) -> Self;
+    /// Load a manifest from the assets propogated through object files.
+    /// The asset descriptions are stored inside a manifest file that is produced when the linker is intercepted.
+    fn load(manifest: Vec<PathBuf>) -> Self;
     /// Optimize and copy all assets in the manifest to a folder
     fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> anyhow::Result<()>;
     /// Collect all tailwind classes and generate string with the output css
@@ -51,19 +51,10 @@ fn deserialize_assets(json: &str) -> Vec<AssetType> {
 }
 
 impl AssetManifestExt for AssetManifest {
-    fn load(executable: &Path) -> Self {
-        let deps_path = executable.join("../deps");
-
-        let files = fs::read_dir(deps_path).unwrap();
+    fn load(object_paths: Vec<PathBuf>) -> Self {
         let mut all_assets = Vec::new();
 
-        for file in files {
-            let Ok(file) = file else {
-                continue;
-            };
-
-            let path = file.path();
-
+        for path in object_paths {
             let Some(ext) = path.extension() else {
                 continue;
             };
@@ -96,7 +87,7 @@ impl AssetManifestExt for AssetManifest {
                     let file = object::read::archive::ArchiveFile::parse(&*binary_data).unwrap();
 
                     // rlibs can contain many object files so we collect each manganis string here.
-                    let mut manganis_strings = Vec::new(); 
+                    let mut manganis_strings = Vec::new();
 
                     // Look through each archive member for object files.
                     // Read the archive member's binary data (we know it's an object file)
