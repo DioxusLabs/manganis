@@ -19,14 +19,12 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
 
     let mut working_dir = std::env::current_dir().unwrap();
 
-    let Some(arg1) = args.get(1) else {
-        return None;
-    };
-    let is_command_file = arg1.starts_with("@");
+    let arg1 = args.get(1)?;
+    let is_command_file = arg1.starts_with('@');
 
     let linker_args = match is_command_file {
         true => {
-            let path = args[1].trim().trim_start_matches("@");
+            let path = args[1].trim().trim_start_matches('@');
             let file_binary = fs::read(path).unwrap();
 
             // This may be a utf-16le file. Let's try utf-8 first.
@@ -36,7 +34,6 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
                     // Convert Vec<u8> to Vec<u16> to convert into a String
                     let binary_u16le: Vec<u16> = file_binary
                         .chunks_exact(2)
-                        .into_iter()
                         .map(|a| u16::from_le_bytes([a[0], a[1]]))
                         .collect();
 
@@ -50,8 +47,8 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
 
             for line in lines {
                 let line_parsed = line.to_string();
-                let line_parsed = line_parsed.trim_end_matches("\"").to_string();
-                let line_parsed = line_parsed.trim_start_matches("\"").to_string();
+                let line_parsed = line_parsed.trim_end_matches('\"').to_string();
+                let line_parsed = line_parsed.trim_start_matches('\"').to_string();
 
                 linker_args.push(line_parsed);
             }
@@ -69,7 +66,7 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
     for item in linker_args {
         // Get the working directory so it isn't lost.
         if item.starts_with(MG_WORKDIR_ARG_NAME) {
-            let split: Vec<_> = item.split(";").collect();
+            let split: Vec<_> = item.split(';').collect();
             working_dir = PathBuf::from(split[1]);
             continue;
         }

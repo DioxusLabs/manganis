@@ -319,7 +319,7 @@ impl ForMgMacro for &'static str {}
 //     )]
 //     #[cfg_attr(target_os = "windows", link_name = "mg_s")]
 //     #[cfg_attr(target_os = "illumos", link_name = "__start_set_manganis")]
-    
+
 //     static MANGANIS_START: u8;
 // }
 

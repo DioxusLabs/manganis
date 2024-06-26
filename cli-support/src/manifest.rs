@@ -30,7 +30,7 @@ fn get_string_manganis(file: &File) -> Option<String> {
 /// An extension trait CLI support for the asset manifest
 pub trait AssetManifestExt {
     /// Load a manifest from the assets propogated through object files.
-    /// 
+    ///
     /// The asset descriptions are stored inside a manifest file that is produced when the linker is intercepted.
     fn load(manifest: Vec<PathBuf>) -> Self;
     /// Optimize and copy all assets in the manifest to a folder
@@ -100,7 +100,7 @@ impl AssetManifestExt for AssetManifest {
                         // Check if the archive member is an object file and parse it.
                         if name.ends_with(".o") {
                             let data = member.data(&*binary_data).unwrap();
-                            let o_file = object::File::parse(&*data).unwrap();
+                            let o_file = object::File::parse(data).unwrap();
                             if let Some(manganis_str) = get_string_manganis(&o_file) {
                                 manganis_strings.push(manganis_str);
                             }
