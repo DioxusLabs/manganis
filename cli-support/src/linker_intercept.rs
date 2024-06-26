@@ -80,12 +80,12 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
     }
 
     // debugging
-    let data = format!("{:?}", object_files);
-    fs::write(
-        format!("{}/mg-linker-intercept-out", working_dir.display()),
-        data,
-    )
-    .unwrap();
+    // let data = format!("{:?}", object_files);
+    // fs::write(
+    //     format!("{}/mg-linker-intercept-out", working_dir.display()),
+    //     data,
+    // )
+    // .unwrap();
 
     if object_files.is_empty() {
         return None;
