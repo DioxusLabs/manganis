@@ -87,6 +87,10 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
     )
     .unwrap();
 
+    if object_files.is_empty() {
+        return None;
+    }
+
     Some((working_dir, object_files))
 }
 

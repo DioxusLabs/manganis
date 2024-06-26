@@ -8,18 +8,23 @@ const ASSETS_FILE_LOCATION: &str = "./assets";
 // This is the location where the assets will be served from
 const ASSETS_SERVE_LOCATION: &str = "/assets";
 
-
 fn main() {
     // Debug
     // let data = format!("{:?}", args);
     // fs::write("./link-args.txt", data).unwrap();
 
-    // Check if there is data from linker, otherwise start building the project.
+    // First set any settings you need for the build.
+    Config::default()
+        .with_assets_serve_location(ASSETS_SERVE_LOCATION)
+        .save();
+
+    // Next, tell manganis that you support assets
+    let _guard = ManganisSupportGuard::default();
+
+    // Now check if there is data from linker, otherwise start building the project.
     if let Some((working_dir, object_files)) =
         manganis_cli_support::linker_intercept(std::env::args())
     {
-
-
         // Extract the assets
         let assets = AssetManifest::load(object_files);
 
@@ -44,14 +49,6 @@ fn main() {
 }
 
 fn build() {
-    // First set any settings you need for the build
-    Config::default()
-        .with_assets_serve_location(ASSETS_SERVE_LOCATION)
-        .save();
-
-    // Next, tell manganis that you support assets
-    let _guard = ManganisSupportGuard::default();
-
     // Then build your application
     let current_dir = std::env::current_dir().unwrap();
 
@@ -65,5 +62,6 @@ fn build() {
         .wait()
         .unwrap();
 
+    // Call the helper function to intercept the Rust linker.
     manganis_cli_support::start_linker_intercept(Some(&current_dir), args).unwrap();
 }
