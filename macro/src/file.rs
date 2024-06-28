@@ -41,8 +41,10 @@ impl ToTokens for FileAssetParser {
         let link_section = generate_link_section(self.asset.clone());
 
         tokens.extend(quote! {
-            #link_section
-            #file_name
+            {
+                #link_section
+                #file_name
+            }
         })
     }
 }

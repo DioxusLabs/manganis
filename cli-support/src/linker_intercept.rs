@@ -13,15 +13,12 @@ const MG_WORKDIR_ARG_NAME: &str = "mg-working-dir;";
 pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)> {
     let args = args.collect::<Vec<String>>();
 
-    // let data = format!("{:?}", args);
-    // fs::write("./mg-linker-intercept-out-args", data).unwrap();
-    // println!("{:?}", args);
-
     let mut working_dir = std::env::current_dir().unwrap();
 
     // Check if we were provided with a command file.
     let mut is_command_file = None;
     for arg in args.iter() {
+        // On windows the linker args are passed in a file that is referenced by `@<file>`
         if arg.starts_with('@') {
             is_command_file = Some(arg.clone());
             break;
@@ -29,6 +26,13 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
     }
 
     let linker_args = match is_command_file {
+        // On unix/linux/mac the linker args are passed directly.
+        None => {
+            let args = &args[1..args.len()];
+            Vec::from(args)
+        }
+
+        // Handle windows here - uf16 and utf8 files are supported.
         Some(arg) => {
             let path = arg.trim().trim_start_matches('@');
             let file_binary = fs::read(path).unwrap();
@@ -52,6 +56,7 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
             let lines = content.lines();
 
             for line in lines {
+                // Remove quotes from the line - windows link args files are quoted
                 let line_parsed = line.to_string();
                 let line_parsed = line_parsed.trim_end_matches('\"').to_string();
                 let line_parsed = line_parsed.trim_start_matches('\"').to_string();
@@ -61,16 +66,14 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
 
             linker_args
         }
-        None => {
-            let args = &args[1..args.len()];
-            Vec::from(args)
-        }
     };
 
     // Parse through linker args for `.o` or `.rlib` files.
     let mut object_files: Vec<PathBuf> = Vec::new();
     for item in linker_args {
         // Get the working directory so it isn't lost.
+        // when rust calls the linker it doesn't pass the working dir so we need to recover it
+        // "MG_WORKDIR_ARG_NAME;dir"
         if item.starts_with(MG_WORKDIR_ARG_NAME) {
             let split: Vec<_> = item.split(';').collect();
             working_dir = PathBuf::from(split[1]);
