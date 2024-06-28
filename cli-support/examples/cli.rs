@@ -26,7 +26,7 @@ fn main() {
         manganis_cli_support::linker_intercept(std::env::args())
     {
         // Extract the assets
-        let assets = AssetManifest::load(object_files);
+        let assets = AssetManifest::load_from_objects(object_files);
 
         let assets_dir = working_dir.join(working_dir.join(ASSETS_FILE_LOCATION));
 

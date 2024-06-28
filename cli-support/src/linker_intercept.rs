@@ -19,12 +19,18 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
 
     let mut working_dir = std::env::current_dir().unwrap();
 
-    let arg1 = args.get(1)?;
-    let is_command_file = arg1.starts_with('@');
+    // Check if we were provided with a command file.
+    let mut is_command_file = None;
+    for arg in args.iter() {
+        if arg.starts_with('@') {
+            is_command_file = Some(arg.clone());
+            break;
+        }
+    }
 
     let linker_args = match is_command_file {
-        true => {
-            let path = args[1].trim().trim_start_matches('@');
+        Some(arg) => {
+            let path = arg.trim().trim_start_matches('@');
             let file_binary = fs::read(path).unwrap();
 
             // This may be a utf-16le file. Let's try utf-8 first.
@@ -55,7 +61,7 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
 
             linker_args
         }
-        false => {
+        None => {
             let args = &args[1..args.len()];
             Vec::from(args)
         }

@@ -23,7 +23,7 @@ fn collects_assets() {
         manganis_cli_support::linker_intercept(std::env::args())
     {
         // Then collect the assets
-        let assets = AssetManifest::load(object_files);
+        let assets = AssetManifest::load_from_objects(object_files);
 
         let all_assets = assets.assets();
         println!("{:#?}", all_assets);
