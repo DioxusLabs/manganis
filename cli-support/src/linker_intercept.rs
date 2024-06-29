@@ -5,18 +5,13 @@ use std::{
 };
 
 // The prefix to the link arg for a path to the current working directory.
-const MG_WORKDIR_ARG_NAME: &str = "mg-working-dir;";
+const MG_WORKDIR_ARG_NAME: &str = "mg-working-dir=";
 
 /// Intercept the linker for object files.
 ///
 /// Takes the arguments used in a CLI and returns a list of paths to `.rlib` or `.o` files to be searched for asset sections.
 pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)> {
     let args = args.collect::<Vec<String>>();
-
-    // let data = format!("{:?}", args);
-    // fs::write("./mg-linker-intercept-out-args", data).unwrap();
-    // println!("{:?}", args);
-
     let mut working_dir = std::env::current_dir().unwrap();
 
     // Check if we were provided with a command file.
@@ -53,8 +48,8 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
 
             for line in lines {
                 let line_parsed = line.to_string();
-                let line_parsed = line_parsed.trim_end_matches('\"').to_string();
-                let line_parsed = line_parsed.trim_start_matches('\"').to_string();
+                let line_parsed = line_parsed.trim_end_matches('"').to_string();
+                let line_parsed = line_parsed.trim_start_matches('"').to_string();
 
                 linker_args.push(line_parsed);
             }
@@ -72,7 +67,7 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
     for item in linker_args {
         // Get the working directory so it isn't lost.
         if item.starts_with(MG_WORKDIR_ARG_NAME) {
-            let split: Vec<_> = item.split(';').collect();
+            let split: Vec<_> = item.split('=').collect();
             working_dir = PathBuf::from(split[1]);
             continue;
         }
@@ -82,14 +77,6 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
         }
     }
 
-    // debugging
-    // let data = format!("{:?}", object_files);
-    // fs::write(
-    //     format!("{}/mg-linker-intercept-out", working_dir.display()),
-    //     data,
-    // )
-    // .unwrap();
-
     if object_files.is_empty() {
         return None;
     }
@@ -97,8 +84,15 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
     Some((working_dir, object_files))
 }
 
-/// Calls cargo to build the project, passing this current executable as the linker.
-pub fn start_linker_intercept<I, S>(cwd: Option<&Path>, args: I) -> Result<(), std::io::Error>
+/// Calls cargo to build the project with a linker intercept script.
+///
+/// The linker intercept script will call the current executable with the specified subcommand
+/// and a list of arguments provided by rustc.
+pub fn start_linker_intercept<I, S>(
+    cwd: Option<&Path>,
+    subcommand: &str,
+    args: I,
+) -> Result<(), std::io::Error>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -110,7 +104,9 @@ where
     cmd.args(args);
     cmd.arg("--");
 
-    let linker_arg = format!("-Clinker={}", exec_path.display());
+    // Build a temporary redirect script.
+    let script_path = create_linker_script(exec_path, subcommand).unwrap();
+    let linker_arg = format!("-Clinker={}", script_path.display());
     cmd.arg(linker_arg);
 
     if let Some(cwd) = cwd {
@@ -120,9 +116,49 @@ where
     // Since we have some serious child process stuff going on, (About 3 levels deep)
     // we need to make sure the current working directory makes it through correctly.
     let working_dir = std::env::current_dir().unwrap();
-    let working_dir_arg = format!("-Clink-arg=mg-working-dir;{}", working_dir.display());
+    let working_dir_arg = format!(
+        "-Clink-arg={}{}",
+        MG_WORKDIR_ARG_NAME,
+        working_dir.display()
+    );
     cmd.arg(working_dir_arg);
 
     cmd.spawn()?.wait()?;
+    delete_linker_script().unwrap();
     Ok(())
+}
+
+const LINK_SCRIPT_NAME: &str = "mg-link";
+
+/// Creates a temporary script that re-routes rustc linker args to a subcommand of an executable.
+fn create_linker_script(exec: PathBuf, subcommand: &str) -> Result<PathBuf, std::io::Error> {
+    #[cfg(windows)]
+    let (script, ext) = (
+        format!("echo off\n{} {} %*", exec.display(), subcommand),
+        ".bat",
+    );
+    #[cfg(not(windows))]
+    let (script, ext) = (
+        format!("#!/bin/bash\n{} {} $@", exec.display(), subcommand),
+        ".sh",
+    );
+
+    let temp_path = std::env::temp_dir();
+    let out_name = format!("{LINK_SCRIPT_NAME}.{ext}");
+    let out = temp_path.join(out_name);
+    fs::write(&out, script)?;
+    Ok(out)
+}
+
+/// Deletes the temporary script created by [`create_linker_script`].
+fn delete_linker_script() -> Result<(), std::io::Error> {
+    #[cfg(windows)]
+    let ext = ".bat";
+    #[cfg(not(windows))]
+    let ext = ".sh";
+
+    let temp_path = std::env::temp_dir();
+    let file_name = format!("{LINK_SCRIPT_NAME}.{ext}");
+    let file = temp_path.join(file_name);
+    fs::remove_file(file)
 }
