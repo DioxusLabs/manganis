@@ -12,7 +12,6 @@ const MG_WORKDIR_ARG_NAME: &str = "mg-working-dir=";
 /// Takes the arguments used in a CLI and returns a list of paths to `.rlib` or `.o` files to be searched for asset sections.
 pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)> {
     let args = args.collect::<Vec<String>>();
-
     let mut working_dir = std::env::current_dir().unwrap();
 
     // Check if we were provided with a command file.
