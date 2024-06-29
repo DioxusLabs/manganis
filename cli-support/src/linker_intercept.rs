@@ -1,7 +1,6 @@
 use std::{
     ffi::OsStr,
     fs,
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
 
@@ -158,11 +157,17 @@ fn create_linker_script(exec: PathBuf, subcommand: &str) -> Result<PathBuf, std:
 
     // Set executable permissions.
     let mut perms = fs::metadata(&out)?.permissions();
+
+    // We give windows RW and implied X perms.
+    #[cfg(windows)]
     perms.set_readonly(false);
 
     // We give nix RWX perms.
     #[cfg(not(windows))]
-    perms.set_mode(0o700);
+    {
+        use std::os::unix::fs::PermissionsExt;
+        perms.set_mode(0o700);
+    }
     fs::set_permissions(&out, perms)?;
 
     Ok(out)
