@@ -10,8 +10,12 @@ const MG_WORKDIR_ARG_NAME: &str = "mg-working-dir=";
 /// Intercept the linker for object files.
 ///
 /// Takes the arguments used in a CLI and returns a list of paths to `.rlib` or `.o` files to be searched for asset sections.
-pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)> {
-    let args = args.collect::<Vec<String>>();
+pub fn linker_intercept<I, T>(args: I) -> Option<(PathBuf, Vec<PathBuf>)>
+where
+    I: IntoIterator<Item = T>,
+    T: ToString,
+{
+    let args: Vec<String> = args.into_iter().map(|x| x.to_string()).collect();
     let mut working_dir = std::env::current_dir().unwrap();
 
     // Check if we were provided with a command file.
@@ -26,12 +30,8 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
 
     let linker_args = match is_command_file {
         // On unix/linux/mac the linker args are passed directly.
-        None => {
-            let args = &args[1..args.len()];
-            Vec::from(args)
-        }
-
-        // Handle windows here - uf16 and utf8 files are supported.
+        None => args,
+        // Handle windows here - uf16le and utf8 files are supported.
         Some(arg) => {
             let path = arg.trim().trim_start_matches('@');
             let file_binary = fs::read(path).unwrap();
@@ -71,8 +71,8 @@ pub fn linker_intercept(args: std::env::Args) -> Option<(PathBuf, Vec<PathBuf>)>
     let mut object_files: Vec<PathBuf> = Vec::new();
     for item in linker_args {
         // Get the working directory so it isn't lost.
-        // when rust calls the linker it doesn't pass the working dir so we need to recover it
-        // "MG_WORKDIR_ARG_NAME;dir"
+        // When rust calls the linker it doesn't pass the working dir so we need to recover it.
+        // "{MG_WORKDIR_ARG_NAME}path"
         if item.starts_with(MG_WORKDIR_ARG_NAME) {
             let split: Vec<_> = item.split('=').collect();
             working_dir = PathBuf::from(split[1]);
@@ -159,10 +159,13 @@ fn create_linker_script(exec: PathBuf, subcommand: &str) -> Result<PathBuf, std:
     let mut perms = fs::metadata(&out)?.permissions();
 
     // We give windows RW and implied X perms.
+    // Clippy complains on any platform about this even if it's not *nix.
+    // https://rust-lang.github.io/rust-clippy/master/index.html#permissions_set_readonly_false
     #[cfg(windows)]
+    #[allow(clippy::permissions_set_readonly_false)]
     perms.set_readonly(false);
 
-    // We give nix RWX perms.
+    // We give nix user-RWX perms.
     #[cfg(not(windows))]
     {
         use std::os::unix::fs::PermissionsExt;
