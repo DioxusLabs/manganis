@@ -1,6 +1,6 @@
 use manganis_cli_support::{AssetManifestExt, ManganisSupportGuard};
 use manganis_common::{AssetManifest, Config};
-use std::process::Command;
+use std::{path::PathBuf, process::Command};
 
 // This is the location where the assets will be copied to in the filesystem
 const ASSETS_FILE_LOCATION: &str = "./assets";
@@ -48,16 +48,21 @@ fn build() {
         .unwrap();
 
     // Call the helper function to intercept the Rust linker.
-    manganis_cli_support::start_linker_intercept(Some(&current_dir), "link", args).unwrap();
+    // We will pass the current working directory as it may get lost.
+    let work_dir = std::env::current_dir().unwrap();
+    let link_args = vec![format!("{}", work_dir.display())];
+    manganis_cli_support::start_linker_intercept(Some(&current_dir), "link", args, Some(link_args))
+        .unwrap();
 }
 
 fn link() {
-    let (working_dir, object_files) =
+    let (link_args, object_files) =
         manganis_cli_support::linker_intercept(std::env::args()).unwrap();
 
     // Extract the assets
     let assets = AssetManifest::load_from_objects(object_files);
 
+    let working_dir = PathBuf::from(link_args.get(0).unwrap());
     let assets_dir = working_dir.join(working_dir.join(ASSETS_FILE_LOCATION));
 
     // Remove the old assets

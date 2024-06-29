@@ -4,19 +4,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
-// The prefix to the link arg for a path to the current working directory.
-const MG_WORKDIR_ARG_NAME: &str = "mg-working-dir=";
+// The prefix to link args passed from parent process.
+const MG_ARG_NAME: &str = "mg-arg=";
 
 /// Intercept the linker for object files.
 ///
 /// Takes the arguments used in a CLI and returns a list of paths to `.rlib` or `.o` files to be searched for asset sections.
-pub fn linker_intercept<I, T>(args: I) -> Option<(PathBuf, Vec<PathBuf>)>
+pub fn linker_intercept<I, T>(args: I) -> Option<(Vec<String>, Vec<PathBuf>)>
 where
     I: IntoIterator<Item = T>,
     T: ToString,
 {
     let args: Vec<String> = args.into_iter().map(|x| x.to_string()).collect();
-    let mut working_dir = std::env::current_dir().unwrap();
 
     // Check if we were provided with a command file.
     let mut is_command_file = None;
@@ -67,15 +66,17 @@ where
         }
     };
 
+    let mut link_args = Vec::new();
+
     // Parse through linker args for `.o` or `.rlib` files.
     let mut object_files: Vec<PathBuf> = Vec::new();
     for item in linker_args {
         // Get the working directory so it isn't lost.
         // When rust calls the linker it doesn't pass the working dir so we need to recover it.
         // "{MG_WORKDIR_ARG_NAME}path"
-        if item.starts_with(MG_WORKDIR_ARG_NAME) {
+        if item.starts_with(MG_ARG_NAME) {
             let split: Vec<_> = item.split('=').collect();
-            working_dir = PathBuf::from(split[1]);
+            link_args.push(split[1].to_string());
             continue;
         }
 
@@ -88,21 +89,24 @@ where
         return None;
     }
 
-    Some((working_dir, object_files))
+    Some((link_args, object_files))
 }
 
 /// Calls cargo to build the project with a linker intercept script.
 ///
 /// The linker intercept script will call the current executable with the specified subcommand
 /// and a list of arguments provided by rustc.
-pub fn start_linker_intercept<I, S>(
+pub fn start_linker_intercept<I, J>(
     cwd: Option<&Path>,
     subcommand: &str,
     args: I,
+    link_args: Option<J>,
 ) -> Result<(), std::io::Error>
 where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
+    I: IntoIterator,
+    I::Item: AsRef<OsStr>,
+    J: IntoIterator,
+    J::Item: ToString,
 {
     let exec_path = std::env::current_exe().unwrap();
 
@@ -120,15 +124,14 @@ where
         cmd.current_dir(cwd);
     }
 
-    // Since we have some serious child process stuff going on, (About 3 levels deep)
-    // we need to make sure the current working directory makes it through correctly.
-    let working_dir = std::env::current_dir().unwrap();
-    let working_dir_arg = format!(
-        "-Clink-arg={}{}",
-        MG_WORKDIR_ARG_NAME,
-        working_dir.display()
-    );
-    cmd.arg(working_dir_arg);
+    // Handle passing any arguments back to the current executable.
+    if let Some(link_args) = link_args {
+        let link_args: Vec<String> = link_args.into_iter().map(|x| x.to_string()).collect();
+        for link_arg in link_args {
+            let arg = format!("-Clink-arg={}{}", MG_ARG_NAME, link_arg);
+            cmd.arg(arg);
+        }
+    }
 
     cmd.spawn()?.wait()?;
     delete_linker_script().unwrap();

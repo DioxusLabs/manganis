@@ -56,12 +56,26 @@ fn build() {
         .unwrap();
 
     println!("Collecting Assets");
-    manganis_cli_support::start_linker_intercept(Some(&test_package_dir), "link", args).unwrap();
+
+    // Call the helper function to intercept the Rust linker.
+    // We will pass the current working directory as it may get lost.
+    let work_dir = std::env::current_dir().unwrap();
+    let link_args = vec![format!("{}", work_dir.display())];
+    manganis_cli_support::start_linker_intercept(
+        Some(&test_package_dir),
+        "link",
+        args,
+        Some(link_args),
+    )
+    .unwrap();
 }
 
 fn link() {
-    let (working_dir, object_files) =
+    let (link_args, object_files) =
         manganis_cli_support::linker_intercept(std::env::args()).unwrap();
+
+    // Recover the working directory from the link args.
+    let working_dir = PathBuf::from(link_args.get(0).unwrap());
 
     // Then collect the assets
     let assets = AssetManifest::load_from_objects(object_files);
