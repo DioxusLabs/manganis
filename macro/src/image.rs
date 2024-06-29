@@ -306,8 +306,10 @@ impl ToTokens for ImageAssetParser {
         let link_section = generate_link_section(self.asset.clone());
 
         tokens.extend(quote! {
-            #link_section
-            manganis::ImageAsset::new(#file_name).with_preview(#low_quality_preview)
+            {
+                #link_section
+                manganis::ImageAsset::new(#file_name).with_preview(#low_quality_preview)
+            }
         })
     }
 }
