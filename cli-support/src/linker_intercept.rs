@@ -1,8 +1,4 @@
-use std::{
-    ffi::OsStr,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{ffi::OsStr, fs, path::PathBuf};
 
 // The prefix to link args passed from parent process.
 const MG_ARG_NAME: &str = "mg-arg=";
@@ -97,7 +93,6 @@ where
 /// The linker intercept script will call the current executable with the specified subcommand
 /// and a list of arguments provided by rustc.
 pub fn start_linker_intercept<I, J>(
-    cwd: Option<&Path>,
     subcommand: &str,
     args: I,
     link_args: Option<J>,
@@ -119,10 +114,6 @@ where
     let script_path = create_linker_script(exec_path, subcommand).unwrap();
     let linker_arg = format!("-Clinker={}", script_path.display());
     cmd.arg(linker_arg);
-
-    if let Some(cwd) = cwd {
-        cmd.current_dir(cwd);
-    }
 
     // Handle passing any arguments back to the current executable.
     if let Some(link_args) = link_args {

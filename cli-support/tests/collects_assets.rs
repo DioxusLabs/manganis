@@ -59,15 +59,8 @@ fn build() {
 
     // Call the helper function to intercept the Rust linker.
     // We will pass the current working directory as it may get lost.
-    let work_dir = std::env::current_dir().unwrap();
-    let link_args = vec![format!("{}", work_dir.display())];
-    manganis_cli_support::start_linker_intercept(
-        Some(&test_package_dir),
-        "link",
-        args,
-        Some(link_args),
-    )
-    .unwrap();
+    let link_args = vec![format!("{}", test_package_dir.display())];
+    manganis_cli_support::start_linker_intercept("link", args, Some(link_args)).unwrap();
 }
 
 fn link() {

@@ -51,8 +51,7 @@ fn build() {
     // We will pass the current working directory as it may get lost.
     let work_dir = std::env::current_dir().unwrap();
     let link_args = vec![format!("{}", work_dir.display())];
-    manganis_cli_support::start_linker_intercept(Some(&current_dir), "link", args, Some(link_args))
-        .unwrap();
+    manganis_cli_support::start_linker_intercept("link", args, Some(link_args)).unwrap();
 }
 
 fn link() {
