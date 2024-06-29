@@ -14,7 +14,7 @@ keywords = ["assets"]
 
 [dependencies]
 manganis-macro = { path = "./macro", version = "0.2.1" }
-dioxus-core = { version = "0.5.0-alpha.0", optional = true }
+dioxus-core = { version = "0.5.0", optional = true }
 
 [workspace]
 members = ["macro", "common", "cli-support", "test-package", "test-package/test-package-dependency", "test-package/test-package-nested-dependency"]
