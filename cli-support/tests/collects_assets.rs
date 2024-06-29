@@ -75,7 +75,7 @@ fn link() {
         manganis_cli_support::linker_intercept(std::env::args()).unwrap();
 
     // Recover the working directory from the link args.
-    let working_dir = PathBuf::from(link_args.get(0).unwrap());
+    let working_dir = PathBuf::from(link_args.first().unwrap());
 
     // Then collect the assets
     let assets = AssetManifest::load_from_objects(object_files);

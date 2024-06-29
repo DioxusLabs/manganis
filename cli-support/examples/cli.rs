@@ -62,7 +62,7 @@ fn link() {
     // Extract the assets
     let assets = AssetManifest::load_from_objects(object_files);
 
-    let working_dir = PathBuf::from(link_args.get(0).unwrap());
+    let working_dir = PathBuf::from(link_args.first().unwrap());
     let assets_dir = working_dir.join(working_dir.join(ASSETS_FILE_LOCATION));
 
     // Remove the old assets
