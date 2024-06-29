@@ -1,6 +1,7 @@
 use std::{
     ffi::OsStr,
     fs,
+    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
 
@@ -142,27 +143,37 @@ fn create_linker_script(exec: PathBuf, subcommand: &str) -> Result<PathBuf, std:
     #[cfg(windows)]
     let (script, ext) = (
         format!("echo off\n{} {} %*", exec.display(), subcommand),
-        ".bat",
+        "bat",
     );
     #[cfg(not(windows))]
     let (script, ext) = (
         format!("#!/bin/bash\n{} {} $@", exec.display(), subcommand),
-        ".sh",
+        "sh",
     );
 
     let temp_path = std::env::temp_dir();
     let out_name = format!("{LINK_SCRIPT_NAME}.{ext}");
     let out = temp_path.join(out_name);
     fs::write(&out, script)?;
+
+    // Set executable permissions.
+    let mut perms = fs::metadata(&out)?.permissions();
+    perms.set_readonly(false);
+
+    // We give nix RWX perms.
+    #[cfg(not(windows))]
+    perms.set_mode(0o700);
+    fs::set_permissions(&out, perms)?;
+
     Ok(out)
 }
 
 /// Deletes the temporary script created by [`create_linker_script`].
 fn delete_linker_script() -> Result<(), std::io::Error> {
     #[cfg(windows)]
-    let ext = ".bat";
+    let ext = "bat";
     #[cfg(not(windows))]
-    let ext = ".sh";
+    let ext = "sh";
 
     let temp_path = std::env::temp_dir();
     let file_name = format!("{LINK_SCRIPT_NAME}.{ext}");
