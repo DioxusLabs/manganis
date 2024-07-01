@@ -24,7 +24,7 @@ pub enum AssetType {
 }
 
 /// The source of a file asset
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash, Eq)]
 pub enum FileSource {
     /// A local file
     Local(PathBuf),
@@ -207,7 +207,7 @@ pub fn get_mime_from_ext(extension: Option<&str>) -> &'static str {
 }
 
 /// The location of an asset before and after it is collected
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash, Eq)]
 pub struct FileLocation {
     unique_name: String,
     source: FileSource,

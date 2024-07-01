@@ -1,11 +1,12 @@
-use manganis_common::FileAsset;
+use manganis_common::{AssetType, FileAsset};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse};
 
-use crate::add_asset;
+use crate::generate_link_section;
 
 pub struct FileAssetParser {
     file_name: String,
+    asset: AssetType,
 }
 
 impl Parse for FileAssetParser {
@@ -25,20 +26,11 @@ impl Parse for FileAssetParser {
             }
         };
         let this_file = FileAsset::new(path);
-        let asset =
-            add_asset(manganis_common::AssetType::File(this_file.clone())).map_err(|e| {
-                syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("Failed to add asset: {e}"),
-                )
-            })?;
-        let this_file = match asset {
-            manganis_common::AssetType::File(this_file) => this_file,
-            _ => unreachable!(),
-        };
+        let asset = manganis_common::AssetType::File(this_file.clone());
+
         let file_name = this_file.served_location();
 
-        Ok(FileAssetParser { file_name })
+        Ok(FileAssetParser { file_name, asset })
     }
 }
 
@@ -46,8 +38,13 @@ impl ToTokens for FileAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let file_name = &self.file_name;
 
+        let link_section = generate_link_section(self.asset.clone());
+
         tokens.extend(quote! {
-            #file_name
+            {
+                #link_section
+                #file_name
+            }
         })
     }
 }

@@ -2,3 +2,6 @@
 /test-package/dist
 /Cargo.lock
 /test-package/test-package-nested-dependency/target
+/test-package/assets
+/cli-support/assets
+/dist

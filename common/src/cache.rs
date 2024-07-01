@@ -68,12 +68,6 @@ pub(crate) fn manifest_dir() -> PathBuf {
     std::env::var("CARGO_MANIFEST_DIR").unwrap().into()
 }
 
-pub(crate) fn current_package_cache_dir() -> PathBuf {
-    let mut dir = asset_cache_dir();
-    dir.push(current_package_identifier());
-    dir
-}
-
 /// The location where logs are stored while expanding macros
 pub fn macro_log_directory() -> PathBuf {
     let mut dir = asset_cache_dir();

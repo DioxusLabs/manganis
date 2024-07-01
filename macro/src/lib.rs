@@ -5,7 +5,7 @@ use file::FileAssetParser;
 use font::FontAssetParser;
 use image::ImageAssetParser;
 use manganis_common::cache::macro_log_file;
-use manganis_common::{AssetType, MetadataAsset, TailwindAsset};
+use manganis_common::{MetadataAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::TokenStream as TokenStream2;
@@ -35,16 +35,27 @@ fn trace_to_file() {
     }
 }
 
-// It appears rustc uses one instance of the dynamic library for each crate that uses it.
-// We can reset the asset of the current crate the first time the macro is used in the crate.
-static INITIALIZED: AtomicBool = AtomicBool::new(false);
+/// this new approach will store the assets descriptions *inside the executable*.
+/// The trick is to use the `link_section` attribute.
+/// We force rust to store a json representation of the asset description
+/// inside a particular region of the binary, with the label "manganis".
+/// After linking, the "manganis" sections of the different executables will be merged.
+fn generate_link_section(asset: manganis_common::AssetType) -> TokenStream2 {
+    let position = proc_macro2::Span::call_site();
 
-fn add_asset(asset: manganis_common::AssetType) -> std::io::Result<AssetType> {
-    if !INITIALIZED.fetch_or(true, Ordering::Relaxed) {
-        manganis_common::clear_assets()?;
+    let asset_description = serde_json::to_string(&asset).unwrap();
+
+    let len = asset_description.as_bytes().len();
+
+    let asset_bytes = syn::LitByteStr::new(asset_description.as_bytes(), position);
+
+    let section_name = syn::LitStr::new(manganis_common::linker::SECTION, position);
+
+    quote! {
+        #[link_section = #section_name]
+        #[used]
+        static ASSET: [u8; #len] = * #asset_bytes;
     }
-
-    manganis_common::add_asset(asset)
 }
 
 /// Collects tailwind classes that will be included in the final binary and returns them unmodified
@@ -61,28 +72,15 @@ pub fn classes(input: TokenStream) -> TokenStream {
     let input_as_str = parse_macro_input!(input as LitStr);
     let input_as_str = input_as_str.value();
 
-    let result = add_asset(manganis_common::AssetType::Tailwind(TailwindAsset::new(
-        &input_as_str,
-    )))
-    .map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to add asset: {e}"),
-        )
-        .into_compile_error()
-    });
+    let asset = manganis_common::AssetType::Tailwind(TailwindAsset::new(&input_as_str));
 
-    let result = match result {
-        Ok(_) => quote! {
-            #input_as_str
-        },
-        Err(e) => quote! {
-            #e
-        },
-    };
+    let link_section = generate_link_section(asset);
 
     quote! {
-        #result
+        {
+        #link_section
+        #input_as_str
+        }
     }
     .into_token_stream()
     .into()
@@ -229,18 +227,18 @@ pub fn meta(input: TokenStream) -> TokenStream {
 
     let md = parse_macro_input!(input as MetadataValue);
 
-    let result = add_asset(manganis_common::AssetType::Metadata(MetadataAsset::new(
+    let asset = manganis_common::AssetType::Metadata(MetadataAsset::new(
         md.key.as_str(),
         md.value.as_str(),
-    )))
-    .map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to add asset: {e}"),
-        )
-        .into_compile_error()
-    })
-    .err();
+    ));
 
-    quote! {#result}.into_token_stream().into()
+    let link_section = generate_link_section(asset);
+
+    quote! {
+        {
+            #link_section
+        }
+    }
+    .into_token_stream()
+    .into()
 }

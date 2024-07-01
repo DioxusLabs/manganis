@@ -15,6 +15,7 @@ keywords = ["assets"]
 manganis-common = { path = "../common", version = "0.2.1" }
 
 serde = { version = "1.0.183", features = ["derive"] }
+serde_json = {version="1.0.116"}
 toml = "0.7.6"
 cargo-lock = { version = "9.0.0", features = ["dependency-tree"] }
 cargo_metadata = "0.17.0"
@@ -44,6 +45,12 @@ lightningcss = "1.0.0-alpha.44"
 url = { version = "2.4.0", features = ["serde"] }
 reqwest = { version = "0.11.18", features = ["blocking"] }
 tracing = "0.1.37"
+
+# Extracting data from an executable
+object = {version="0.36.0", features=["wasm"]}
+
+[dev-dependencies]
+tracing-subscriber = "0.3.18"
 
 [features]
 default = []
