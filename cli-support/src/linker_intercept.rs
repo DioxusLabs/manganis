@@ -125,7 +125,7 @@ where
     }
 
     cmd.spawn()?.wait()?;
-    delete_linker_script().unwrap();
+    _ = delete_linker_script();
     Ok(())
 }
 
