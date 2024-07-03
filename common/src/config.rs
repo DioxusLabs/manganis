@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 use crate::cache::config_path;
 
 fn default_assets_serve_location() -> String {
-    #[cfg(target_os = "wasm")]
+    #[cfg(target_arch = "wasm32")]
     {
         "/".to_string()
     }
-    #[cfg(not(target_os = "wasm"))]
+    #[cfg(not(target_arch = "wasm32"))]
     {
         "./assets/".to_string()
     }
