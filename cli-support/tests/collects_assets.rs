@@ -44,7 +44,7 @@ fn build() {
     println!("running the CLI from {test_package_dir:?}");
 
     // Then build your application
-    let args = ["--release"];
+    let args = ["--target", "wasm32-unknown-unknown", "--release"];
     Command::new("cargo")
         .arg("build")
         .args(args)

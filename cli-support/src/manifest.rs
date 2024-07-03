@@ -12,16 +12,22 @@ use std::fs;
 // in the "link section" of the binary
 fn get_string_manganis(file: &File) -> Option<String> {
     for section in file.sections() {
-        if let Ok(linker::SECTION_NAME) = section.name() {
-            let bytes = section.uncompressed_data().ok()?;
-            // Some platforms (e.g. macOS) start the manganis section with a null byte, we need to filter that out before we deserialize the JSON
-            return Some(
-                std::str::from_utf8(&bytes)
-                    .ok()?
-                    .chars()
-                    .filter(|c| !c.is_control())
-                    .collect::<String>(),
-            );
+        if let Ok(section_name) = section.name() {
+            // Check if the link section matches the asset section for one of the platforms we support. This may not be the current platform if the user is cross compiling
+            if linker::LinkSection::ALL
+                .iter()
+                .any(|x| x.link_section == section_name)
+            {
+                let bytes = section.uncompressed_data().ok()?;
+                // Some platforms (e.g. macOS) start the manganis section with a null byte, we need to filter that out before we deserialize the JSON
+                return Some(
+                    std::str::from_utf8(&bytes)
+                        .ok()?
+                        .chars()
+                        .filter(|c| !c.is_control())
+                        .collect::<String>(),
+                );
+            }
         }
     }
     None
