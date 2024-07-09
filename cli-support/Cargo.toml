@@ -43,7 +43,7 @@ lightningcss = "1.0.0-alpha.44"
 
 # Remote assets
 url = { version = "2.4.0", features = ["serde"] }
-reqwest = { version = "0.11.18", features = ["blocking"] }
+reqwest = { version = "0.12.5", features = ["blocking"] }
 tracing = "0.1.37"
 
 # Extracting data from an executable
