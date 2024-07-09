@@ -17,7 +17,7 @@ impl AssetManifest {
         &self.assets
     }
 
-    #[cfg(feature = "html")]
+    //#[cfg(feature = "html")]
     /// Returns the HTML that should be injected into the head of the page
     pub fn head(&self) -> String {
         let mut head = String::new();
@@ -37,6 +37,10 @@ impl AssetManifest {
                                 "<link rel=\"preload\" as=\"image\" href=\"{asset_path}\">\n"
                             ))
                         }
+                    }
+                    crate::FileOptions::Js(_) => {
+                        let asset_path = file.served_location();
+                        head.push_str(&format!("<script src=\"{asset_path}\"></script>\n"))
                     }
                     _ => {}
                 }

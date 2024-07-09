@@ -12,6 +12,8 @@ pub enum FileOptions {
     Font(FontOptions),
     /// A css asset
     Css(CssOptions),
+    /// A JavaScript asset
+    Js(JsOptions),
     /// Any other asset
     Other(UnknownFileOptions),
 }
@@ -23,6 +25,7 @@ impl Display for FileOptions {
             Self::Video(options) => write!(f, "{}", options),
             Self::Font(options) => write!(f, "{}", options),
             Self::Css(options) => write!(f, "{}", options),
+            Self::Js(options) => write!(f, "{}", options),
             Self::Other(options) => write!(f, "{}", options),
         }
     }
@@ -43,6 +46,7 @@ impl FileOptions {
             Some("woff") => Self::Font(FontOptions::new(FontType::WOFF)),
             Some("woff2") => Self::Font(FontOptions::new(FontType::WOFF2)),
             Some("css") => Self::Css(CssOptions::default()),
+            Some("js") => Self::Js(JsOptions::default()),
             _ => Self::Other(UnknownFileOptions {
                 extension: extension.map(String::from),
             }),
@@ -69,6 +73,7 @@ impl FileOptions {
                 FontType::WOFF2 => Some("woff2"),
             },
             Self::Css(_) => Some("css"),
+            Self::Js(_) => Some("js"),
             Self::Other(extension) => extension.extension.as_deref(),
         }
     }
@@ -338,6 +343,24 @@ impl CssOptions {
 impl Default for CssOptions {
     fn default() -> Self {
         Self { minify: true }
+    }
+}
+
+/// The options for a Javascript asset
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash, Default)]
+pub struct JsOptions {}
+
+impl Display for JsOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "js")?;
+        Ok(())
+    }
+}
+
+impl JsOptions {
+    /// Creates a new js options struct
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
