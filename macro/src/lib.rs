@@ -49,7 +49,10 @@ fn generate_link_section(asset: manganis_common::AssetType) -> TokenStream2 {
 
     let asset_bytes = syn::LitByteStr::new(asset_description.as_bytes(), position);
 
-    let section_name = syn::LitStr::new(manganis_common::linker::SECTION, position);
+    let section_name = syn::LitStr::new(
+        manganis_common::linker::LinkSection::CURRENT.link_section,
+        position,
+    );
 
     quote! {
         #[link_section = #section_name]
