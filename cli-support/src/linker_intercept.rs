@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, fs, path::PathBuf};
+use std::{ffi::OsStr, fs, path::PathBuf, process::Stdio};
 
 // The prefix to link args passed from parent process.
 const MG_ARG_NAME: &str = "mg-arg=";
@@ -124,7 +124,10 @@ where
         }
     }
 
-    cmd.spawn()?.wait()?;
+    cmd.stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?
+        .wait()?;
     delete_linker_script().unwrap();
     Ok(())
 }
