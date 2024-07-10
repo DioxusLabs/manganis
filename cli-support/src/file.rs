@@ -1,7 +1,7 @@
 use anyhow::Context;
 use image::{DynamicImage, EncodableLayout};
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
-use manganis_common::{CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType};
+use manganis_common::{CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType, JsOptions};
 use std::{
     io::{BufWriter, Write},
     path::{Path, PathBuf},
@@ -34,6 +34,9 @@ impl Process for FileOptions {
                 })?;
             }
             Self::Css(options) => {
+                options.process(input_location, output_folder)?;
+            }
+            Self::Js(options) => {
                 options.process(input_location, output_folder)?;
             }
             Self::Image(options) => {
@@ -181,4 +184,21 @@ pub(crate) fn minify_css(css: &str) -> String {
     };
     let res = stylesheet.to_css(printer).unwrap();
     res.code
+}
+
+impl Process for JsOptions {
+    fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
+        let js = input_location.read_to_string()?;
+        let mut output_location = output_folder.to_path_buf();
+        output_location.push(input_location.unique_name());
+
+        std::fs::write(&output_location, js).with_context(|| {
+            format!(
+                "Failed to write js to output location: {}",
+                output_location.display()
+            )
+        })?;
+
+        Ok(())
+    }
 }
