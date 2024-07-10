@@ -1,7 +1,9 @@
 use anyhow::Context;
 use image::{DynamicImage, EncodableLayout};
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
-use manganis_common::{CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType, JsOptions};
+use manganis_common::{
+    CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType, JsOptions,
+};
 use std::{
     io::{BufWriter, Write},
     path::{Path, PathBuf},
