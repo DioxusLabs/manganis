@@ -388,7 +388,22 @@ impl FileAsset {
 
     /// Returns the location where the file asset will be served from
     pub fn served_location(&self) -> String {
-        if self.url_encoded {
+        let manganis_support = std::env::var("MANGANIS_SUPPORT");
+
+        // If manganis is being used without CLI support, we will fallback to providing a local path.
+        if manganis_support.is_err() {
+            match self.location.source() {
+                FileSource::Remote(url) => url.as_str().to_string(),
+                FileSource::Local(path) => {
+                    // Tauri doesn't allow absolute paths(??) so we convert to relative.
+                    let cwd = std::env::current_dir().unwrap();
+                    let path =
+                        PathBuf::from(path.display().to_string().strip_prefix("\\\\?\\").unwrap());
+                    let rel_path = path.strip_prefix(cwd).unwrap();
+                    rel_path.display().to_string()
+                }
+            }
+        } else if self.url_encoded {
             let data = self.location.read_to_bytes().unwrap();
             let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
             let mime = self.location.source.mime_type().unwrap();
