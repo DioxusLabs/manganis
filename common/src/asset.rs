@@ -396,7 +396,11 @@ impl FileAsset {
                 FileSource::Remote(url) => url.as_str().to_string(),
                 FileSource::Local(path) => {
                     // Tauri doesn't allow absolute paths(??) so we convert to relative.
-                    let cwd = std::env::current_dir().unwrap();
+                    let Ok(cwd) = std::env::current_dir() else {
+                        tracing::warn!("failed to get current working dir for fs fallback");
+                        return path.display().to_string();
+                    };
+
                     let path =
                         PathBuf::from(path.display().to_string().strip_prefix("\\\\?\\").unwrap());
                     let rel_path = path.strip_prefix(cwd).unwrap();
