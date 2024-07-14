@@ -395,14 +395,22 @@ impl FileAsset {
             match self.location.source() {
                 FileSource::Remote(url) => url.as_str().to_string(),
                 FileSource::Local(path) => {
+                    let path_as_string = path.display().to_string();
+
                     // Tauri doesn't allow absolute paths(??) so we convert to relative.
                     let Ok(cwd) = std::env::current_dir() else {
                         tracing::warn!("failed to get current working dir for fs fallback");
-                        return path.display().to_string();
+                        return path_as_string;
                     };
 
-                    let path =
-                        PathBuf::from(path.display().to_string().strip_prefix("\\\\?\\").unwrap());
+                    // Windows adds `\\?\` to longer path names. We'll try to remove it.
+                    #[cfg(windows)]
+                    let path = PathBuf::from(
+                        path_as_string
+                            .strip_prefix("\\\\?\\")
+                            .unwrap_or(&path_as_string),
+                    );
+
                     let rel_path = path.strip_prefix(cwd).unwrap();
                     rel_path.display().to_string()
                 }
