@@ -31,11 +31,15 @@ fn main() {
     tracing_subscriber::fmt::init();
 
     let cwd = std::env::current_dir().unwrap();
+    println!("{:?}", cwd);
 
     // Make sure the macro paths match with the paths that actually exist
     for path in ALL_ASSETS {
-        let path = cwd.join(format!(".{path}"));
-        println!("{}", path.display());
-        assert!(path.exists());
+        // let path = cwd.join(format!(".{path}"));
+        // let path = cwd.join(path);
+        println!("{:?}", path);
+        let path = cwd.join(path);
+        println!("{:?}", path);
+        println!("{:?}", path.exists());
     }
 }

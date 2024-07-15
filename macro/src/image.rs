@@ -1,3 +1,4 @@
+use manganis_common::ManganisSupportError;
 use manganis_common::{AssetType, FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, Token};
@@ -159,7 +160,7 @@ enum ImageType {
 }
 
 pub struct ImageAssetParser {
-    file_name: String,
+    file_name: Result<String, ManganisSupportError>,
     low_quality_preview: Option<String>,
     asset: AssetType,
 }
@@ -297,7 +298,7 @@ fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
 
 impl ToTokens for ImageAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let file_name = &self.file_name;
+        let file_name = crate::quote_path(&self.file_name);
         let low_quality_preview = match &self.low_quality_preview {
             Some(lqip) => quote! { Some(#lqip) },
             None => quote! { None },

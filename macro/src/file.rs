@@ -1,11 +1,11 @@
-use manganis_common::{AssetType, FileAsset};
+use manganis_common::{AssetType, FileAsset, ManganisSupportError};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse};
 
 use crate::generate_link_section;
 
 pub struct FileAssetParser {
-    file_name: String,
+    file_name: Result<String, ManganisSupportError>,
     asset: AssetType,
 }
 
@@ -36,7 +36,7 @@ impl Parse for FileAssetParser {
 
 impl ToTokens for FileAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let file_name = &self.file_name;
+        let file_name = crate::quote_path(&self.file_name);
 
         let link_section = generate_link_section(self.asset.clone());
 
