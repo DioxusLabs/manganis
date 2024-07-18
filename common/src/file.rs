@@ -201,6 +201,8 @@ impl FromStr for ImageType {
 pub struct VideoOptions {
     /// Whether the video should be compressed
     compress: bool,
+    /// Whether the video should be preloaded
+    preload: bool,
     /// The type of the video
     ty: VideoType,
 }
@@ -211,6 +213,9 @@ impl Display for VideoOptions {
         if self.compress {
             write!(f, " (compressed)")?;
         }
+        if self.preload {
+            write!(f, " (preload)")?;
+        }
         Ok(())
     }
 }
@@ -218,7 +223,11 @@ impl Display for VideoOptions {
 impl VideoOptions {
     /// Creates a new video options struct
     pub fn new(ty: VideoType) -> Self {
-        Self { compress: true, ty }
+        Self {
+            compress: true,
+            ty,
+            preload: false,
+        }
     }
 
     /// Returns the type of the video
@@ -239,6 +248,16 @@ impl VideoOptions {
     /// Sets whether the video should be compressed
     pub fn set_compress(&mut self, compress: bool) {
         self.compress = compress;
+    }
+
+    /// Returns whether the video should be preloaded
+    pub fn preload(&self) -> bool {
+        self.preload
+    }
+
+    /// Sets whether the video should be preloaded
+    pub fn set_preload(&mut self, preload: bool) {
+        self.preload = preload;
     }
 }
 
@@ -312,6 +331,13 @@ impl Display for FontType {
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct CssOptions {
     minify: bool,
+    preload: bool,
+}
+
+impl Default for CssOptions {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Display for CssOptions {
@@ -319,25 +345,40 @@ impl Display for CssOptions {
         if self.minify {
             write!(f, "minified")?;
         }
+        if self.preload {
+            write!(f, " (preload)")?;
+        }
         Ok(())
     }
 }
 
 impl CssOptions {
     /// Creates a new css options struct
-    pub fn new(minify: bool) -> Self {
-        Self { minify }
+    pub const fn new() -> Self {
+        Self {
+            minify: true,
+            preload: false,
+        }
     }
 
     /// Returns whether the css should be minified
     pub fn minify(&self) -> bool {
         self.minify
     }
-}
 
-impl Default for CssOptions {
-    fn default() -> Self {
-        Self { minify: true }
+    /// Sets whether the css should be minified
+    pub fn set_minify(&mut self, minify: bool) {
+        self.minify = minify;
+    }
+
+    /// Returns whether the css should be preloaded
+    pub fn preload(&self) -> bool {
+        self.preload
+    }
+
+    /// Sets whether the css should be preloaded
+    pub fn set_preload(&mut self, preload: bool) {
+        self.preload = preload;
     }
 }
 

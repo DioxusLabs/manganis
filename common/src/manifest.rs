@@ -24,11 +24,13 @@ impl AssetManifest {
         for asset in &self.assets {
             if let crate::AssetType::File(file) = asset {
                 match file.options() {
-                    crate::FileOptions::Css(_) => {
-                        let asset_path = file.served_location();
-                        head.push_str(&format!(
-                            "<link rel=\"stylesheet\" href=\"{asset_path}\">\n"
-                        ))
+                    crate::FileOptions::Css(css_options) => {
+                        if css_options.preload() {
+                            let asset_path = file.served_location();
+                            head.push_str(&format!(
+                                "<link rel=\"preload\" as=\"style\" href=\"{asset_path}\">\n"
+                            ))
+                        }
                     }
                     crate::FileOptions::Image(image_options) => {
                         if image_options.preload() {
