@@ -26,10 +26,10 @@ fn collects_assets() {
     };
 
     // Check if rustc is trying to link
-    if command == "build" {
-        build();
-    } else if command == "link" {
+    if command == "link" {
         link();
+    } else {
+        build();
     }
 }
 
