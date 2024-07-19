@@ -26,18 +26,20 @@ impl AssetManifest {
                 match file.options() {
                     crate::FileOptions::Css(css_options) => {
                         if css_options.preload() {
-                            let asset_path = file.served_location();
-                            head.push_str(&format!(
-                                "<link rel=\"preload\" as=\"style\" href=\"{asset_path}\">\n"
-                            ))
+                            if let Ok(asset_path) = file.served_location() {
+                                head.push_str(&format!(
+                                    "<link rel=\"preload\" as=\"style\" href=\"{asset_path}\">\n"
+                                ))
+                            }
                         }
                     }
                     crate::FileOptions::Image(image_options) => {
                         if image_options.preload() {
-                            let asset_path = file.served_location();
-                            head.push_str(&format!(
-                                "<link rel=\"preload\" as=\"image\" href=\"{asset_path}\">\n"
-                            ))
+                            if let Ok(asset_path) = file.served_location() {
+                                head.push_str(&format!(
+                                    "<link rel=\"preload\" as=\"image\" href=\"{asset_path}\">\n"
+                                ))
+                            }
                         }
                     }
                     _ => {}

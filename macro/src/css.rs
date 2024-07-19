@@ -1,4 +1,6 @@
-use manganis_common::{AssetType, CssOptions, FileAsset, FileOptions, FileSource};
+use manganis_common::{
+    AssetType, CssOptions, FileAsset, FileOptions, FileSource, ManganisSupportError,
+};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, LitBool};
 
@@ -85,7 +87,7 @@ impl Parse for ParseCssOption {
 }
 
 pub struct CssAssetParser {
-    file_name: String,
+    file_name: Result<String, ManganisSupportError>,
     asset: AssetType,
 }
 
@@ -177,7 +179,7 @@ fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
 
 impl ToTokens for CssAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let file_name = &self.file_name;
+        let file_name = crate::quote_path(&self.file_name);
 
         let link_section = generate_link_section(self.asset.clone());
 
