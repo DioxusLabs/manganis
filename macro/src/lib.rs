@@ -245,3 +245,21 @@ pub fn meta(input: TokenStream) -> TokenStream {
     .into_token_stream()
     .into()
 }
+
+fn quote_path(path: &Result<String, manganis_common::ManganisSupportError>) -> TokenStream2 {
+    match path {
+        Ok(path) => quote! { #path },
+        Err(err) => {
+            // Expand the error into a warning and return an empty path. Manganis should try not fail to compile the application because it may be checked in CI where manganis CLI support is not available.
+            let err = err.to_string();
+            quote! {
+                {
+                    #[deprecated(note = #err)]
+                    struct ManganisSupportError;
+                    _ = ManganisSupportError;
+                    ""
+                }
+            }
+        }
+    }
+}
