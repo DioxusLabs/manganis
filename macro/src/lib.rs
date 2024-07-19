@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]
 
+use css::CssAssetParser;
 use file::FileAssetParser;
 use font::FontAssetParser;
 use image::ImageAssetParser;
@@ -14,6 +15,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use syn::{parse::Parse, parse_macro_input, LitStr};
 
+mod css;
 mod file;
 mod font;
 mod image;
@@ -167,6 +169,7 @@ enum AnyAssetParser {
     File(FileAssetParser),
     Image(ImageAssetParser),
     Font(FontAssetParser),
+    Css(CssAssetParser),
 }
 
 impl Parse for AnyAssetParser {
@@ -178,11 +181,12 @@ impl Parse for AnyAssetParser {
             "file" => Self::File(input.parse::<FileAssetParser>()?),
             "image" => Self::Image(input.parse::<ImageAssetParser>()?),
             "font" => Self::Font(input.parse::<FontAssetParser>()?),
+            "css" => Self::Css(input.parse::<CssAssetParser>()?),
             _ => {
                 return Err(syn::Error::new(
                     proc_macro2::Span::call_site(),
                     format!(
-                        "Unknown asset type: {as_string}. Supported types are file, image, font"
+                        "Unknown asset type: {as_string}. Supported types are file, image, font, and css"
                     ),
                 ))
             }
@@ -201,6 +205,9 @@ impl ToTokens for AnyAssetParser {
             }
             Self::Font(font) => {
                 font.to_tokens(tokens);
+            }
+            Self::Css(css) => {
+                css.to_tokens(tokens);
             }
         }
     }
