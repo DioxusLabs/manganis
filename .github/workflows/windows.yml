@@ -5,6 +5,9 @@ on:
     branches:
       - master
     paths:
+      - cli-support/src/**
+      - cli-support/examples/**
+      - cli-support/Cargo.toml
       - common/src/**
       - common/examples/**
       - common/Cargo.toml
@@ -21,6 +24,9 @@ on:
     branches:
       - master
     paths:
+      - cli-support/src/**
+      - cli-support/examples/**
+      - cli-support/Cargo.toml
       - common/src/**
       - common/examples/**
       - common/Cargo.toml
