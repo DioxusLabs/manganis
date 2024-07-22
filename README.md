@@ -48,4 +48,4 @@ pub const ROBOTO_FONT_LIGHT_FONT: &str = manganis::mg!(font()
 
 ## Adding Support to Your CLI
 
-To add support for your CLI, you need to integrate with the [manganis_cli_support](https://github.com/DioxusLabs/collect-assets/tree/master/cli-support) crate. This crate provides utilities to collect assets that integrate with the Manganis macro. It makes it easy to integrate an asset collection and optimization system into a build tool.
+To add support for your CLI, you need to integrate with the [manganis_cli_support](https://github.com/DioxusLabs/manganis/tree/main/cli-support) crate. This crate provides utilities to collect assets that integrate with the Manganis macro. It makes it easy to integrate an asset collection and optimization system into a build tool.
