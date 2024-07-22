@@ -24,7 +24,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Environment:**
- - Manganis version: [e.g. v0.17, `master`]
+ - Manganis version: [e.g. v0.17, `main`]
  - Rust version: [e.g. 1.43.0, `nightly`]
  - OS info: [e.g. MacOS]
  - App platform: [e.g. `web`, `desktop`]

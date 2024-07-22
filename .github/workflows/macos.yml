@@ -3,7 +3,7 @@ name: macOS tests
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - cli-support/src/**
       - cli-support/examples/**
@@ -22,7 +22,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches:
-      - master
+      - main
     paths:
       - cli-support/src/**
       - cli-support/examples/**
