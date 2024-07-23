@@ -141,8 +141,14 @@ pub struct FontAssetParser {
 
 impl Parse for FontAssetParser {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let _inside;
-        parenthesized!(_inside in input);
+        let inside;
+        parenthesized!(inside in input);
+        if !inside.is_empty() {
+            return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                "Font assets do not support paths. Please use file() if you want to import a local font file",
+            ));
+        }
 
         let options = input.parse::<ParseFontOptions>()?;
 

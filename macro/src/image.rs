@@ -120,12 +120,7 @@ impl Parse for ImageSize {
 
 impl From<ImageType> for manganis_common::ImageType {
     fn from(val: ImageType) -> Self {
-        match val {
-            ImageType::Png => manganis_common::ImageType::Png,
-            ImageType::Jpeg => manganis_common::ImageType::Jpg,
-            ImageType::Webp => manganis_common::ImageType::Webp,
-            ImageType::Avif => manganis_common::ImageType::Avif,
-        }
+        val.0
     }
 }
 
@@ -134,29 +129,31 @@ impl Parse for ImageType {
         let _ = input.parse::<syn::Ident>()?;
         let _ = input.parse::<Token![::]>()?;
         let ident = input.parse::<syn::Ident>()?;
-        match ident.to_string().to_lowercase().as_str() {
-            "png" => Ok(ImageType::Png),
-            "jpg" => Ok(ImageType::Jpeg),
-            "webp" => Ok(ImageType::Webp),
-            "avif" => Ok(ImageType::Avif),
-            _ => Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!(
-                    "Unknown image type: {}. Supported types are png, jpeg, webp, avif",
-                    ident
-                ),
-            )),
-        }
+        ident
+            .to_string()
+            .to_lowercase()
+            .as_str()
+            .parse::<manganis_common::ImageType>()
+            .map_err(|_| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!(
+                        "Unknown image type: {}. Supported types are png, jpeg, webp, avif",
+                        ident
+                    ),
+                )
+            })
+            .map(Self)
     }
 }
 
-#[derive(Clone, Copy, Default)]
-enum ImageType {
-    Png,
-    Jpeg,
-    Webp,
-    #[default]
-    Avif,
+#[derive(Clone, Copy)]
+struct ImageType(manganis_common::ImageType);
+
+impl Default for ImageType {
+    fn default() -> Self {
+        Self(manganis_common::ImageType::Avif)
+    }
 }
 
 pub struct ImageAssetParser {

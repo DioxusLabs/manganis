@@ -334,11 +334,11 @@ pub const fn font() -> FontAssetBuilder {
 ///
 /// The file builder collects an arbitrary file. Relative paths are resolved relative to the package root
 /// ```rust
-/// const _: &str = manganis::mg!(file("src/asset.txt"));
+/// const _: &str = manganis::mg!("src/asset.txt");
 /// ```
 /// Or you can use URLs to read the asset at build time from a remote location
 /// ```rust
-/// const _: &str = manganis::mg!(file("https://rustacean.net/assets/rustacean-flat-happy.png"));
+/// const _: &str = manganis::mg!("https://rustacean.net/assets/rustacean-flat-happy.png");
 /// ```
 #[allow(unused)]
 pub const fn file(path: &'static str) -> ImageAssetBuilder {
