@@ -10,7 +10,7 @@ use manganis_common::{MetadataAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, ToTokens};
+use quote::{quote, quote_spanned, ToTokens};
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use syn::{parse::Parse, parse_macro_input, LitStr};
@@ -97,11 +97,11 @@ pub fn classes(input: TokenStream) -> TokenStream {
 ///
 /// The file builder collects an arbitrary file. Relative paths are resolved relative to the package root
 /// ```rust
-/// const _: &str = manganis::mg!(file("src/asset.txt"));
+/// const _: &str = manganis::mg!("src/asset.txt");
 /// ```
 /// Or you can use URLs to read the asset at build time from a remote location
 /// ```rust
-/// const _: &str = manganis::mg!(file("https://rustacean.net/assets/rustacean-flat-happy.png"));
+/// const _: &str = manganis::mg!("https://rustacean.net/assets/rustacean-flat-happy.png");
 /// ```
 ///
 /// # Images
@@ -141,38 +141,112 @@ pub fn classes(input: TokenStream) -> TokenStream {
 pub fn mg(input: TokenStream) -> TokenStream {
     trace_to_file();
 
-    let builder_tokens = {
-        let input = input.clone();
-        parse_macro_input!(input as TokenStream2)
-    };
-
-    let builder_output = quote! {
-        const _: &dyn manganis::ForMgMacro = {
-            use manganis::*;
-            &#builder_tokens
-        };
-    };
-
     let asset = parse_macro_input!(input as AnyAssetParser);
 
     quote! {
-        {
-            #builder_output
-            #asset
-        }
+        #asset
     }
     .into_token_stream()
     .into()
 }
 
-enum AnyAssetParser {
+#[derive(Copy, Clone, Default, PartialEq)]
+enum ReturnType {
+    #[default]
+    AssetSpecific,
+    StaticStr,
+}
+
+struct AnyAssetParser {
+    return_type: ReturnType,
+    asset_type: syn::Result<AnyAssetParserType>,
+    source: TokenStream2,
+}
+
+impl ToTokens for AnyAssetParser {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let asset = match &self.asset_type {
+            Ok(AnyAssetParserType::File(file)) => file.into_token_stream(),
+            Ok(AnyAssetParserType::Image(image)) => {
+                let tokens = image.into_token_stream();
+                if self.return_type == ReturnType::StaticStr {
+                    quote! {
+                        #tokens.path()
+                    }
+                } else {
+                    tokens
+                }
+            }
+            Ok(AnyAssetParserType::Font(font)) => font.into_token_stream(),
+            Ok(AnyAssetParserType::Css(css)) => css.into_token_stream(),
+            Err(e) => e.to_compile_error(),
+        };
+        let source = &self.source;
+        let source = quote! {
+            const _: &dyn manganis::ForMgMacro = {
+                use manganis::*;
+                &#source
+            };
+        };
+
+        tokens.extend(quote! {
+            {
+                #source
+                #asset
+            }
+        })
+    }
+}
+
+impl Parse for AnyAssetParser {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        // First try to parse `"myfile".option1().option2()`. We parse that like asset_type("myfile.png").option1().option2()
+        if input.peek(syn::LitStr) {
+            let path_str = input.parse::<syn::LitStr>()?;
+            // Try to parse an extension
+            let path = std::path::PathBuf::from(path_str.value());
+            let input: proc_macro2::TokenStream = input.parse()?;
+            let parse_asset = || -> syn::Result<Self> {
+                if let Some(extension) = path.extension() {
+                    let extension = extension.to_str().unwrap();
+                    if extension.parse::<manganis_common::ImageType>().is_ok() {
+                        return syn::parse2(
+                            quote_spanned! { path_str.span() => image(#path_str) #input },
+                        );
+                    } else if extension.parse::<manganis_common::VideoType>().is_ok() {
+                        return syn::parse2(
+                            quote_spanned! { path_str.span() => video(#path_str) #input },
+                        );
+                    }
+                }
+                syn::parse2(quote_spanned! { path_str.span() => file(#path_str) #input })
+            };
+
+            let mut asset = parse_asset()?;
+            // We always return a static string if the asset was not parsed with an explicit type
+            asset.return_type = ReturnType::StaticStr;
+            return Ok(asset);
+        }
+
+        let builder_tokens = { input.fork().parse::<TokenStream2>()? };
+
+        let asset = input.parse::<AnyAssetParserType>();
+        Ok(AnyAssetParser {
+            return_type: ReturnType::AssetSpecific,
+            asset_type: asset,
+            source: builder_tokens,
+        })
+    }
+}
+
+enum AnyAssetParserType {
     File(FileAssetParser),
     Image(ImageAssetParser),
     Font(FontAssetParser),
     Css(CssAssetParser),
 }
 
-impl Parse for AnyAssetParser {
+impl Parse for AnyAssetParserType {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let ident = input.parse::<syn::Ident>()?;
         let as_string = ident.to_string();
@@ -191,25 +265,6 @@ impl Parse for AnyAssetParser {
                 ))
             }
         })
-    }
-}
-
-impl ToTokens for AnyAssetParser {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        match self {
-            Self::File(file) => {
-                file.to_tokens(tokens);
-            }
-            Self::Image(image) => {
-                image.to_tokens(tokens);
-            }
-            Self::Font(font) => {
-                font.to_tokens(tokens);
-            }
-            Self::Css(css) => {
-                css.to_tokens(tokens);
-            }
-        }
     }
 }
 

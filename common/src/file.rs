@@ -31,44 +31,29 @@ impl Display for FileOptions {
 impl FileOptions {
     /// Returns the default options for a given extension
     pub fn default_for_extension(extension: Option<&str>) -> Self {
-        match extension {
-            Some("png") => Self::Image(ImageOptions::new(ImageType::Png, None)),
-            Some("jpg") | Some("jpeg") => Self::Image(ImageOptions::new(ImageType::Jpg, None)),
-            Some("avif") => Self::Image(ImageOptions::new(ImageType::Avif, None)),
-            Some("webp") => Self::Image(ImageOptions::new(ImageType::Webp, None)),
-            Some("mp4") => Self::Video(VideoOptions::new(VideoType::MP4)),
-            Some("webm") => Self::Video(VideoOptions::new(VideoType::Webm)),
-            Some("gif") => Self::Video(VideoOptions::new(VideoType::GIF)),
-            Some("ttf") => Self::Font(FontOptions::new(FontType::TTF)),
-            Some("woff") => Self::Font(FontOptions::new(FontType::WOFF)),
-            Some("woff2") => Self::Font(FontOptions::new(FontType::WOFF2)),
-            Some("css") => Self::Css(CssOptions::default()),
-            _ => Self::Other(UnknownFileOptions {
-                extension: extension.map(String::from),
-            }),
+        if let Some(extension) = extension {
+            if extension == CssOptions::EXTENSION {
+                return Self::Css(CssOptions::default());
+            } else if let Ok(ty) = extension.parse::<ImageType>() {
+                return Self::Image(ImageOptions::new(ty, None));
+            } else if let Ok(ty) = extension.parse::<VideoType>() {
+                return Self::Video(VideoOptions::new(ty));
+            } else if let Ok(ty) = extension.parse::<FontType>() {
+                return Self::Font(FontOptions::new(ty));
+            }
         }
+        Self::Other(UnknownFileOptions {
+            extension: extension.map(String::from),
+        })
     }
 
     /// Returns the extension for this file
     pub fn extension(&self) -> Option<&str> {
         match self {
-            Self::Image(options) => match options.ty {
-                ImageType::Png => Some("png"),
-                ImageType::Jpg => Some("jpg"),
-                ImageType::Avif => Some("avif"),
-                ImageType::Webp => Some("webp"),
-            },
-            Self::Video(options) => match options.ty {
-                VideoType::MP4 => Some("mp4"),
-                VideoType::Webm => Some("webm"),
-                VideoType::GIF => Some("gif"),
-            },
-            Self::Font(options) => match options.ty {
-                FontType::TTF => Some("ttf"),
-                FontType::WOFF => Some("woff"),
-                FontType::WOFF2 => Some("woff2"),
-            },
-            Self::Css(_) => Some("css"),
+            Self::Image(options) => Some(options.ty.extension()),
+            Self::Video(options) => Some(options.ty.extension()),
+            Self::Font(options) => Some(options.ty.extension()),
+            Self::Css(_) => Some(CssOptions::EXTENSION),
             Self::Other(extension) => extension.extension.as_deref(),
         }
     }
@@ -171,14 +156,21 @@ pub enum ImageType {
     Webp,
 }
 
+impl ImageType {
+    /// Returns the extension for this image type
+    pub fn extension(&self) -> &'static str {
+        match self {
+            Self::Png => "png",
+            Self::Jpg => "jpg",
+            Self::Avif => "avif",
+            Self::Webp => "webp",
+        }
+    }
+}
+
 impl Display for ImageType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Png => write!(f, "png"),
-            Self::Jpg => write!(f, "jpg"),
-            Self::Avif => write!(f, "avif"),
-            Self::Webp => write!(f, "webp"),
-        }
+        write!(f, "{}", self.extension())
     }
 }
 
@@ -272,12 +264,32 @@ pub enum VideoType {
     GIF,
 }
 
+impl VideoType {
+    /// Returns the extension for this video type
+    pub fn extension(&self) -> &'static str {
+        match self {
+            Self::MP4 => "mp4",
+            Self::Webm => "webm",
+            Self::GIF => "gif",
+        }
+    }
+}
+
 impl Display for VideoType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::MP4 => write!(f, "mp4"),
-            Self::Webm => write!(f, "webm"),
-            Self::GIF => write!(f, "gif"),
+        write!(f, "{}", self.extension())
+    }
+}
+
+impl FromStr for VideoType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "mp4" => Ok(Self::MP4),
+            "webm" => Ok(Self::Webm),
+            "gif" => Ok(Self::GIF),
+            _ => Err(()),
         }
     }
 }
@@ -317,6 +329,30 @@ pub enum FontType {
     WOFF2,
 }
 
+impl FontType {
+    /// Returns the extension for this font type
+    pub fn extension(&self) -> &'static str {
+        match self {
+            Self::TTF => "ttf",
+            Self::WOFF => "woff",
+            Self::WOFF2 => "woff2",
+        }
+    }
+}
+
+impl FromStr for FontType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "ttf" => Ok(Self::TTF),
+            "woff" => Ok(Self::WOFF),
+            "woff2" => Ok(Self::WOFF2),
+            _ => Err(()),
+        }
+    }
+}
+
 impl Display for FontType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -353,6 +389,8 @@ impl Display for CssOptions {
 }
 
 impl CssOptions {
+    const EXTENSION: &'static str = "css";
+
     /// Creates a new css options struct
     pub const fn new() -> Self {
         Self {
