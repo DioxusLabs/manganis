@@ -3,11 +3,16 @@ use image::{DynamicImage, EncodableLayout};
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
 use manganis_common::{
     CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType, JsOptions,
+    JsonOptions,
 };
 use std::{
     io::{BufWriter, Write},
     path::{Path, PathBuf},
+    sync::Arc,
 };
+use swc::{config::JsMinifyOptions, try_with_handler, BoolOrDataConfig};
+use swc_common::{sync::Lrc, FileName};
+use swc_common::{SourceMap, GLOBALS};
 
 pub trait Process {
     fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()>;
@@ -39,6 +44,9 @@ impl Process for FileOptions {
                 options.process(input_location, output_folder)?;
             }
             Self::Js(options) => {
+                options.process(input_location, output_folder)?;
+            }
+            Self::Json(options) => {
                 options.process(input_location, output_folder)?;
             }
             Self::Image(options) => {
@@ -188,15 +196,71 @@ pub(crate) fn minify_css(css: &str) -> String {
     res.code
 }
 
+pub(crate) fn minify_js(source: &FileLocation) -> anyhow::Result<String> {
+    let cm = Arc::<SourceMap>::default();
+
+    let js = source.read_to_string()?;
+    let c = swc::Compiler::new(cm.clone());
+    let output = GLOBALS.set(&Default::default(), || {
+        try_with_handler(cm.clone(), Default::default(), |handler| {
+            let filename = Lrc::new(match source.source() {
+                manganis_common::FileSource::Local(path) => FileName::Real(path.clone()),
+                manganis_common::FileSource::Remote(url) => FileName::Url(url.clone()),
+            });
+            let fm = cm.new_source_file(filename, js.to_string());
+
+            c.minify(
+                fm,
+                handler,
+                &JsMinifyOptions {
+                    compress: BoolOrDataConfig::from_bool(true),
+                    mangle: BoolOrDataConfig::from_bool(true),
+                    ..Default::default()
+                },
+            )
+            .context("failed to minify javascript")
+        })
+    }).map(|output| output.code);
+
+    match output {
+        Ok(output) => Ok(output),
+        Err(err) => {
+            tracing::error!("Failed to minify javascript: {}", err);
+            Ok(js)
+        }
+    }
+}
+
 impl Process for JsOptions {
     fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
-        let js = input_location.read_to_string()?;
+        let js = if self.minify() {
+            minify_js(input_location)?
+        } else {
+            input_location.read_to_string()?
+        };
         let mut output_location = output_folder.to_path_buf();
         output_location.push(input_location.unique_name());
 
         std::fs::write(&output_location, js).with_context(|| {
             format!(
                 "Failed to write js to output location: {}",
+                output_location.display()
+            )
+        })?;
+
+        Ok(())
+    }
+}
+
+impl Process for JsonOptions {
+    fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
+        let json = minify_js(input_location)?;
+        let mut output_location = output_folder.to_path_buf();
+        output_location.push(input_location.unique_name());
+
+        std::fs::write(&output_location, json).with_context(|| {
+            format!(
+                "Failed to write json to output location: {}",
                 output_location.display()
             )
         })?;

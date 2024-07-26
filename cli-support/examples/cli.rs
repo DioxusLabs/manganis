@@ -9,6 +9,8 @@ const ASSETS_FILE_LOCATION: &str = "./assets";
 const ASSETS_SERVE_LOCATION: &str = "./assets/";
 
 fn main() {
+    tracing_subscriber::fmt::init();
+
     // First set any settings you need for the build.
     Config::default()
         .with_assets_serve_location(ASSETS_SERVE_LOCATION)
