@@ -6,7 +6,7 @@ use std::{path::PathBuf, process::Command};
 const ASSETS_FILE_LOCATION: &str = "./assets";
 
 // This is the location where the assets will be served from
-const ASSETS_SERVE_LOCATION: &str = "/assets";
+const ASSETS_SERVE_LOCATION: &str = "./assets/";
 
 fn main() {
     // First set any settings you need for the build.

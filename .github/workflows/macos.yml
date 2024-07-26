@@ -3,8 +3,11 @@ name: macOS tests
 on:
   push:
     branches:
-      - master
+      - main
     paths:
+      - cli-support/src/**
+      - cli-support/examples/**
+      - cli-support/Cargo.toml
       - common/src/**
       - common/examples/**
       - common/Cargo.toml
@@ -19,8 +22,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches:
-      - master
+      - main
     paths:
+      - cli-support/src/**
+      - cli-support/examples/**
+      - cli-support/Cargo.toml
       - common/src/**
       - common/examples/**
       - common/Cargo.toml

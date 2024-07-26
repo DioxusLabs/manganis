@@ -1,3 +1,4 @@
+use manganis_common::ManganisSupportError;
 use manganis_common::{AssetType, FileAsset, FileOptions, FileSource, ImageOptions};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, Token};
@@ -119,12 +120,7 @@ impl Parse for ImageSize {
 
 impl From<ImageType> for manganis_common::ImageType {
     fn from(val: ImageType) -> Self {
-        match val {
-            ImageType::Png => manganis_common::ImageType::Png,
-            ImageType::Jpeg => manganis_common::ImageType::Jpg,
-            ImageType::Webp => manganis_common::ImageType::Webp,
-            ImageType::Avif => manganis_common::ImageType::Avif,
-        }
+        val.0
     }
 }
 
@@ -133,33 +129,35 @@ impl Parse for ImageType {
         let _ = input.parse::<syn::Ident>()?;
         let _ = input.parse::<Token![::]>()?;
         let ident = input.parse::<syn::Ident>()?;
-        match ident.to_string().to_lowercase().as_str() {
-            "png" => Ok(ImageType::Png),
-            "jpg" => Ok(ImageType::Jpeg),
-            "webp" => Ok(ImageType::Webp),
-            "avif" => Ok(ImageType::Avif),
-            _ => Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                format!(
-                    "Unknown image type: {}. Supported types are png, jpeg, webp, avif",
-                    ident
-                ),
-            )),
-        }
+        ident
+            .to_string()
+            .to_lowercase()
+            .as_str()
+            .parse::<manganis_common::ImageType>()
+            .map_err(|_| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!(
+                        "Unknown image type: {}. Supported types are png, jpeg, webp, avif",
+                        ident
+                    ),
+                )
+            })
+            .map(Self)
     }
 }
 
-#[derive(Clone, Copy, Default)]
-enum ImageType {
-    Png,
-    Jpeg,
-    Webp,
-    #[default]
-    Avif,
+#[derive(Clone, Copy)]
+struct ImageType(manganis_common::ImageType);
+
+impl Default for ImageType {
+    fn default() -> Self {
+        Self(manganis_common::ImageType::Avif)
+    }
 }
 
 pub struct ImageAssetParser {
-    file_name: String,
+    file_name: Result<String, ManganisSupportError>,
     low_quality_preview: Option<String>,
     asset: AssetType,
 }
@@ -206,12 +204,12 @@ impl Parse for ImageAssetParser {
                 "URL encoding is not enabled. Enable the url-encoding feature to use this feature",
             ));
             #[cfg(feature = "url-encoding")]
-            url_encoded_asset(&this_file).map_err(|e| {
+            Ok(url_encoded_asset(&this_file).map_err(|e| {
                 syn::Error::new(
                     proc_macro2::Span::call_site(),
                     format!("Failed to encode file: {}", e),
                 )
-            })?
+            })?)
         } else {
             this_file.served_location()
         };
@@ -297,7 +295,7 @@ fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
 
 impl ToTokens for ImageAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let file_name = &self.file_name;
+        let file_name = crate::quote_path(&self.file_name);
         let low_quality_preview = match &self.low_quality_preview {
             Some(lqip) => quote! { Some(#lqip) },
             None => quote! { None },

@@ -34,46 +34,32 @@ impl Display for FileOptions {
 impl FileOptions {
     /// Returns the default options for a given extension
     pub fn default_for_extension(extension: Option<&str>) -> Self {
-        match extension {
-            Some("png") => Self::Image(ImageOptions::new(ImageType::Png, None)),
-            Some("jpg") | Some("jpeg") => Self::Image(ImageOptions::new(ImageType::Jpg, None)),
-            Some("avif") => Self::Image(ImageOptions::new(ImageType::Avif, None)),
-            Some("webp") => Self::Image(ImageOptions::new(ImageType::Webp, None)),
-            Some("mp4") => Self::Video(VideoOptions::new(VideoType::MP4)),
-            Some("webm") => Self::Video(VideoOptions::new(VideoType::Webm)),
-            Some("gif") => Self::Video(VideoOptions::new(VideoType::GIF)),
-            Some("ttf") => Self::Font(FontOptions::new(FontType::TTF)),
-            Some("woff") => Self::Font(FontOptions::new(FontType::WOFF)),
-            Some("woff2") => Self::Font(FontOptions::new(FontType::WOFF2)),
-            Some("css") => Self::Css(CssOptions::default()),
-            Some("js") => Self::Js(JsOptions::default()),
-            _ => Self::Other(UnknownFileOptions {
-                extension: extension.map(String::from),
-            }),
+        if let Some(extension) = extension {
+            if extension == CssOptions::EXTENSION {
+                return Self::Css(CssOptions::default());
+            } else if let Ok(ty) = extension.parse::<ImageType>() {
+                return Self::Image(ImageOptions::new(ty, None));
+            } else if let Ok(ty) = extension.parse::<VideoType>() {
+                return Self::Video(VideoOptions::new(ty));
+            } else if let Ok(ty) = extension.parse::<FontType>() {
+                return Self::Font(FontOptions::new(ty));
+            } else if let Ok(ty) = extension.parse::<JsType>() {
+                return Self::Js(JsOptions::new(ty));
+            }
         }
+        Self::Other(UnknownFileOptions {
+            extension: extension.map(String::from),
+        })
     }
 
     /// Returns the extension for this file
     pub fn extension(&self) -> Option<&str> {
         match self {
-            Self::Image(options) => match options.ty {
-                ImageType::Png => Some("png"),
-                ImageType::Jpg => Some("jpg"),
-                ImageType::Avif => Some("avif"),
-                ImageType::Webp => Some("webp"),
-            },
-            Self::Video(options) => match options.ty {
-                VideoType::MP4 => Some("mp4"),
-                VideoType::Webm => Some("webm"),
-                VideoType::GIF => Some("gif"),
-            },
-            Self::Font(options) => match options.ty {
-                FontType::TTF => Some("ttf"),
-                FontType::WOFF => Some("woff"),
-                FontType::WOFF2 => Some("woff2"),
-            },
-            Self::Css(_) => Some("css"),
-            Self::Js(_) => Some("js"),
+            Self::Image(options) => Some(options.ty.extension()),
+            Self::Video(options) => Some(options.ty.extension()),
+            Self::Font(options) => Some(options.ty.extension()),
+            Self::Css(_) => Some(CssOptions::EXTENSION),
+            Self::Js(js) => Some(js.ty.extension()),
             Self::Other(extension) => extension.extension.as_deref(),
         }
     }
@@ -176,14 +162,21 @@ pub enum ImageType {
     Webp,
 }
 
+impl ImageType {
+    /// Returns the extension for this image type
+    pub fn extension(&self) -> &'static str {
+        match self {
+            Self::Png => "png",
+            Self::Jpg => "jpg",
+            Self::Avif => "avif",
+            Self::Webp => "webp",
+        }
+    }
+}
+
 impl Display for ImageType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Png => write!(f, "png"),
-            Self::Jpg => write!(f, "jpg"),
-            Self::Avif => write!(f, "avif"),
-            Self::Webp => write!(f, "webp"),
-        }
+        write!(f, "{}", self.extension())
     }
 }
 
@@ -206,6 +199,8 @@ impl FromStr for ImageType {
 pub struct VideoOptions {
     /// Whether the video should be compressed
     compress: bool,
+    /// Whether the video should be preloaded
+    preload: bool,
     /// The type of the video
     ty: VideoType,
 }
@@ -216,6 +211,9 @@ impl Display for VideoOptions {
         if self.compress {
             write!(f, " (compressed)")?;
         }
+        if self.preload {
+            write!(f, " (preload)")?;
+        }
         Ok(())
     }
 }
@@ -223,7 +221,11 @@ impl Display for VideoOptions {
 impl VideoOptions {
     /// Creates a new video options struct
     pub fn new(ty: VideoType) -> Self {
-        Self { compress: true, ty }
+        Self {
+            compress: true,
+            ty,
+            preload: false,
+        }
     }
 
     /// Returns the type of the video
@@ -245,6 +247,16 @@ impl VideoOptions {
     pub fn set_compress(&mut self, compress: bool) {
         self.compress = compress;
     }
+
+    /// Returns whether the video should be preloaded
+    pub fn preload(&self) -> bool {
+        self.preload
+    }
+
+    /// Sets whether the video should be preloaded
+    pub fn set_preload(&mut self, preload: bool) {
+        self.preload = preload;
+    }
 }
 
 /// The type of a video
@@ -258,12 +270,32 @@ pub enum VideoType {
     GIF,
 }
 
+impl VideoType {
+    /// Returns the extension for this video type
+    pub fn extension(&self) -> &'static str {
+        match self {
+            Self::MP4 => "mp4",
+            Self::Webm => "webm",
+            Self::GIF => "gif",
+        }
+    }
+}
+
 impl Display for VideoType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::MP4 => write!(f, "mp4"),
-            Self::Webm => write!(f, "webm"),
-            Self::GIF => write!(f, "gif"),
+        write!(f, "{}", self.extension())
+    }
+}
+
+impl FromStr for VideoType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "mp4" => Ok(Self::MP4),
+            "webm" => Ok(Self::Webm),
+            "gif" => Ok(Self::GIF),
+            _ => Err(()),
         }
     }
 }
@@ -303,6 +335,30 @@ pub enum FontType {
     WOFF2,
 }
 
+impl FontType {
+    /// Returns the extension for this font type
+    pub fn extension(&self) -> &'static str {
+        match self {
+            Self::TTF => "ttf",
+            Self::WOFF => "woff",
+            Self::WOFF2 => "woff2",
+        }
+    }
+}
+
+impl FromStr for FontType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "ttf" => Ok(Self::TTF),
+            "woff" => Ok(Self::WOFF),
+            "woff2" => Ok(Self::WOFF2),
+            _ => Err(()),
+        }
+    }
+}
+
 impl Display for FontType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -317,6 +373,13 @@ impl Display for FontType {
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct CssOptions {
     minify: bool,
+    preload: bool,
+}
+
+impl Default for CssOptions {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Display for CssOptions {
@@ -324,31 +387,89 @@ impl Display for CssOptions {
         if self.minify {
             write!(f, "minified")?;
         }
+        if self.preload {
+            write!(f, " (preload)")?;
+        }
         Ok(())
     }
 }
 
 impl CssOptions {
+    const EXTENSION: &'static str = "css";
+
     /// Creates a new css options struct
-    pub fn new(minify: bool) -> Self {
-        Self { minify }
+    pub const fn new() -> Self {
+        Self {
+            minify: true,
+            preload: false,
+        }
     }
 
     /// Returns whether the css should be minified
     pub fn minify(&self) -> bool {
         self.minify
     }
+
+    /// Sets whether the css should be minified
+    pub fn set_minify(&mut self, minify: bool) {
+        self.minify = minify;
+    }
+
+    /// Returns whether the css should be preloaded
+    pub fn preload(&self) -> bool {
+        self.preload
+    }
+
+    /// Sets whether the css should be preloaded
+    pub fn set_preload(&mut self, preload: bool) {
+        self.preload = preload;
+    }
 }
 
-impl Default for CssOptions {
-    fn default() -> Self {
-        Self { minify: true }
+/// The type of a Javascript asset
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Copy, Hash, Default)]
+pub enum JsType {
+    /// A js asset
+    #[default]
+    Js,
+    /// A json asset
+    Json,
+}
+
+impl JsType {
+    /// Returns the extension for this js type
+    pub fn extension(&self) -> &'static str {
+        match self {
+            Self::Js => "js",
+            Self::Json => "json",
+        }
+    }
+}
+
+impl FromStr for JsType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "js" => Ok(Self::Js),
+            "json" => Ok(Self::Json),
+            _ => Err(()),
+        }
+    }
+}
+
+impl Display for JsType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.extension())
     }
 }
 
 /// The options for a Javascript asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash, Default)]
-pub struct JsOptions {}
+pub struct JsOptions {
+    ty: JsType,
+    preload: bool,
+}
 
 impl Display for JsOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -359,8 +480,28 @@ impl Display for JsOptions {
 
 impl JsOptions {
     /// Creates a new js options struct
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(ty: JsType) -> Self {
+        Self { ty, preload: false }
+    }
+
+    /// Returns the type of the js asset
+    pub fn ty(&self) -> &JsType {
+        &self.ty
+    }
+
+    /// Sets the type of the js asset
+    pub fn set_ty(&mut self, ty: JsType) {
+        self.ty = ty;
+    }
+
+    /// Returns whether the js should be preloaded
+    pub fn preload(&self) -> bool {
+        self.preload
+    }
+
+    /// Sets whether the js should be preloaded
+    pub fn set_preload(&mut self, preload: bool) {
+        self.preload = preload;
     }
 }
 

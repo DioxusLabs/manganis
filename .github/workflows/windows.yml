@@ -3,8 +3,11 @@ name: windows
 on:
   push:
     branches:
-      - master
+      - main
     paths:
+      - cli-support/src/**
+      - cli-support/examples/**
+      - cli-support/Cargo.toml
       - common/src/**
       - common/examples/**
       - common/Cargo.toml
@@ -19,8 +22,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches:
-      - master
+      - main
     paths:
+      - cli-support/src/**
+      - cli-support/examples/**
+      - cli-support/Cargo.toml
       - common/src/**
       - common/examples/**
       - common/Cargo.toml
@@ -75,18 +81,18 @@ jobs:
       # - name: checkout
       #   uses: actions/checkout@v3
       #   with:
-      #     path: C:/collect-assets.git
+      #     path: C:/manganis.git
       #     fetch-depth: 1
 
       #  we need to use the C drive as the working directory
 
       - name: Checkout
         run: |
-          mkdir C:/collect-assets.git
-          git clone https://github.com/dioxuslabs/collect-assets.git C:/collect-assets.git --depth 1
+          mkdir C:/manganis.git
+          git clone https://github.com/dioxuslabs/manganis.git C:/manganis.git --depth 1
 
       - name: test
-        working-directory: C:/collect-assets.git
+        working-directory: C:/manganis.git
         run: |
           rustc -Vv
           cargo -V

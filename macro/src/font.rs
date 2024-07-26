@@ -1,4 +1,4 @@
-use manganis_common::{AssetType, CssOptions, FileAsset, FileSource};
+use manganis_common::{AssetType, CssOptions, FileAsset, FileSource, ManganisSupportError};
 use quote::{quote, ToTokens};
 use syn::{bracketed, parenthesized, parse::Parse};
 
@@ -135,14 +135,20 @@ impl Parse for ParseFontOptions {
 }
 
 pub struct FontAssetParser {
-    file_name: String,
+    file_name: Result<String, ManganisSupportError>,
     asset: AssetType,
 }
 
 impl Parse for FontAssetParser {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let _inside;
-        parenthesized!(_inside in input);
+        let inside;
+        parenthesized!(inside in input);
+        if !inside.is_empty() {
+            return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                "Font assets do not support paths. Please use file() if you want to import a local font file",
+            ));
+        }
 
         let options = input.parse::<ParseFontOptions>()?;
 
@@ -168,7 +174,7 @@ impl Parse for FontAssetParser {
 
 impl ToTokens for FontAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let file_name = &self.file_name;
+        let file_name = crate::quote_path(&self.file_name);
 
         let link_section = generate_link_section(self.asset.clone());
 
