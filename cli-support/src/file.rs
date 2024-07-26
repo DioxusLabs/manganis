@@ -201,26 +201,28 @@ pub(crate) fn minify_js(source: &FileLocation) -> anyhow::Result<String> {
 
     let js = source.read_to_string()?;
     let c = swc::Compiler::new(cm.clone());
-    let output = GLOBALS.set(&Default::default(), || {
-        try_with_handler(cm.clone(), Default::default(), |handler| {
-            let filename = Lrc::new(match source.source() {
-                manganis_common::FileSource::Local(path) => FileName::Real(path.clone()),
-                manganis_common::FileSource::Remote(url) => FileName::Url(url.clone()),
-            });
-            let fm = cm.new_source_file(filename, js.to_string());
+    let output = GLOBALS
+        .set(&Default::default(), || {
+            try_with_handler(cm.clone(), Default::default(), |handler| {
+                let filename = Lrc::new(match source.source() {
+                    manganis_common::FileSource::Local(path) => FileName::Real(path.clone()),
+                    manganis_common::FileSource::Remote(url) => FileName::Url(url.clone()),
+                });
+                let fm = cm.new_source_file(filename, js.to_string());
 
-            c.minify(
-                fm,
-                handler,
-                &JsMinifyOptions {
-                    compress: BoolOrDataConfig::from_bool(true),
-                    mangle: BoolOrDataConfig::from_bool(true),
-                    ..Default::default()
-                },
-            )
-            .context("failed to minify javascript")
+                c.minify(
+                    fm,
+                    handler,
+                    &JsMinifyOptions {
+                        compress: BoolOrDataConfig::from_bool(true),
+                        mangle: BoolOrDataConfig::from_bool(true),
+                        ..Default::default()
+                    },
+                )
+                .context("failed to minify javascript")
+            })
         })
-    }).map(|output| output.code);
+        .map(|output| output.code);
 
     match output {
         Ok(output) => Ok(output),
