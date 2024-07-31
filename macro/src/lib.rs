@@ -337,7 +337,9 @@ fn quote_path(path: &Result<String, manganis_common::ManganisSupportError>) -> T
 }
 
 #[cfg(feature = "url-encoding")]
-pub(crate) fn url_encoded_asset(file_asset: &manganis_common::FileAsset) -> Result<String, syn::Error> {
+pub(crate) fn url_encoded_asset(
+    file_asset: &manganis_common::FileAsset,
+) -> Result<String, syn::Error> {
     use base64::Engine;
 
     let target_directory =
