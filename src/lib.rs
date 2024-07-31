@@ -235,6 +235,90 @@ impl CssAssetBuilder {
     }
 }
 
+/// A builder for a javascript asset. This must be used in the [`mg!`] macro.
+///
+/// > **Note**: This will do nothing outside of the `mg!` macro
+pub struct JsAssetBuilder;
+
+impl JsAssetBuilder {
+    /// Sets whether the js should be minified (default: true)
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
+    ///
+    /// Minifying the js can make your site load faster by loading less data
+    ///
+    /// ```rust
+    /// const _: &str = manganis::mg!(js("assets/script.js").minify(false));
+    /// ```
+    #[allow(unused)]
+    pub const fn minify(self, minify: bool) -> Self {
+        Self
+    }
+
+    /// Make the js preloaded
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
+    ///
+    /// Preloading js will make the js start to load as soon as possible. This is useful for js that will be run soon after the page loads or js that may not be used immediately, but should start loading sooner
+    ///
+    /// ```rust
+    /// const _: &str = manganis::mg!(js("assets/script.js").preload());
+    /// ```
+    #[allow(unused)]
+    pub const fn preload(self) -> Self {
+        Self
+    }
+
+    /// Make the js URL encoded
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
+    ///
+    /// URL encoding an image inlines the data of the js into the URL. This is useful for small js files that should load as soon as the html is parsed
+    ///
+    /// ```rust
+    /// const _: &str = manganis::mg!(js("assets/script.js").url_encoded());
+    /// ```
+    #[allow(unused)]
+    pub const fn url_encoded(self) -> Self {
+        Self
+    }
+}
+
+/// A builder for a json asset. This must be used in the [`mg!`] macro.
+///
+/// > **Note**: This will do nothing outside of the `mg!` macro
+pub struct JsonAssetBuilder;
+
+impl JsonAssetBuilder {
+    /// Make the json preloaded
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
+    ///
+    /// Preloading json will make the json start to load as soon as possible. This is useful for json that will be run soon after the page loads or json that may not be used immediately, but should start loading sooner
+    ///
+    /// ```rust
+    /// const _: &str = manganis::mg!(json("assets/data.json").preload());
+    /// ```
+    #[allow(unused)]
+    pub const fn preload(self) -> Self {
+        Self
+    }
+
+    /// Make the json URL encoded
+    ///
+    /// > **Note**: This will do nothing outside of the `mg!` macro
+    ///
+    /// URL encoding an image inlines the data of the json into the URL. This is useful for small json files that should load as soon as the html is parsed
+    ///
+    /// ```rust
+    /// const _: &str = manganis::mg!(json("assets/data.json").url_encoded());
+    /// ```
+    #[allow(unused)]
+    pub const fn url_encoded(self) -> Self {
+        Self
+    }
+}
+
 /// Create an css asset from the local path or url to the css
 ///
 /// > **Note**: This will do nothing outside of the `mg!` macro
@@ -357,6 +441,9 @@ mod __private {
 
     impl Sealed for ImageAssetBuilder {}
     impl Sealed for FontAssetBuilder {}
+    impl Sealed for JsAssetBuilder {}
+    impl Sealed for JsonAssetBuilder {}
+    impl Sealed for CssAssetBuilder {}
     impl Sealed for &'static str {}
 }
 

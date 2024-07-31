@@ -12,6 +12,10 @@ pub enum FileOptions {
     Font(FontOptions),
     /// A css asset
     Css(CssOptions),
+    /// A JavaScript asset
+    Js(JsOptions),
+    /// A Json asset
+    Json(JsonOptions),
     /// Any other asset
     Other(UnknownFileOptions),
 }
@@ -23,6 +27,8 @@ impl Display for FileOptions {
             Self::Video(options) => write!(f, "{}", options),
             Self::Font(options) => write!(f, "{}", options),
             Self::Css(options) => write!(f, "{}", options),
+            Self::Js(options) => write!(f, "{}", options),
+            Self::Json(options) => write!(f, "{}", options),
             Self::Other(options) => write!(f, "{}", options),
         }
     }
@@ -34,12 +40,16 @@ impl FileOptions {
         if let Some(extension) = extension {
             if extension == CssOptions::EXTENSION {
                 return Self::Css(CssOptions::default());
+            } else if extension == JsonOptions::EXTENSION {
+                return Self::Json(JsonOptions::default());
             } else if let Ok(ty) = extension.parse::<ImageType>() {
                 return Self::Image(ImageOptions::new(ty, None));
             } else if let Ok(ty) = extension.parse::<VideoType>() {
                 return Self::Video(VideoOptions::new(ty));
             } else if let Ok(ty) = extension.parse::<FontType>() {
                 return Self::Font(FontOptions::new(ty));
+            } else if let Ok(ty) = extension.parse::<JsType>() {
+                return Self::Js(JsOptions::new(ty));
             }
         }
         Self::Other(UnknownFileOptions {
@@ -54,6 +64,8 @@ impl FileOptions {
             Self::Video(options) => Some(options.ty.extension()),
             Self::Font(options) => Some(options.ty.extension()),
             Self::Css(_) => Some(CssOptions::EXTENSION),
+            Self::Js(js) => Some(js.ty.extension()),
+            Self::Json(_) => Some(JsonOptions::EXTENSION),
             Self::Other(extension) => extension.extension.as_deref(),
         }
     }
@@ -415,6 +427,120 @@ impl CssOptions {
     }
 
     /// Sets whether the css should be preloaded
+    pub fn set_preload(&mut self, preload: bool) {
+        self.preload = preload;
+    }
+}
+
+/// The type of a Javascript asset
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Copy, Hash, Default)]
+pub enum JsType {
+    /// A js asset
+    #[default]
+    Js,
+    // TODO: support ts files
+}
+
+impl JsType {
+    /// Returns the extension for this js type
+    pub fn extension(&self) -> &'static str {
+        match self {
+            Self::Js => "js",
+        }
+    }
+}
+
+impl FromStr for JsType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "js" => Ok(Self::Js),
+            _ => Err(()),
+        }
+    }
+}
+
+impl Display for JsType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.extension())
+    }
+}
+
+/// The options for a Javascript asset
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash, Default)]
+pub struct JsOptions {
+    ty: JsType,
+    minify: bool,
+    preload: bool,
+}
+
+impl Display for JsOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "js")?;
+        Ok(())
+    }
+}
+
+impl JsOptions {
+    /// Creates a new js options struct
+    pub fn new(ty: JsType) -> Self {
+        Self {
+            ty,
+            preload: false,
+            minify: true,
+        }
+    }
+
+    /// Returns whether the js should be preloaded
+    pub fn preload(&self) -> bool {
+        self.preload
+    }
+
+    /// Sets whether the js should be preloaded
+    pub fn set_preload(&mut self, preload: bool) {
+        self.preload = preload;
+    }
+
+    /// Returns if the js should be minified
+    pub fn minify(&self) -> bool {
+        self.minify
+    }
+
+    /// Sets if the js should be minified
+    pub fn set_minify(&mut self, minify: bool) {
+        self.minify = minify;
+    }
+}
+
+/// The options for a Json asset
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash, Default)]
+pub struct JsonOptions {
+    preload: bool,
+}
+
+impl Display for JsonOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "json")?;
+        Ok(())
+    }
+}
+
+impl JsonOptions {
+    /// The extension of the json asset
+    pub const EXTENSION: &'static str = "json";
+
+    /// Creates a new json options struct
+    pub fn new() -> Self {
+        Self { preload: false }
+    }
+
+    /// Returns whether the json should be preloaded
+    pub fn preload(&self) -> bool {
+        self.preload
+    }
+
+    /// Sets whether the json should be preloaded
     pub fn set_preload(&mut self, preload: bool) {
         self.preload = preload;
     }

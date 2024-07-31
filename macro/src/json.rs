@@ -1,16 +1,14 @@
-use manganis_common::{
-    AssetType, CssOptions, FileAsset, FileOptions, FileSource, ManganisSupportError,
-};
+use manganis_common::{AssetType, FileAsset, FileOptions, FileSource, ManganisSupportError};
 use quote::{quote, ToTokens};
-use syn::{parenthesized, parse::Parse, LitBool};
+use syn::{parenthesized, parse::Parse};
 
 use crate::generate_link_section;
 
-struct ParseCssOptions {
-    options: Vec<ParseCssOption>,
+struct ParseJsonOptions {
+    options: Vec<ParseJsonOption>,
 }
 
-impl ParseCssOptions {
+impl ParseJsonOptions {
     fn apply_to_options(self, file: &mut FileAsset) {
         for option in self.options {
             option.apply_to_options(file);
@@ -18,67 +16,49 @@ impl ParseCssOptions {
     }
 }
 
-impl Parse for ParseCssOptions {
+impl Parse for ParseJsonOptions {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut options = Vec::new();
         while !input.is_empty() {
-            options.push(input.parse::<ParseCssOption>()?);
+            options.push(input.parse::<ParseJsonOption>()?);
         }
-        Ok(ParseCssOptions { options })
+        Ok(ParseJsonOptions { options })
     }
 }
 
-enum ParseCssOption {
+enum ParseJsonOption {
     UrlEncoded(bool),
     Preload(bool),
-    Minify(bool),
 }
 
-impl ParseCssOption {
+impl ParseJsonOption {
     fn apply_to_options(self, file: &mut FileAsset) {
         match self {
-            ParseCssOption::Preload(_) | ParseCssOption::Minify(_) => {
-                file.with_options_mut(|options| {
-                    if let FileOptions::Css(options) = options {
-                        match self {
-                            ParseCssOption::Minify(format) => {
-                                options.set_minify(format);
-                            }
-                            ParseCssOption::Preload(preload) => {
-                                options.set_preload(preload);
-                            }
-                            _ => {}
-                        }
-                    }
-                })
-            }
-            ParseCssOption::UrlEncoded(url_encoded) => {
+            ParseJsonOption::Preload(preload) => file.with_options_mut(|options| {
+                if let FileOptions::Json(options) = options {
+                    options.set_preload(preload);
+                }
+            }),
+            ParseJsonOption::UrlEncoded(url_encoded) => {
                 file.set_url_encoded(url_encoded);
             }
         }
     }
 }
 
-impl Parse for ParseCssOption {
+impl Parse for ParseJsonOption {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let _ = input.parse::<syn::Token![.]>()?;
         let ident = input.parse::<syn::Ident>()?;
-        let content;
-        parenthesized!(content in input);
+        let _content;
+        parenthesized!(_content in input);
         match ident.to_string().as_str() {
-            "preload" => {
-                Ok(ParseCssOption::Preload(true))
-            }
-            "url_encoded" => {
-                Ok(ParseCssOption::UrlEncoded(true))
-            }
-            "minify" => {
-                Ok(ParseCssOption::Minify(content.parse::<LitBool>()?.value()))
-            }
+            "preload" => Ok(ParseJsonOption::Preload(true)),
+            "url_encoded" => Ok(ParseJsonOption::UrlEncoded(true)),
             _ => Err(syn::Error::new(
                 proc_macro2::Span::call_site(),
                 format!(
-                    "Unknown Css option: {}. Supported options are preload, url_encoded, and minify",
+                    "Unknown Json option: {}. Supported options are preload, url_encoded, and minify",
                     ident
                 ),
             )),
@@ -86,12 +66,12 @@ impl Parse for ParseCssOption {
     }
 }
 
-pub struct CssAssetParser {
+pub struct JsonAssetParser {
     file_name: Result<String, ManganisSupportError>,
     asset: AssetType,
 }
 
-impl Parse for CssAssetParser {
+impl Parse for JsonAssetParser {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let inside;
         parenthesized!(inside in input);
@@ -101,7 +81,7 @@ impl Parse for CssAssetParser {
             if input.is_empty() {
                 None
             } else {
-                Some(input.parse::<ParseCssOptions>()?)
+                Some(input.parse::<ParseJsonOptions>()?)
             }
         };
 
@@ -116,7 +96,7 @@ impl Parse for CssAssetParser {
             }
         };
         let mut this_file = FileAsset::new(path.clone())
-            .with_options(manganis_common::FileOptions::Css(CssOptions::new()));
+            .with_options(manganis_common::FileOptions::Json(Default::default()));
         if let Some(parsed_options) = parsed_options {
             parsed_options.apply_to_options(&mut this_file);
         }
@@ -140,11 +120,11 @@ impl Parse for CssAssetParser {
             this_file.served_location()
         };
 
-        Ok(CssAssetParser { file_name, asset })
+        Ok(JsonAssetParser { file_name, asset })
     }
 }
 
-impl ToTokens for CssAssetParser {
+impl ToTokens for JsonAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let file_name = crate::quote_path(&self.file_name);
 

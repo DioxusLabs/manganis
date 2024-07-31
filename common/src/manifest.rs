@@ -42,6 +42,15 @@ impl AssetManifest {
                             }
                         }
                     }
+                    crate::FileOptions::Js(js_options) => {
+                        if js_options.preload() {
+                            if let Ok(asset_path) = file.served_location() {
+                                head.push_str(&format!(
+                                    "<link rel=\"preload\" as=\"script\" href=\"{asset_path}\">\n"
+                                ))
+                            }
+                        }
+                    }
                     _ => {}
                 }
             }

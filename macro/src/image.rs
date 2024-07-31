@@ -241,7 +241,7 @@ impl Parse for ImageAssetParser {
                     ),
                 ));
 
-                Some(url_encoded_asset(&lqip).map_err(|e| {
+                Some(crate::url_encoded_asset(&lqip).map_err(|e| {
                     syn::Error::new(
                         proc_macro2::Span::call_site(),
                         format!("Failed to encode file: {}", e),
@@ -258,39 +258,6 @@ impl Parse for ImageAssetParser {
             asset,
         })
     }
-}
-
-#[cfg(feature = "url-encoding")]
-fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
-    use base64::Engine;
-
-    let target_directory =
-        std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
-    let output_folder = std::path::Path::new(&target_directory)
-        .join("manganis")
-        .join("assets");
-    std::fs::create_dir_all(&output_folder).map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to create output folder: {}", e),
-        )
-    })?;
-    manganis_cli_support::process_file(file_asset, &output_folder).map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to process file: {}", e),
-        )
-    })?;
-    let file = output_folder.join(file_asset.location().unique_name());
-    let data = std::fs::read(file).map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to read file: {}", e),
-        )
-    })?;
-    let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
-    let mime = manganis_common::get_mime_from_ext(file_asset.options().extension());
-    Ok(format!("data:{mime};base64,{data}"))
 }
 
 impl ToTokens for ImageAssetParser {

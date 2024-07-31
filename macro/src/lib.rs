@@ -5,6 +5,8 @@ use css::CssAssetParser;
 use file::FileAssetParser;
 use font::FontAssetParser;
 use image::ImageAssetParser;
+use js::JsAssetParser;
+use json::JsonAssetParser;
 use manganis_common::cache::macro_log_file;
 use manganis_common::{MetadataAsset, TailwindAsset};
 use proc_macro::TokenStream;
@@ -19,6 +21,8 @@ mod css;
 mod file;
 mod font;
 mod image;
+mod js;
+mod json;
 
 static LOG_FILE_FRESH: AtomicBool = AtomicBool::new(false);
 
@@ -179,6 +183,8 @@ impl ToTokens for AnyAssetParser {
             }
             Ok(AnyAssetParserType::Font(font)) => font.into_token_stream(),
             Ok(AnyAssetParserType::Css(css)) => css.into_token_stream(),
+            Ok(AnyAssetParserType::Js(js)) => js.into_token_stream(),
+            Ok(AnyAssetParserType::Json(js)) => js.into_token_stream(),
             Err(e) => e.to_compile_error(),
         };
         let source = &self.source;
@@ -244,6 +250,8 @@ enum AnyAssetParserType {
     Image(ImageAssetParser),
     Font(FontAssetParser),
     Css(CssAssetParser),
+    Js(JsAssetParser),
+    Json(JsonAssetParser),
 }
 
 impl Parse for AnyAssetParserType {
@@ -256,6 +264,8 @@ impl Parse for AnyAssetParserType {
             "image" => Self::Image(input.parse::<ImageAssetParser>()?),
             "font" => Self::Font(input.parse::<FontAssetParser>()?),
             "css" => Self::Css(input.parse::<CssAssetParser>()?),
+            "js" => Self::Js(input.parse::<JsAssetParser>()?),
+            "json" => Self::Json(input.parse::<JsonAssetParser>()?),
             _ => {
                 return Err(syn::Error::new(
                     proc_macro2::Span::call_site(),
@@ -324,4 +334,37 @@ fn quote_path(path: &Result<String, manganis_common::ManganisSupportError>) -> T
             }
         }
     }
+}
+
+#[cfg(feature = "url-encoding")]
+pub(crate) fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::Error> {
+    use base64::Engine;
+
+    let target_directory =
+        std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
+    let output_folder = std::path::Path::new(&target_directory)
+        .join("manganis")
+        .join("assets");
+    std::fs::create_dir_all(&output_folder).map_err(|e| {
+        syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("Failed to create output folder: {}", e),
+        )
+    })?;
+    manganis_cli_support::process_file(file_asset, &output_folder).map_err(|e| {
+        syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("Failed to process file: {}", e),
+        )
+    })?;
+    let file = output_folder.join(file_asset.location().unique_name());
+    let data = std::fs::read(file).map_err(|e| {
+        syn::Error::new(
+            proc_macro2::Span::call_site(),
+            format!("Failed to read file: {}", e),
+        )
+    })?;
+    let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
+    let mime = manganis_common::get_mime_from_ext(file_asset.options().extension());
+    Ok(format!("data:{mime};base64,{data}"))
 }
