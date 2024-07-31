@@ -82,6 +82,7 @@ impl Parse for ParseImageOption {
                 Ok(ParseImageOption::Size((size.width, size.height)))
             }
             "preload" => {
+                crate::verify_preload_valid(&ident)?;
                 Ok(ParseImageOption::Preload(true))
             }
             "url_encoded" => {

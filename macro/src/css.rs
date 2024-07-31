@@ -67,6 +67,7 @@ impl Parse for ParseCssOption {
         parenthesized!(content in input);
         match ident.to_string().as_str() {
             "preload" => {
+                crate::verify_preload_valid(&ident)?;
                 Ok(ParseCssOption::Preload(true))
             }
             "url_encoded" => {

@@ -368,3 +368,16 @@ pub(crate) fn url_encoded_asset(file_asset: &FileAsset) -> Result<String, syn::E
     let mime = manganis_common::get_mime_from_ext(file_asset.options().extension());
     Ok(format!("data:{mime};base64,{data}"))
 }
+
+pub(crate) fn verify_preload_valid(ident: &Ident) -> Result<(), syn::Error> {
+    // Compile time preload is only supported for the primary package
+    if std::env::var("CARGO_PRIMARY_PACKAGE").is_err() {
+        return Err(syn::Error::new(
+            ident.span(),
+            "The `preload` option is only supported for the primary package. Libraries should not preload assets or should preload assets\
+            at runtime with utilities your framework provides",
+        ));
+    }
+
+    Ok(())
+}
