@@ -102,23 +102,23 @@ jobs:
       - uses: actions/checkout@v4
       - run: cargo clippy --workspace --examples --tests -- -D warnings
 
-   docs:
-     if: github.event.pull_request.draft == false
-     name: Docs
-     runs-on: ubuntu-latest
-     steps:
-       - uses: actions/checkout@v4
-       - name: Install Rust ${{ env.rust_nightly }}
-         uses: dtolnay/rust-toolchain@stable
-         with:
-           toolchain: ${{ env.rust_nightly }}
-       - uses: Swatinem/rust-cache@v2
-         with:
-           cache-all-crates: "true"
-           save-if: ${{ github.ref == 'refs/heads/main' }}
-       - name: "doc --lib --all-features"
-         run: |
-           cargo doc --workspace --lib --no-deps --all-features --document-private-items
-         env:
-           RUSTFLAGS: --cfg docsrs
-           RUSTDOCFLAGS: --cfg docsrs -Dwarnings
+  docs:
+    if: github.event.pull_request.draft == false
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust ${{ env.rust_nightly }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.rust_nightly }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: "doc --lib --all-features"
+        run: |
+          cargo doc --workspace --lib --no-deps --all-features --document-private-items
+        env:
+          RUSTFLAGS: --cfg docsrs
+          RUSTDOCFLAGS: --cfg docsrs -Dwarnings
