@@ -172,7 +172,7 @@ fn create_linker_script(exec: PathBuf, subcommand: &str) -> Result<PathBuf, std:
     Ok(out)
 }
 
-/// Deletes the temporary script created by [`create_linker_script`].
+/// Deletes the temporary script created by `create_linker_script`.
 pub fn delete_linker_script() -> Result<(), std::io::Error> {
     #[cfg(windows)]
     let ext = "bat";
