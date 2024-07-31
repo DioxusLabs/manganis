@@ -1,7 +1,7 @@
 [package]
 # Manganese is a rusting catalyst. Manganis makes it faster to collect rust assets (and has almost no google search results)
 name = "manganis"
-version = "0.2.2"
+version = "0.3.0-alpha.0"
 authors = ["Evan Almloff"]
 edition = "2021"
 description = "Ergonomic, automatic, cross crate asset collection and optimization"
