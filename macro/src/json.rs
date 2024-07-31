@@ -53,7 +53,10 @@ impl Parse for ParseJsonOption {
         let _content;
         parenthesized!(_content in input);
         match ident.to_string().as_str() {
-            "preload" => Ok(ParseJsonOption::Preload(true)),
+            "preload" => {
+                crate::verify_preload_valid(&ident)?;
+                Ok(ParseJsonOption::Preload(true))
+            },
             "url_encoded" => Ok(ParseJsonOption::UrlEncoded(true)),
             _ => Err(syn::Error::new(
                 proc_macro2::Span::call_site(),

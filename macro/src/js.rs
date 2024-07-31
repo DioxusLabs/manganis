@@ -66,7 +66,10 @@ impl Parse for ParseJsOption {
         let content;
         parenthesized!(content in input);
         match ident.to_string().as_str() {
-            "preload" => Ok(ParseJsOption::Preload(true)),
+            "preload" => {
+                crate::verify_preload_valid(&ident)?;
+                Ok(ParseJsOption::Preload(true))
+            }
             "url_encoded" => Ok(ParseJsOption::UrlEncoded(true)),
             "minify" => Ok(ParseJsOption::Minify(content.parse::<LitBool>()?.value())),
             _ => Err(syn::Error::new(
