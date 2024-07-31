@@ -254,9 +254,24 @@ impl Process for JsOptions {
     }
 }
 
+pub(crate) fn minify_json(source: &str) -> anyhow::Result<String> {
+    // First try to parse the json
+    let json: serde_json::Value = serde_json::from_str(source)?;
+    // Then print it in a minified format
+    let json = serde_json::to_string(&json)?;
+    Ok(json)
+}
+
 impl Process for JsonOptions {
     fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
-        let json = minify_js(input_location)?;
+        let source = input_location.read_to_string()?;
+        let json = match minify_json(&source) {
+            Ok(json) => json,
+            Err(err) => {
+                tracing::error!("Failed to minify json: {}", err);
+                source
+            }
+        };
         let mut output_location = output_folder.to_path_buf();
         output_location.push(input_location.unique_name());
 
