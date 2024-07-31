@@ -483,10 +483,13 @@ impl FileAsset {
         if file_name.len() + extension_and_hash_size > MAX_PATH_LENGTH {
             file_name = file_name[..MAX_PATH_LENGTH - extension_and_hash_size].to_string();
         }
+        // Generate an unique name for the file based on the options, source, and the current version of manganis
         let mut hash = std::collections::hash_map::DefaultHasher::new();
         updated.hash(&mut hash);
         self.options.hash(&mut hash);
         self.location.source.hash(&mut hash);
+        crate::built::PKG_VERSION.hash(&mut hash);
+        crate::built::GIT_COMMIT_HASH.hash(&mut hash);
         let uuid = hash.finish();
         self.location.unique_name = format!("{file_name}{uuid:x}{extension}");
         assert!(self.location.unique_name.len() <= MAX_PATH_LENGTH);
