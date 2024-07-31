@@ -40,6 +40,19 @@ on:
       - .github/**
       - Cargo.toml
 
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  # RUSTFLAGS: -Dwarnings
+  RUST_BACKTRACE: 1
+  RUSTUP_WINDOWS_PATH_ADD_BIN: 1
+  # Change to specific Rust release to pin
+  rust_stable: stable
+  rust_nightly: nightly-2024-07-01
+  rust_clippy: "1.79"
+  # When updating this, also update relevant msrvs (readme, cargo.toml etc):
+  rust_min: "1.79.0"
+
 jobs:
   check:
     if: github.event.pull_request.draft == false
@@ -88,3 +101,24 @@ jobs:
       - run: rustup component add clippy
       - uses: actions/checkout@v4
       - run: cargo clippy --workspace --examples --tests -- -D warnings
+
+   docs:
+     if: github.event.pull_request.draft == false
+     name: Docs
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v4
+       - name: Install Rust ${{ env.rust_nightly }}
+         uses: dtolnay/rust-toolchain@stable
+         with:
+           toolchain: ${{ env.rust_nightly }}
+       - uses: Swatinem/rust-cache@v2
+         with:
+           cache-all-crates: "true"
+           save-if: ${{ github.ref == 'refs/heads/main' }}
+       - name: "doc --lib --all-features"
+         run: |
+           cargo doc --workspace --lib --no-deps --all-features --document-private-items
+         env:
+           RUSTFLAGS: --cfg docsrs
+           RUSTDOCFLAGS: --cfg docsrs -Dwarnings
