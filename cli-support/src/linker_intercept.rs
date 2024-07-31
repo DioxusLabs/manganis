@@ -142,7 +142,7 @@ fn create_linker_script(exec: PathBuf, subcommand: &str) -> Result<PathBuf, std:
     );
     #[cfg(not(windows))]
     let (script, ext) = (
-        format!("#!/bin/bash\n{} {} $@", exec.display(), subcommand),
+        format!("#!/usr/bin/env bash\n{} {} $@", exec.display(), subcommand),
         "sh",
     );
 
