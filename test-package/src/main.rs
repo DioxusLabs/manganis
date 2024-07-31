@@ -8,7 +8,7 @@ use test_package_dependency::{
     ROBOTO_FONT_LIGHT_FONT, SCRIPT, TEXT_ASSET, WEBP_ASSET,
 };
 
-const TEXT_FILE: &str = manganis::mg!("./test-package-dependency/src/asset.txt");
+const TEXT_FILE: &str = manganis::mg!("/test-package-dependency/src/asset.txt");
 
 const ALL_ASSETS: &[&str] = &[
     TEXT_FILE,
