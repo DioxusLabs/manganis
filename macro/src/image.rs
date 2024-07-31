@@ -205,7 +205,7 @@ impl Parse for ImageAssetParser {
                 "URL encoding is not enabled. Enable the url-encoding feature to use this feature",
             ));
             #[cfg(feature = "url-encoding")]
-            Ok(url_encoded_asset(&this_file).map_err(|e| {
+            Ok(crate::url_encoded_asset(&this_file).map_err(|e| {
                 syn::Error::new(
                     proc_macro2::Span::call_site(),
                     format!("Failed to encode file: {}", e),
