@@ -26,3 +26,6 @@ tracing = "0.1.40"
 
 [features]
 html = []
+
+[build-dependencies]
+built = { version = "0.7", features = ["git2"] }
