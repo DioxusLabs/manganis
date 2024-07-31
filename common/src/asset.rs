@@ -260,8 +260,6 @@ impl FileLocation {
 /// Error while checking an asset exists
 #[derive(Debug)]
 pub enum AssetError {
-    /// The absolute path does not exist
-    NotFoundAbsolute(PathBuf),
     /// The relative path does not exist
     NotFoundRelative(PathBuf, String),
     /// The path exist but is not a file
@@ -273,8 +271,6 @@ pub enum AssetError {
 impl Display for AssetError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            AssetError::NotFoundAbsolute(x) =>
-                write!(f,"File `{}` not found, please make sure it exists", x.display()),
             AssetError::NotFoundRelative(manifest_dir, path) =>
                 write!(f,"cannot find file `{}` in `{}`, please make sure it exists.\nAny relative paths are resolved relative to the manifest directory.", 
                        path,
@@ -296,17 +292,18 @@ impl FromStr for FileSource {
             Ok(url) => Ok(Self::Remote(url)),
             Err(_) => {
                 let manifest_dir = manifest_dir();
-                let path = manifest_dir.join(PathBuf::from(s));
-                let is_absolute = PathBuf::from(s).is_absolute();
+                let path = PathBuf::from(s);
+                // Paths are always relative to the manifest directory.
+                // If the path is absolute, we need to make it relative to the manifest directory.
+                let path = path
+                    .strip_prefix(std::path::MAIN_SEPARATOR_STR)
+                    .unwrap_or(&path);
+                let path = manifest_dir.join(path);
 
                 match path.canonicalize() {
                     Ok(x) if x.is_file() => Ok(Self::Local(x)),
                     // path exists but is not a file
                     Ok(x) => Err(AssetError::NotFile(x)),
-                    // absolute path does not exist
-                    Err(e) if e.kind() == std::io::ErrorKind::NotFound && is_absolute => {
-                        Err(AssetError::NotFoundAbsolute(s.into()))
-                    }
                     // relative path does not exist
                     Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                         Err(AssetError::NotFoundRelative(manifest_dir, s.into()))
