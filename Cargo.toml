@@ -21,7 +21,6 @@ package.version = "0.3.0-alpha.0"
 members = ["macro", "common", "cli-support", "test-package", "test-package/test-package-dependency", "test-package/test-package-nested-dependency"]
 
 [features]
-default = ["dioxus"]
+default = []
 html = []
-dioxus = ["dioxus-core"]
 url-encoding = ["manganis-macro/url-encoding"]

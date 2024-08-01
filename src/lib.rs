@@ -64,13 +64,6 @@ impl std::fmt::Display for ImageAsset {
     }
 }
 
-#[cfg(feature = "dioxus")]
-impl dioxus_core::prelude::IntoAttributeValue for ImageAsset {
-    fn into_value(self) -> dioxus_core::AttributeValue {
-        dioxus_core::AttributeValue::Text(self.path.to_string())
-    }
-}
-
 /// The type of an image. You can read more about the tradeoffs between image formats [here](https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types)
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Hash)]
 pub enum ImageType {
