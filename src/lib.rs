@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]
 
+#[cfg(feature = "macro")]
 pub use manganis_macro::*;
 
 /// An image asset that is built by the [`mg!`] macro
@@ -61,13 +62,6 @@ impl std::ops::Deref for ImageAsset {
 impl std::fmt::Display for ImageAsset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.path.fmt(f)
-    }
-}
-
-#[cfg(feature = "dioxus")]
-impl dioxus_core::prelude::IntoAttributeValue for ImageAsset {
-    fn into_value(self) -> dioxus_core::AttributeValue {
-        dioxus_core::AttributeValue::Text(self.path.to_string())
     }
 }
 
