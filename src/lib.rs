@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]
 
+#[cfg(feature = "macro")]
 pub use manganis_macro::*;
 
 /// An image asset that is built by the [`mg!`] macro
