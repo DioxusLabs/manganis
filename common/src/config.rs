@@ -22,9 +22,6 @@ fn default_assets_serve_location() -> String {
 /// Get the base path for assets defined by the MG_BASEPATH environment variable
 pub fn base_path() -> PathBuf {
     env!("MG_BASEPATH").into()
-    // std::env::var("MG_BASEPATH")
-    //     .unwrap_or_else(|_| default_assets_serve_location())
-    //     .into()
 }
 
 // /// The configuration for collecting assets
