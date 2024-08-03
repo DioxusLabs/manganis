@@ -1,4 +1,4 @@
-use manganis_common::{AssetType, FileAsset, FileOptions, FileSource, ManganisSupportError};
+use manganis_common::{AssetSource, AssetType, FileAsset, FileOptions, ManganisSupportError};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse};
 
@@ -89,7 +89,7 @@ impl Parse for JsonAssetParser {
         };
 
         let path_as_str = path.value();
-        let path: FileSource = match path_as_str.parse() {
+        let path: AssetSource = match AssetSource::parse_file(&path_as_str) {
             Ok(path) => path,
             Err(e) => {
                 return Err(syn::Error::new(

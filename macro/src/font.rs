@@ -1,4 +1,4 @@
-use manganis_common::{AssetType, CssOptions, FileAsset, FileSource, ManganisSupportError};
+use manganis_common::{AssetSource, AssetType, CssOptions, FileAsset, ManganisSupportError};
 use quote::{quote, ToTokens};
 use syn::{bracketed, parenthesized, parse::Parse};
 
@@ -153,7 +153,7 @@ impl Parse for FontAssetParser {
         let options = input.parse::<ParseFontOptions>()?;
 
         let url = options.url();
-        let url: FileSource = match url.parse() {
+        let url: AssetSource = match AssetSource::parse_file(&url) {
             Ok(url) => url,
             Err(e) => {
                 return Err(syn::Error::new(
