@@ -1,4 +1,4 @@
-use manganis_cli_support::{AssetManifestExt, ManganisSupportGuard};
+use manganis_cli_support::AssetManifestExt;
 use manganis_common::{AssetManifest, Config};
 use std::{path::PathBuf, process::Command};
 
@@ -15,9 +15,6 @@ fn main() {
     Config::default()
         .with_assets_serve_location(ASSETS_SERVE_LOCATION)
         .save();
-
-    // Next, tell manganis that you support assets
-    let _guard = ManganisSupportGuard::default();
 
     // Handle the commands.
     let args: Vec<String> = std::env::args().collect();
@@ -44,6 +41,7 @@ fn build() {
         .current_dir(&current_dir)
         .arg("build")
         .args(args)
+        .env("MANGANIS_SUPPORT", "true")
         .spawn()
         .unwrap()
         .wait()

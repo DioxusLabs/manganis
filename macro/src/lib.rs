@@ -27,18 +27,18 @@ mod json;
 static LOG_FILE_FRESH: AtomicBool = AtomicBool::new(false);
 
 fn trace_to_file() {
-    // If this is the first time the macro is used in the crate, set the subscriber to write to a file
-    if !LOG_FILE_FRESH.fetch_or(true, Ordering::Relaxed) {
-        let path = macro_log_file();
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        let file = std::fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(path)
-            .unwrap();
-        tracing_subscriber::fmt::fmt().with_writer(file).init();
-    }
+    // // If this is the first time the macro is used in the crate, set the subscriber to write to a file
+    // if !LOG_FILE_FRESH.fetch_or(true, Ordering::Relaxed) {
+    //     let path = macro_log_file();
+    //     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    //     let file = std::fs::OpenOptions::new()
+    //         .create(true)
+    //         .write(true)
+    //         .truncate(true)
+    //         .open(path)
+    //         .unwrap();
+    //     tracing_subscriber::fmt::fmt().with_writer(file).init();
+    // }
 }
 
 /// this new approach will store the assets descriptions *inside the executable*.

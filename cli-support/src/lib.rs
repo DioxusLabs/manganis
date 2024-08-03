@@ -5,10 +5,8 @@
 mod file;
 mod linker_intercept;
 mod manifest;
-mod marker;
 
 pub use file::process_file;
 pub use linker_intercept::*;
 pub use manganis_common::*;
 pub use manifest::*;
-pub use marker::*;

@@ -1,4 +1,4 @@
-use manganis_cli_support::{AssetManifestExt, ManganisSupportGuard};
+use manganis_cli_support::AssetManifestExt;
 use manganis_common::{AssetManifest, AssetType, Config};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -14,9 +14,6 @@ fn collects_assets() {
     Config::default()
         .with_assets_serve_location(assets_serve_location)
         .save();
-
-    // Next, tell manganis that you support assets
-    let _guard = ManganisSupportGuard::default();
 
     // Get args and default to "build"
     let args: Vec<String> = std::env::args().collect();
@@ -48,6 +45,7 @@ fn build() {
     Command::new("cargo")
         .arg("build")
         .args(args)
+        .env("MANGANIS_SUPPORT", "true")
         .current_dir(&test_package_dir)
         .stdout(Stdio::piped())
         .spawn()
