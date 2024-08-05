@@ -351,18 +351,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "514de17de45fdb8dc022b1a7975556c53c86f9f0aa5f534b98977b171857c2c9"
 
 [[package]]
-name = "cargo-config2"
-version = "0.1.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d83ce0be8bd1479e5de6202def660e6c7e27e4e0599bffa4fed05bd380ec2ede"
-dependencies = [
- "home",
- "serde",
- "serde_derive",
- "toml_edit",
-]
-
-[[package]]
 name = "cc"
 version = "1.0.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -933,15 +921,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
-name = "home"
-version = "0.5.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3d1354bf6b7235cb4a0576c2619fd4ed18183f689b12b006a0ee7329eeff9a5"
-dependencies = [
- "windows-sys 0.52.0",
-]
-
-[[package]]
 name = "hstr"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1448,13 +1427,10 @@ dependencies = [
  "anyhow",
  "base64 0.22.1",
  "built",
- "cargo-config2",
- "home",
  "infer",
  "reqwest",
  "scratch",
  "serde",
- "toml",
  "tracing",
  "url",
 ]
@@ -1463,7 +1439,7 @@ dependencies = [
 name = "manganis-macro"
 version = "0.3.0-alpha.0"
 dependencies = [
- "base64 0.21.7",
+ "base64 0.22.1",
  "manganis-cli-support",
  "manganis-common",
  "proc-macro2",

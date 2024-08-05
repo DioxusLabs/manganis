@@ -5,42 +5,6 @@ use std::{
     path::PathBuf,
 };
 
-use home::{cargo_home, env};
-
-// /// The location where assets are cached
-// pub fn asset_cache_dir() -> PathBuf {
-//     let config = cargo_config2::Config::load().unwrap();
-//     let mut dir = config
-//         .build
-//         .target_dir
-//         .unwrap_or_else(|| workspace_path().join("target"));
-
-//     // panic!("{:?}", std::env::var("CARGO_MANIFEST_DIR"));
-//     let vars = std::env::vars();
-//     let mut out = String::new();
-//     for (key, value) in vars {
-//         out.push_str(&format!("{}={}\n", key, value));
-//     }
-
-//     panic!("{:#?}", crate::config::base_path());
-//     // panic!("{}\n\n\n{}", env!("MG_WORKSPACE"), out);
-//     // panic!("{:?}", env!("MANGANIS_SUPPORT"));
-
-//     // let mut dir = cargo_home().unwrap();
-//     dir.push("assets");
-//     dir
-// }
-
-// pub(crate) fn workspace_path() -> PathBuf {
-//     env!("OUT_DIR").into()
-//     // env!("MG_WORKSPACE").into()
-//     // std::env::var("MG_WORKSPACE").unwrap().into()
-// }
-
-// pub(crate) fn config_path() -> PathBuf {
-//     asset_cache_dir().join("config.toml")
-// }
-
 pub(crate) fn current_package_identifier() -> String {
     package_identifier(
         &std::env::var("CARGO_PKG_NAME").unwrap(),
@@ -98,11 +62,11 @@ pub(crate) fn manifest_dir() -> PathBuf {
 //     dir
 // }
 
-/// The current log file for the macro expansion
-pub fn macro_log_file() -> PathBuf {
-    todo!()
+// /// The current log file for the macro expansion
+// pub fn macro_log_file() -> PathBuf {
+//     todo!()
 
-    // let mut dir = macro_log_directory();
-    // dir.push(current_package_identifier());
-    // dir
-}
+//     // let mut dir = macro_log_directory();
+//     // dir.push(current_package_identifier());
+//     // dir
+// }

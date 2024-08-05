@@ -13,12 +13,9 @@ keywords = ["assets"]
 
 [dependencies]
 serde = { version = "1.0.183", features = ["derive"] }
-toml = "0.8.10"
 anyhow = "1"
-home = "0.5.5"
-base64 = "0.22.1"
-infer = "0.16.0"
-cargo-config2 = "0.1.26"
+base64 = { workspace = true }
+infer = { workspace = true }
 
 # Remote assets
 url = { version = "2.4.0", features = ["serde"] }

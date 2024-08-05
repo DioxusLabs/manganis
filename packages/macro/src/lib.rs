@@ -8,7 +8,7 @@ use font::FontAssetParser;
 use image::ImageAssetParser;
 use js::JsAssetParser;
 use json::JsonAssetParser;
-use manganis_common::cache::macro_log_file;
+// use manganis_common::cache::macro_log_file;
 use manganis_common::{AssetSource, MetadataAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
@@ -103,48 +103,48 @@ pub fn classes(input: TokenStream) -> TokenStream {
 ///
 /// The file builder collects an arbitrary file. Relative paths are resolved relative to the package root
 /// ```rust
-/// const _: &str = manganis::mg!("src/asset.txt");
+/// const _: &str = manganis::asset!("src/asset.txt");
 /// ```
 /// Or you can use URLs to read the asset at build time from a remote location
 /// ```rust
-/// const _: &str = manganis::mg!("https://rustacean.net/assets/rustacean-flat-happy.png");
+/// const _: &str = manganis::asset!("https://rustacean.net/assets/rustacean-flat-happy.png");
 /// ```
 ///
 /// # Images
 ///
 /// You can collect images which will be automatically optimized with the image builder:
 /// ```rust
-/// const _: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png"));
+/// const _: manganis::ImageAsset = manganis::asset!(image("rustacean-flat-gesture.png"));
 /// ```
 /// Resize the image at compile time to make the assets file size smaller:
 /// ```rust
-/// const _: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png").size(52, 52));
+/// const _: manganis::ImageAsset = manganis::asset!(image("rustacean-flat-gesture.png").size(52, 52));
 /// ```
 /// Or convert the image at compile time to a web friendly format:
 /// ```rust
-/// const _: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png").format(ImageFormat::Avif).size(52, 52));
+/// const _: manganis::ImageAsset = manganis::asset!(image("rustacean-flat-gesture.png").format(ImageFormat::Avif).size(52, 52));
 /// ```
 /// You can mark images as preloaded to make them load faster in your app
 /// ```rust
-/// const _: manganis::ImageAsset = manganis::mg!(image("rustacean-flat-gesture.png").preload());
+/// const _: manganis::ImageAsset = manganis::asset!(image("rustacean-flat-gesture.png").preload());
 /// ```
 ///
 /// # Fonts
 ///
 /// You can use the font builder to collect fonts that will be included in the final binary from google fonts
 /// ```rust
-/// const _: &str = manganis::mg!(font().families(["Roboto"]));
+/// const _: &str = manganis::asset!(font().families(["Roboto"]));
 /// ```
 /// You can specify weights for the fonts
 /// ```rust
-/// const _: &str = manganis::mg!(font().families(["Roboto"]).weights([200]));
+/// const _: &str = manganis::asset!(font().families(["Roboto"]).weights([200]));
 /// ```
 /// Or set the text to only include the characters you need
 /// ```rust
-/// const _: &str = manganis::mg!(font().families(["Roboto"]).weights([200]).text("Hello, world!"));
+/// const _: &str = manganis::asset!(font().families(["Roboto"]).weights([200]).text("Hello, world!"));
 /// ```
 #[proc_macro]
-pub fn mg(input: TokenStream) -> TokenStream {
+pub fn asset(input: TokenStream) -> TokenStream {
     trace_to_file();
 
     let asset = parse_macro_input!(input as AnyAssetParser);

@@ -6,7 +6,6 @@ use std::{
 
 use anyhow::Context;
 use base64::Engine;
-use cargo_config2::Config;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -608,46 +607,49 @@ fn hash_version(hash: &mut DefaultHasher) {
 }
 
 fn resolve_asset_location(location: &AssetLocation) -> Result<String, ManganisSupportError> {
+    Ok(location.unique_name().to_string())
+    // todo!()
+
     // If manganis is being used without CLI support, we will fallback to providing a local path.
-    let manganis_support = std::env::var("MANGANIS_SUPPORT");
-    if manganis_support.is_err() {
-        match location.source() {
-            AssetSource::Remote(url) => Ok(url.as_str().to_string()),
-            AssetSource::Local(path) => {
-                // If this is not the main package, we can't include assets from it without CLI support
-                let primary_package = std::env::var("CARGO_PRIMARY_PACKAGE").is_ok();
-                if !primary_package {
-                    return Err(ManganisSupportError::ExternalPackageCollection);
-                }
+    // let manganis_support = std::env::var("MANGANIS_SUPPORT");
+    // if manganis_support.is_err() {
+    //     match location.source() {
+    //         AssetSource::Remote(url) => Ok(url.as_str().to_string()),
+    //         AssetSource::Local(path) => {
+    //             // If this is not the main package, we can't include assets from it without CLI support
+    //             let primary_package = std::env::var("CARGO_PRIMARY_PACKAGE").is_ok();
+    //             if !primary_package {
+    //                 return Err(ManganisSupportError::ExternalPackageCollection);
+    //             }
 
-                // Tauri doesn't allow absolute paths(??) so we convert to relative.
-                let Ok(cwd) = std::env::var("CARGO_MANIFEST_DIR") else {
-                    return Err(ManganisSupportError::FailedToFindCargoManifest);
-                };
+    //             // Tauri doesn't allow absolute paths(??) so we convert to relative.
+    //             let Ok(cwd) = std::env::var("CARGO_MANIFEST_DIR") else {
+    //                 return Err(ManganisSupportError::FailedToFindCargoManifest);
+    //             };
 
-                // Windows adds `\\?\` to longer path names. We'll try to remove it.
-                #[cfg(windows)]
-                let path = {
-                    let path_as_string = path.display().to_string();
-                    let path_as_string = path_as_string
-                        .strip_prefix("\\\\?\\")
-                        .unwrap_or(&path_as_string);
-                    PathBuf::from(path_as_string)
-                };
+    //             // Windows adds `\\?\` to longer path names. We'll try to remove it.
+    //             #[cfg(windows)]
+    //             let path = {
+    //                 let path_as_string = path.display().to_string();
+    //                 let path_as_string = path_as_string
+    //                     .strip_prefix("\\\\?\\")
+    //                     .unwrap_or(&path_as_string);
+    //                 PathBuf::from(path_as_string)
+    //             };
 
-                let rel_path = path
-                    .strip_prefix(cwd)
-                    .map_err(|_| ManganisSupportError::FailedToFindCargoManifest)?;
-                let path = PathBuf::from(".").join(rel_path);
-                Ok(path.display().to_string())
-            }
-        }
-    } else {
-        let config = Config::current();
-        let root = config.assets_serve_location();
-        let unique_name = location.unique_name();
-        Ok(format!("{root}{unique_name}"))
-    }
+    //             let rel_path = path
+    //                 .strip_prefix(cwd)
+    //                 .map_err(|_| ManganisSupportError::FailedToFindCargoManifest)?;
+    //             let path = PathBuf::from(".").join(rel_path);
+    //             Ok(path.display().to_string())
+    //         }
+    //     }
+    // } else {
+    //     // let config = Config::current();
+    //     // let root = config.assets_serve_location();
+    //     // let unique_name = location.unique_name();
+    //     Ok(format!("{root}{unique_name}"))
+    // }
 }
 
 /// An error that can occur while collecting assets without CLI support

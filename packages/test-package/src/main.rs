@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use test_package_dependency::*;
 
-const TEXT_FILE: &str = manganis::mg!("/test-package-dependency/src/asset.txt");
+const TEXT_FILE: &str = manganis::asset!("/test-package-dependency/src/asset.txt");
 
 const ALL_ASSETS: &[&str] = &[
     TEXT_FILE,
