@@ -419,8 +419,21 @@ pub const fn font() -> FontAssetBuilder {
 /// const _: &str = manganis::mg!("https://rustacean.net/assets/rustacean-flat-happy.png");
 /// ```
 #[allow(unused)]
-pub const fn file(path: &'static str) -> ImageAssetBuilder {
-    ImageAssetBuilder
+pub const fn file(path: &'static str) -> &'static str {
+    path
+}
+
+/// Create an folder asset from the local path
+///
+/// > **Note**: This will do nothing outside of the `mg!` macro
+///
+/// The folder builder collects an arbitrary local folder. Relative paths are resolved relative to the package root
+/// ```rust
+/// const _: &str = manganis::mg!("/assets");
+/// ```
+#[allow(unused)]
+pub const fn folder(path: &'static str) -> &'static str {
+    path
 }
 
 /// A trait for something that can be used in the `mg!` macro

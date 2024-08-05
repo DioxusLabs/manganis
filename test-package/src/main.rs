@@ -2,11 +2,7 @@
 
 use std::path::PathBuf;
 
-use test_package_dependency::{
-    AVIF_ASSET, COMFORTAA_FONT, CSS_ASSET, DATA, HTML_ASSET, IMAGE_ASSET, JPEG_ASSET, PNG_ASSET,
-    RESIZED_AVIF_ASSET, RESIZED_JPEG_ASSET, RESIZED_PNG_ASSET, RESIZED_WEBP_ASSET, ROBOTO_FONT,
-    ROBOTO_FONT_LIGHT_FONT, SCRIPT, TEXT_ASSET, WEBP_ASSET,
-};
+use test_package_dependency::*;
 
 const TEXT_FILE: &str = manganis::mg!("/test-package-dependency/src/asset.txt");
 
@@ -29,6 +25,7 @@ const ALL_ASSETS: &[&str] = &[
     ROBOTO_FONT_LIGHT_FONT,
     SCRIPT,
     DATA,
+    FOLDER,
 ];
 
 fn main() {

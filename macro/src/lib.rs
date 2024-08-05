@@ -3,12 +3,13 @@
 
 use css::CssAssetParser;
 use file::FileAssetParser;
+use folder::FolderAssetParser;
 use font::FontAssetParser;
 use image::ImageAssetParser;
 use js::JsAssetParser;
 use json::JsonAssetParser;
 use manganis_common::cache::macro_log_file;
-use manganis_common::{MetadataAsset, TailwindAsset};
+use manganis_common::{AssetSource, MetadataAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::TokenStream as TokenStream2;
@@ -19,6 +20,7 @@ use syn::{parse::Parse, parse_macro_input, LitStr};
 
 mod css;
 mod file;
+mod folder;
 mod font;
 mod image;
 mod js;
@@ -171,6 +173,7 @@ impl ToTokens for AnyAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let asset = match &self.asset_type {
             Ok(AnyAssetParserType::File(file)) => file.into_token_stream(),
+            Ok(AnyAssetParserType::Folder(folder)) => folder.into_token_stream(),
             Ok(AnyAssetParserType::Image(image)) => {
                 let tokens = image.into_token_stream();
                 if self.return_type == ReturnType::StaticStr {
@@ -210,11 +213,11 @@ impl Parse for AnyAssetParser {
         if input.peek(syn::LitStr) {
             let path_str = input.parse::<syn::LitStr>()?;
             // Try to parse an extension
-            let path = std::path::PathBuf::from(path_str.value());
+            let asset = AssetSource::parse_any(&path_str.value())
+                .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))?;
             let input: proc_macro2::TokenStream = input.parse()?;
             let parse_asset = || -> syn::Result<Self> {
-                if let Some(extension) = path.extension() {
-                    let extension = extension.to_str().unwrap();
+                if let Some(extension) = asset.extension() {
                     if extension.parse::<manganis_common::ImageType>().is_ok() {
                         return syn::parse2(
                             quote_spanned! { path_str.span() => image(#path_str) #input },
@@ -222,6 +225,13 @@ impl Parse for AnyAssetParser {
                     } else if extension.parse::<manganis_common::VideoType>().is_ok() {
                         return syn::parse2(
                             quote_spanned! { path_str.span() => video(#path_str) #input },
+                        );
+                    }
+                }
+                if let AssetSource::Local(path) = &asset {
+                    if path.is_dir() {
+                        return syn::parse2(
+                            quote_spanned! { path_str.span() => folder(#path_str) #input },
                         );
                     }
                 }
@@ -247,6 +257,7 @@ impl Parse for AnyAssetParser {
 
 enum AnyAssetParserType {
     File(FileAssetParser),
+    Folder(FolderAssetParser),
     Image(ImageAssetParser),
     Font(FontAssetParser),
     Css(CssAssetParser),
@@ -261,6 +272,7 @@ impl Parse for AnyAssetParserType {
 
         Ok(match &*as_string {
             "file" => Self::File(input.parse::<FileAssetParser>()?),
+            "folder" => Self::Folder(input.parse::<FolderAssetParser>()?),
             "image" => Self::Image(input.parse::<ImageAssetParser>()?),
             "font" => Self::Font(input.parse::<FontAssetParser>()?),
             "css" => Self::Css(input.parse::<CssAssetParser>()?),

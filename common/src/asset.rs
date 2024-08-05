@@ -1,8 +1,7 @@
 use std::{
     fmt::Display,
-    hash::{Hash, Hasher},
+    hash::{DefaultHasher, Hash, Hasher},
     path::{Path, PathBuf},
-    str::FromStr,
 };
 
 use anyhow::Context;
@@ -12,11 +11,18 @@ use url::Url;
 
 use crate::{cache::manifest_dir, Config, FileOptions};
 
+/// The maximum length of a path segment
+const MAX_PATH_LENGTH: usize = 128;
+/// The length of the hash in the output path
+const HASH_SIZE: usize = 16;
+
 /// The type of asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub enum AssetType {
     /// A file asset
     File(FileAsset),
+    /// A folder asset
+    Folder(FolderAsset),
     /// A tailwind class asset
     Tailwind(TailwindAsset),
     /// A metadata asset
@@ -25,14 +31,14 @@ pub enum AssetType {
 
 /// The source of a file asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash, Eq)]
-pub enum FileSource {
+pub enum AssetSource {
     /// A local file
     Local(PathBuf),
     /// A remote file
     Remote(Url),
 }
 
-impl Display for FileSource {
+impl Display for AssetSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let as_string = match self {
             Self::Local(path) => path.display().to_string(),
@@ -46,7 +52,23 @@ impl Display for FileSource {
     }
 }
 
-impl FileSource {
+impl AssetSource {
+    /// Try to convert the asset source to a path
+    pub fn as_path(&self) -> Option<&PathBuf> {
+        match self {
+            Self::Local(path) => Some(path),
+            Self::Remote(_) => None,
+        }
+    }
+
+    /// Try to convert the asset source to a url
+    pub fn as_url(&self) -> Option<&Url> {
+        match self {
+            Self::Local(_) => None,
+            Self::Remote(url) => Some(url),
+        }
+    }
+
     /// Returns the last segment of the file source used to generate a unique name
     pub fn last_segment(&self) -> &str {
         match self {
@@ -118,6 +140,38 @@ impl FileSource {
                                 .map(|last_modified| last_modified.to_string())
                         })
                 }),
+        }
+    }
+
+    /// Reads the file to a string
+    pub fn read_to_string(&self) -> anyhow::Result<String> {
+        match &self {
+            AssetSource::Local(path) => Ok(std::fs::read_to_string(path).with_context(|| {
+                format!("Failed to read file from location: {}", path.display())
+            })?),
+            AssetSource::Remote(url) => {
+                let response = reqwest::blocking::get(url.as_str())
+                    .with_context(|| format!("Failed to asset from url: {}", url.as_str()))?;
+                Ok(response.text().with_context(|| {
+                    format!("Failed to read text for asset from url: {}", url.as_str())
+                })?)
+            }
+        }
+    }
+
+    /// Reads the file to bytes
+    pub fn read_to_bytes(&self) -> anyhow::Result<Vec<u8>> {
+        match &self {
+            AssetSource::Local(path) => Ok(std::fs::read(path).with_context(|| {
+                format!("Failed to read file from location: {}", path.display())
+            })?),
+            AssetSource::Remote(url) => {
+                let response = reqwest::blocking::get(url.as_str())
+                    .with_context(|| format!("Failed to asset from url: {}", url.as_str()))?;
+                Ok(response.bytes().map(|b| b.to_vec()).with_context(|| {
+                    format!("Failed to read text for asset from url: {}", url.as_str())
+                })?)
+            }
         }
     }
 }
@@ -208,52 +262,20 @@ pub fn get_mime_from_ext(extension: Option<&str>) -> &'static str {
 
 /// The location of an asset before and after it is collected
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone, Hash, Eq)]
-pub struct FileLocation {
+pub struct AssetLocation {
     unique_name: String,
-    source: FileSource,
+    source: AssetSource,
 }
 
-impl FileLocation {
+impl AssetLocation {
     /// Returns the unique name of the file that the asset will be served from
     pub fn unique_name(&self) -> &str {
         &self.unique_name
     }
 
     /// Returns the source of the file that the asset will be collected from
-    pub fn source(&self) -> &FileSource {
+    pub fn source(&self) -> &AssetSource {
         &self.source
-    }
-
-    /// Reads the file to a string
-    pub fn read_to_string(&self) -> anyhow::Result<String> {
-        match &self.source {
-            FileSource::Local(path) => Ok(std::fs::read_to_string(path).with_context(|| {
-                format!("Failed to read file from location: {}", path.display())
-            })?),
-            FileSource::Remote(url) => {
-                let response = reqwest::blocking::get(url.as_str())
-                    .with_context(|| format!("Failed to asset from url: {}", url.as_str()))?;
-                Ok(response.text().with_context(|| {
-                    format!("Failed to read text for asset from url: {}", url.as_str())
-                })?)
-            }
-        }
-    }
-
-    /// Reads the file to bytes
-    pub fn read_to_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        match &self.source {
-            FileSource::Local(path) => Ok(std::fs::read(path).with_context(|| {
-                format!("Failed to read file from location: {}", path.display())
-            })?),
-            FileSource::Remote(url) => {
-                let response = reqwest::blocking::get(url.as_str())
-                    .with_context(|| format!("Failed to asset from url: {}", url.as_str()))?;
-                Ok(response.bytes().map(|b| b.to_vec()).with_context(|| {
-                    format!("Failed to read text for asset from url: {}", url.as_str())
-                })?)
-            }
-        }
     }
 }
 
@@ -264,6 +286,8 @@ pub enum AssetError {
     NotFoundRelative(PathBuf, String),
     /// The path exist but is not a file
     NotFile(PathBuf),
+    /// The path exist but is not a folder
+    NotFolder(PathBuf),
     /// Unknown IO error
     IO(PathBuf, std::io::Error),
 }
@@ -278,21 +302,44 @@ impl Display for AssetError {
                 ),
             AssetError::NotFile(absolute_path) =>
                 write!(f, "`{}` is not a file, please choose a valid asset.\nAny relative paths are resolved relative to the manifest directory.", absolute_path.display()),
+            AssetError::NotFolder(absolute_path) =>
+                write!(f, "`{}` is not a folder, please choose a valid asset.\nAny relative paths are resolved relative to the manifest directory.", absolute_path.display()),
             AssetError::IO(absolute_path, err) =>
                 write!(f, "unknown error when accessing `{}`: \n{}", absolute_path.display(), err)
         }
     }
 }
 
-impl FromStr for FileSource {
-    type Err = AssetError;
+impl AssetSource {
+    /// Parse a string as a file source
+    pub fn parse_file(path: &str) -> Result<Self, AssetError> {
+        let myself = Self::parse_any(path)?;
+        if let Self::Local(path) = &myself {
+            if !path.is_file() {
+                return Err(AssetError::NotFile(path.to_path_buf()));
+            }
+        }
+        Ok(myself)
+    }
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match Url::parse(s) {
+    /// Parse a string as a folder source
+    pub fn parse_folder(path: &str) -> Result<Self, AssetError> {
+        let myself = Self::parse_any(path)?;
+        if let Self::Local(path) = &myself {
+            if !path.is_dir() {
+                return Err(AssetError::NotFolder(path.to_path_buf()));
+            }
+        }
+        Ok(myself)
+    }
+
+    /// Parse a string as a file or folder source
+    pub fn parse_any(src: &str) -> Result<Self, AssetError> {
+        match Url::parse(src) {
             Ok(url) => Ok(Self::Remote(url)),
             Err(_) => {
                 let manifest_dir = manifest_dir();
-                let path = PathBuf::from(s);
+                let path = PathBuf::from(src);
                 // Paths are always relative to the manifest directory.
                 // If the path is absolute, we need to make it relative to the manifest directory.
                 let path = path
@@ -301,12 +348,10 @@ impl FromStr for FileSource {
                 let path = manifest_dir.join(path);
 
                 match path.canonicalize() {
-                    Ok(x) if x.is_file() => Ok(Self::Local(x)),
-                    // path exists but is not a file
-                    Ok(x) => Err(AssetError::NotFile(x)),
+                    Ok(x) => Ok(Self::Local(x)),
                     // relative path does not exist
                     Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                        Err(AssetError::NotFoundRelative(manifest_dir, s.into()))
+                        Err(AssetError::NotFoundRelative(manifest_dir, src.into()))
                     }
                     // other error
                     Err(e) => Err(AssetError::IO(path, e)),
@@ -316,10 +361,100 @@ impl FromStr for FileSource {
     }
 }
 
+/// A folder asset
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+pub struct FolderAsset {
+    location: AssetLocation,
+}
+
+impl Display for FolderAsset {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}/**", self.location.source(),)
+    }
+}
+
+impl FolderAsset {
+    /// Creates a new folder asset
+    pub fn new(source: AssetSource) -> Self {
+        let AssetSource::Local(source) = source else {
+            panic!("Folder asset must be a local path");
+        };
+        assert!(source.is_dir());
+
+        let mut myself = Self {
+            location: AssetLocation {
+                unique_name: Default::default(),
+                source: AssetSource::Local(source),
+            },
+        };
+
+        myself.regenerate_unique_name();
+
+        myself
+    }
+
+    /// Returns the location where the folder asset will be served from or None if the asset cannot be served
+    pub fn served_location(&self) -> Result<String, ManganisSupportError> {
+        resolve_asset_location(&self.location)
+    }
+
+    /// Returns the unique name of the folder asset
+    pub fn unique_name(&self) -> &str {
+        &self.location.unique_name
+    }
+
+    /// Returns the location of the folder asset
+    pub fn location(&self) -> &AssetLocation {
+        &self.location
+    }
+
+    /// Create a unique hash for the source folder by recursively hashing the files
+    fn hash(&self) -> u64 {
+        let mut hash = std::collections::hash_map::DefaultHasher::new();
+        let folder = self
+            .location
+            .source
+            .as_path()
+            .expect("Folder asset must be a local path");
+        let mut folders_queued = vec![folder.clone()];
+        while let Some(folder) = folders_queued.pop() {
+            // Add the folder to the hash
+            for segment in folder.iter() {
+                segment.hash(&mut hash);
+            }
+
+            let files = std::fs::read_dir(folder).into_iter().flatten().flatten();
+            for file in files {
+                let path = file.path();
+                let metadata = path.metadata().unwrap();
+                // If the file is a folder, add it to the queue otherwise add it to the hash
+                if metadata.is_dir() {
+                    folders_queued.push(path);
+                } else {
+                    hash_file(&AssetSource::Local(path), &mut hash);
+                }
+            }
+        }
+
+        // Add the manganis version to the hash
+        hash_version(&mut hash);
+
+        hash.finish()
+    }
+
+    /// Regenerate the unique name of the folder asset
+    fn regenerate_unique_name(&mut self) {
+        let uuid = self.hash();
+        let file_name = normalized_file_name(&self.location.source, None);
+        self.location.unique_name = format!("{file_name}{uuid:x}");
+        assert!(self.location.unique_name.len() <= MAX_PATH_LENGTH);
+    }
+}
+
 /// A file asset
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct FileAsset {
-    location: FileLocation,
+    location: AssetLocation,
     options: FileOptions,
     url_encoded: bool,
 }
@@ -343,11 +478,15 @@ impl Display for FileAsset {
 
 impl FileAsset {
     /// Creates a new file asset
-    pub fn new(source: FileSource) -> Self {
+    pub fn new(source: AssetSource) -> Self {
+        if let Some(path) = source.as_path() {
+            assert!(!path.is_dir());
+        }
+
         let options = FileOptions::default_for_extension(source.extension().as_deref());
 
         let mut myself = Self {
-            location: FileLocation {
+            location: AssetLocation {
                 unique_name: Default::default(),
                 source,
             },
@@ -385,55 +524,18 @@ impl FileAsset {
 
     /// Returns the location where the file asset will be served from or None if the asset cannot be served
     pub fn served_location(&self) -> Result<String, ManganisSupportError> {
-        let manganis_support = std::env::var("MANGANIS_SUPPORT");
-
         if self.url_encoded {
-            let data = self.location.read_to_bytes().unwrap();
+            let data = self.location.source.read_to_bytes().unwrap();
             let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
             let mime = self.location.source.mime_type().unwrap();
             Ok(format!("data:{mime};base64,{data}"))
-        }
-        // If manganis is being used without CLI support, we will fallback to providing a local path.
-        else if manganis_support.is_err() {
-            match self.location.source() {
-                FileSource::Remote(url) => Ok(url.as_str().to_string()),
-                FileSource::Local(path) => {
-                    // If this is not the main package, we can't include assets from it without CLI support
-                    let primary_package = std::env::var("CARGO_PRIMARY_PACKAGE").is_ok();
-                    if !primary_package {
-                        return Err(ManganisSupportError::ExternalPackageCollection);
-                    }
-
-                    // Tauri doesn't allow absolute paths(??) so we convert to relative.
-                    let Ok(cwd) = std::env::var("CARGO_MANIFEST_DIR") else {
-                        return Err(ManganisSupportError::FailedToFindCargoManifest);
-                    };
-
-                    // Windows adds `\\?\` to longer path names. We'll try to remove it.
-                    #[cfg(windows)]
-                    let path = {
-                        let path_as_string = path.display().to_string();
-                        let path_as_string = path_as_string
-                            .strip_prefix("\\\\?\\")
-                            .unwrap_or(&path_as_string);
-                        PathBuf::from(path_as_string)
-                    };
-
-                    let rel_path = path.strip_prefix(cwd).unwrap();
-                    let path = PathBuf::from(".").join(rel_path);
-                    Ok(path.display().to_string())
-                }
-            }
         } else {
-            let config = Config::current();
-            let root = config.assets_serve_location();
-            let unique_name = self.location.unique_name();
-            Ok(format!("{root}{unique_name}"))
+            resolve_asset_location(&self.location)
         }
     }
 
     /// Returns the location of the file asset
-    pub fn location(&self) -> &FileLocation {
+    pub fn location(&self) -> &AssetLocation {
         &self.location
     }
 
@@ -448,48 +550,101 @@ impl FileAsset {
         self.regenerate_unique_name();
     }
 
+    /// Hash the file asset source and options
+    fn hash(&self) -> u64 {
+        let mut hash = std::collections::hash_map::DefaultHasher::new();
+        hash_file(&self.location.source, &mut hash);
+        self.options.hash(&mut hash);
+        hash_version(&mut hash);
+        hash.finish()
+    }
+
     /// Regenerates the unique name of the file asset
     fn regenerate_unique_name(&mut self) {
-        const MAX_PATH_LENGTH: usize = 128;
-        const HASH_SIZE: usize = 16;
-
-        let manifest_dir = manifest_dir();
-        let last_segment = self
-            .location
-            .source
-            .last_segment()
-            .chars()
-            .filter(|c| c.is_alphanumeric())
-            .collect::<String>();
-        let path = manifest_dir.join(last_segment);
-        let updated = self.location.source.last_updated();
-        let extension = self
-            .options
-            .extension()
-            .map(|e| format!(".{e}"))
-            .unwrap_or_default();
-        let extension_and_hash_size = extension.len() + HASH_SIZE;
-        let mut file_name = path
-            .file_stem()
-            .unwrap()
-            .to_string_lossy()
-            .chars()
-            .filter(|c| c.is_alphanumeric())
-            .collect::<String>();
-        // If the file name is too long, we need to truncate it
-        if file_name.len() + extension_and_hash_size > MAX_PATH_LENGTH {
-            file_name = file_name[..MAX_PATH_LENGTH - extension_and_hash_size].to_string();
-        }
         // Generate an unique name for the file based on the options, source, and the current version of manganis
-        let mut hash = std::collections::hash_map::DefaultHasher::new();
-        updated.hash(&mut hash);
-        self.options.hash(&mut hash);
-        self.location.source.hash(&mut hash);
-        crate::built::PKG_VERSION.hash(&mut hash);
-        crate::built::GIT_COMMIT_HASH.hash(&mut hash);
-        let uuid = hash.finish();
+        let uuid = self.hash();
+        let extension = self.options.extension();
+        let file_name = normalized_file_name(&self.location.source, extension);
+        let extension = extension.map(|e| format!(".{e}")).unwrap_or_default();
         self.location.unique_name = format!("{file_name}{uuid:x}{extension}");
         assert!(self.location.unique_name.len() <= MAX_PATH_LENGTH);
+    }
+}
+
+/// Create a normalized file name from the source
+fn normalized_file_name(location: &AssetSource, extension: Option<&str>) -> String {
+    let last_segment = location.last_segment();
+    let mut file_name = to_alphanumeric_string_lossy(last_segment);
+
+    let extension_len = extension.map(|e| e.len() + 1).unwrap_or_default();
+    let extension_and_hash_size = extension_len + HASH_SIZE;
+    // If the file name is too long, we need to truncate it
+    if file_name.len() + extension_and_hash_size > MAX_PATH_LENGTH {
+        file_name = file_name[..MAX_PATH_LENGTH - extension_and_hash_size].to_string();
+    }
+    file_name
+}
+
+/// Normalize a string to only contain alphanumeric characters
+fn to_alphanumeric_string_lossy(name: &str) -> String {
+    name.chars()
+        .filter(|c| c.is_alphanumeric())
+        .collect::<String>()
+}
+
+fn hash_file(location: &AssetSource, hash: &mut DefaultHasher) {
+    // Hash the last time the file was updated and the file source. If either of these change, we need to regenerate the unique name
+    let updated = location.last_updated();
+    updated.hash(hash);
+    location.hash(hash);
+}
+
+fn hash_version(hash: &mut DefaultHasher) {
+    // Hash the current version of manganis. If this changes, we need to regenerate the unique name
+    crate::built::PKG_VERSION.hash(hash);
+    crate::built::GIT_COMMIT_HASH.hash(hash);
+}
+
+fn resolve_asset_location(location: &AssetLocation) -> Result<String, ManganisSupportError> {
+    // If manganis is being used without CLI support, we will fallback to providing a local path.
+    let manganis_support = std::env::var("MANGANIS_SUPPORT");
+    if manganis_support.is_err() {
+        match location.source() {
+            AssetSource::Remote(url) => Ok(url.as_str().to_string()),
+            AssetSource::Local(path) => {
+                // If this is not the main package, we can't include assets from it without CLI support
+                let primary_package = std::env::var("CARGO_PRIMARY_PACKAGE").is_ok();
+                if !primary_package {
+                    return Err(ManganisSupportError::ExternalPackageCollection);
+                }
+
+                // Tauri doesn't allow absolute paths(??) so we convert to relative.
+                let Ok(cwd) = std::env::var("CARGO_MANIFEST_DIR") else {
+                    return Err(ManganisSupportError::FailedToFindCargoManifest);
+                };
+
+                // Windows adds `\\?\` to longer path names. We'll try to remove it.
+                #[cfg(windows)]
+                let path = {
+                    let path_as_string = path.display().to_string();
+                    let path_as_string = path_as_string
+                        .strip_prefix("\\\\?\\")
+                        .unwrap_or(&path_as_string);
+                    PathBuf::from(path_as_string)
+                };
+
+                let rel_path = path
+                    .strip_prefix(cwd)
+                    .map_err(|_| ManganisSupportError::FailedToFindCargoManifest)?;
+                let path = PathBuf::from(".").join(rel_path);
+                Ok(path.display().to_string())
+            }
+        }
+    } else {
+        let config = Config::current();
+        let root = config.assets_serve_location();
+        let unique_name = location.unique_name();
+        Ok(format!("{root}{unique_name}"))
     }
 }
 
