@@ -387,49 +387,12 @@ impl FileAsset {
 
     /// Returns the location where the file asset will be served from or None if the asset cannot be served
     pub fn served_location(&self) -> Result<String, ManganisSupportError> {
-        // let manganis_support = std::env::var("MANGANIS_SUPPORT");
-
         if self.url_encoded {
             let data = self.location.read_to_bytes().unwrap();
             let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
             let mime = self.location.source.mime_type().unwrap();
             return Ok(format!("data:{mime};base64,{data}"));
         }
-        // // If manganis is being used without CLI support, we will fallback to providing a local path.
-        // else if manganis_support.is_err() {
-        //     match self.location.source() {
-        //         FileSource::Remote(url) => Ok(url.as_str().to_string()),
-        //         FileSource::Local(path) => {
-        //             // If this is not the main package, we can't include assets from it without CLI support
-        //             let primary_package = std::env::var("CARGO_PRIMARY_PACKAGE").is_ok();
-        //             if !primary_package {
-        //                 return Err(ManganisSupportError::ExternalPackageCollection);
-        //             }
-
-        //             // Tauri doesn't allow absolute paths(??) so we convert to relative.
-        //             let Ok(cwd) = std::env::var("CARGO_MANIFEST_DIR") else {
-        //                 return Err(ManganisSupportError::FailedToFindCargoManifest);
-        //             };
-
-        //             // Windows adds `\\?\` to longer path names. We'll try to remove it.
-        //             #[cfg(windows)]
-        //             let path = {
-        //                 let path_as_string = path.display().to_string();
-        //                 let path_as_string = path_as_string
-        //                     .strip_prefix("\\\\?\\")
-        //                     .unwrap_or(&path_as_string);
-        //                 PathBuf::from(path_as_string)
-        //             };
-
-        //             let rel_path = path.strip_prefix(cwd).unwrap();
-        //             let path = PathBuf::from(".").join(rel_path);
-        //             Ok(path.display().to_string())
-        //         }
-        //     }
-        // } else {
-        // let config = Config::current();
-        // let root = config.assets_serve_location();
-        // }
 
         let basepath = crate::config::base_path();
         let root = std::env::var("CARGO_MANIFEST_DIR").unwrap();
@@ -438,7 +401,7 @@ impl FileAsset {
             "{root}/{basepath}/{unique_name}",
             basepath = basepath.display()
         );
-        panic!("{:?}", out);
+        // panic!("{:?}", out);
         Ok(out)
     }
 
@@ -569,3 +532,39 @@ impl TailwindAsset {
         &self.classes
     }
 }
+
+// // If manganis is being used without CLI support, we will fallback to providing a local path.
+// else if manganis_support.is_err() {
+//     match self.location.source() {
+//         FileSource::Remote(url) => Ok(url.as_str().to_string()),
+//         FileSource::Local(path) => {
+//             // If this is not the main package, we can't include assets from it without CLI support
+//             let primary_package = std::env::var("CARGO_PRIMARY_PACKAGE").is_ok();
+//             if !primary_package {
+//                 return Err(ManganisSupportError::ExternalPackageCollection);
+//             }
+
+//             // Tauri doesn't allow absolute paths(??) so we convert to relative.
+//             let Ok(cwd) = std::env::var("CARGO_MANIFEST_DIR") else {
+//                 return Err(ManganisSupportError::FailedToFindCargoManifest);
+//             };
+
+//             // Windows adds `\\?\` to longer path names. We'll try to remove it.
+//             #[cfg(windows)]
+//             let path = {
+//                 let path_as_string = path.display().to_string();
+//                 let path_as_string = path_as_string
+//                     .strip_prefix("\\\\?\\")
+//                     .unwrap_or(&path_as_string);
+//                 PathBuf::from(path_as_string)
+//             };
+
+//             let rel_path = path.strip_prefix(cwd).unwrap();
+//             let path = PathBuf::from(".").join(rel_path);
+//             Ok(path.display().to_string())
+//         }
+//     }
+// } else {
+// let config = Config::current();
+// let root = config.assets_serve_location();
+// }

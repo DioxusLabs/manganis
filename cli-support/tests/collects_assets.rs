@@ -1,19 +1,11 @@
 use manganis_cli_support::AssetManifestExt;
-use manganis_common::{AssetManifest, AssetType, Config};
+use manganis_common::{AssetManifest, AssetType};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 #[test]
 fn collects_assets() {
     tracing_subscriber::fmt::init();
-
-    // This is the location where the assets will be served from
-    let assets_serve_location = "/";
-
-    // First set any settings you need for the build
-    Config::default()
-        .with_assets_serve_location(assets_serve_location)
-        .save();
 
     // Get args and default to "build"
     let args: Vec<String> = std::env::args().collect();
@@ -45,7 +37,6 @@ fn build() {
     Command::new("cargo")
         .arg("build")
         .args(args)
-        .env("MANGANIS_SUPPORT", "true")
         .current_dir(&test_package_dir)
         .stdout(Stdio::piped())
         .spawn()

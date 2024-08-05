@@ -1,5 +1,5 @@
 use manganis_cli_support::AssetManifestExt;
-use manganis_common::{AssetManifest, Config};
+use manganis_common::AssetManifest;
 use std::{path::PathBuf, process::Command};
 
 // This is the location where the assets will be copied to in the filesystem
@@ -11,13 +11,9 @@ const ASSETS_SERVE_LOCATION: &str = "./assets/";
 fn main() {
     tracing_subscriber::fmt::init();
 
-    // First set any settings you need for the build.
-    Config::default()
-        .with_assets_serve_location(ASSETS_SERVE_LOCATION)
-        .save();
-
     // Handle the commands.
     let args: Vec<String> = std::env::args().collect();
+
     if let Some(arg) = args.get(1) {
         if arg == "link" {
             link();
@@ -41,7 +37,7 @@ fn build() {
         .current_dir(&current_dir)
         .arg("build")
         .args(args)
-        .env("MANGANIS_SUPPORT", "true")
+        .env("MG_BASEPATH", "/blah/")
         .spawn()
         .unwrap()
         .wait()
