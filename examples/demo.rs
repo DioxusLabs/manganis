@@ -1,7 +1,11 @@
 use manganis::*;
 
 fn main() {
-    let asset = asset!("/assets/file.txt");
+    // Generate a unqiue file name for the txt file after it's been bundled
+    let txt_file = asset!("/assets/file.txt");
+    println!("{txt_file}");
 
-    println!("{asset}");
+    // Generate a unqiue file name for the txt file after it's been bundled
+    let image_file = asset!("/assets/logo.png");
+    println!("{image_file}");
 }
