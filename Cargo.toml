@@ -1,6 +1,7 @@
 [workspace]
-package.version = "0.3.0-alpha.0"
+resolver = "2"
 members = [
+    "packages/manganis",
     "packages/macro",
     "packages/common",
     "packages/cli-support",
@@ -10,6 +11,28 @@ members = [
     "packages/test-package/test-package-nested-dependency",
 ]
 
+[workspace.package]
+version = "0.3.0-alpha.0"
+
 [workspace.dependencies]
+manganis  = { path = "packages/manganis", version = "0.3.0-alpha.0" }
+manganis-common  = { path = "packages/common", version = "0.3.0-alpha.0" }
+manganis-cli-support  = { path = "packages/cli-support", version = "0.3.0-alpha.0" }
+manganis-macro  = { path = "packages/macro", version = "0.3.0-alpha.0" }
+
 base64 = "0.22.1"
 infer = "0.16.0"
+
+[package]
+name = "manganis-examples"
+publish = false
+authors = ["Evan Almloff"]
+edition = "2021"
+description = "Ergonomic, automatic, cross crate asset collection and optimization"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/DioxusLabs/manganis/"
+homepage = "https://dioxuslabs.com"
+keywords = ["assets"]
+
+[dev-dependencies]
+manganis = { workspace = true, features = ["macro"] }

@@ -1436,6 +1436,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "manganis-examples"
+version = "0.0.0"
+dependencies = [
+ "manganis",
+]
+
+[[package]]
 name = "manganis-macro"
 version = "0.3.0-alpha.0"
 dependencies = [
