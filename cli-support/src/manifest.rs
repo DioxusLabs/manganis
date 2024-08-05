@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use manganis_common::{linker, AssetManifest, AssetType};
 
-use crate::file::process_file;
+use crate::{file::process_file, process_folder};
 
 use object::{File, Object, ObjectSection};
 use std::fs;
@@ -87,16 +87,29 @@ impl AssetManifestExt for AssetManifest {
         }
 
         self.assets().iter().try_for_each(|asset| {
-            if let AssetType::File(file_asset) = asset {
-                tracing::info!("Optimizing and bundling {}", file_asset);
-                tracing::trace!("Copying asset from {:?} to {:?}", file_asset, location);
-                match process_file(file_asset, &location) {
-                    Ok(_) => {}
-                    Err(err) => {
-                        tracing::error!("Failed to copy static asset: {}", err);
-                        return Err(err);
+            match asset {
+                AssetType::File(file_asset) => {
+                    tracing::info!("Optimizing and bundling {}", file_asset);
+                    tracing::trace!("Copying asset from {:?} to {:?}", file_asset, location);
+                    match process_file(file_asset, &location) {
+                        Ok(_) => {}
+                        Err(err) => {
+                            tracing::error!("Failed to copy static asset: {}", err);
+                            return Err(err);
+                        }
                     }
                 }
+                AssetType::Folder(folder_asset) => {
+                    tracing::info!("Copying folder asset {}", folder_asset);
+                    match process_folder(folder_asset, &location) {
+                        Ok(_) => {}
+                        Err(err) => {
+                            tracing::error!("Failed to copy static asset: {}", err);
+                            return Err(err);
+                        }
+                    }
+                }
+                _ => {}
             }
             Ok::<(), anyhow::Error>(())
         })

@@ -2,12 +2,12 @@ use anyhow::Context;
 use image::{DynamicImage, EncodableLayout};
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
 use manganis_common::{
-    CssOptions, FileAsset, FileLocation, FileOptions, ImageOptions, ImageType, JsOptions,
+    AssetSource, CssOptions, FileAsset, FileOptions, ImageOptions, ImageType, JsOptions,
     JsonOptions,
 };
 use std::{
     io::{BufWriter, Write},
-    path::{Path, PathBuf},
+    path::Path,
     sync::Arc,
 };
 use swc::{config::JsMinifyOptions, try_with_handler, BoolOrDataConfig};
@@ -15,42 +15,43 @@ use swc_common::{sync::Lrc, FileName};
 use swc_common::{SourceMap, GLOBALS};
 
 pub trait Process {
-    fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()>;
+    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()>;
 }
 
 /// Process a specific file asset
 pub fn process_file(file: &FileAsset, output_folder: &Path) -> anyhow::Result<()> {
-    file.options().process(file.location(), output_folder)
+    let location = file.location();
+    let source = location.source();
+    let output_path = output_folder.join(location.unique_name());
+    file.options().process(source, &output_path)
 }
 
 impl Process for FileOptions {
-    fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
-        if output_folder.join(input_location.unique_name()).exists() {
+    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
+        if output_path.exists() {
             return Ok(());
         }
         match self {
             Self::Other { .. } => {
-                let mut output_location = output_folder.to_path_buf();
-                output_location.push(input_location.unique_name());
-                let bytes = input_location.read_to_bytes()?;
-                std::fs::write(&output_location, bytes).with_context(|| {
+                let bytes = source.read_to_bytes()?;
+                std::fs::write(output_path, bytes).with_context(|| {
                     format!(
                         "Failed to write file to output location: {}",
-                        output_location.display()
+                        output_path.display()
                     )
                 })?;
             }
             Self::Css(options) => {
-                options.process(input_location, output_folder)?;
+                options.process(source, output_path)?;
             }
             Self::Js(options) => {
-                options.process(input_location, output_folder)?;
+                options.process(source, output_path)?;
             }
             Self::Json(options) => {
-                options.process(input_location, output_folder)?;
+                options.process(source, output_path)?;
             }
             Self::Image(options) => {
-                options.process(input_location, output_folder)?;
+                options.process(source, output_path)?;
             }
             _ => todo!(),
         }
@@ -60,36 +61,29 @@ impl Process for FileOptions {
 }
 
 impl Process for ImageOptions {
-    fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
-        let mut image =
-            image::io::Reader::new(std::io::Cursor::new(&*input_location.read_to_bytes()?))
-                .with_guessed_format()?
-                .decode()?;
+    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
+        let mut image = image::io::Reader::new(std::io::Cursor::new(&*source.read_to_bytes()?))
+            .with_guessed_format()?
+            .decode()?;
 
         if let Some(size) = self.size() {
             image = image.resize_exact(size.0, size.1, image::imageops::FilterType::Lanczos3);
         }
 
-        let mut output_location = output_folder.to_path_buf();
-
         match self.ty() {
             ImageType::Png => {
-                output_location.push(input_location.unique_name());
-                compress_png(image, output_location);
+                compress_png(image, output_path);
             }
             ImageType::Jpg => {
-                output_location.push(input_location.unique_name());
-                compress_jpg(image, output_location)?;
+                compress_jpg(image, output_path)?;
             }
             ImageType::Avif => {
-                output_location.push(input_location.unique_name());
-                if let Err(error) = image.save(&output_location) {
-                    tracing::error!("Failed to save avif image: {} with path {}. You must have the avif feature enabled to use avif assets", error, output_location.display());
+                if let Err(error) = image.save(output_path) {
+                    tracing::error!("Failed to save avif image: {} with path {}. You must have the avif feature enabled to use avif assets", error, output_path.display());
                 }
             }
             ImageType::Webp => {
-                output_location.push(input_location.unique_name());
-                if let Err(err) = image.save(output_location) {
+                if let Err(err) = image.save(output_path) {
                     tracing::error!("Failed to save webp image: {}. You must have the avif feature enabled to use webp assets", err);
                 }
             }
@@ -99,7 +93,7 @@ impl Process for ImageOptions {
     }
 }
 
-fn compress_jpg(image: DynamicImage, output_location: PathBuf) -> anyhow::Result<()> {
+fn compress_jpg(image: DynamicImage, output_location: &Path) -> anyhow::Result<()> {
     let mut comp = mozjpeg::Compress::new(mozjpeg::ColorSpace::JCS_EXT_RGBX);
     let width = image.width() as usize;
     let height = image.height() as usize;
@@ -117,7 +111,7 @@ fn compress_jpg(image: DynamicImage, output_location: PathBuf) -> anyhow::Result
     Ok(())
 }
 
-fn compress_png(image: DynamicImage, output_location: PathBuf) {
+fn compress_png(image: DynamicImage, output_location: &Path) {
     // Image loading/saving is outside scope of this library
     let width = image.width() as usize;
     let height = image.height() as usize;
@@ -167,17 +161,15 @@ fn compress_png(image: DynamicImage, output_location: PathBuf) {
 }
 
 impl Process for CssOptions {
-    fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
-        let css = input_location.read_to_string()?;
+    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
+        let css = source.read_to_string()?;
 
         let css = if self.minify() { minify_css(&css) } else { css };
 
-        let mut output_location = output_folder.to_path_buf();
-        output_location.push(input_location.unique_name());
-        std::fs::write(&output_location, css).with_context(|| {
+        std::fs::write(output_path, css).with_context(|| {
             format!(
                 "Failed to write css to output location: {}",
-                output_location.display()
+                output_path.display()
             )
         })?;
 
@@ -196,7 +188,7 @@ pub(crate) fn minify_css(css: &str) -> String {
     res.code
 }
 
-pub(crate) fn minify_js(source: &FileLocation) -> anyhow::Result<String> {
+pub(crate) fn minify_js(source: &AssetSource) -> anyhow::Result<String> {
     let cm = Arc::<SourceMap>::default();
 
     let js = source.read_to_string()?;
@@ -204,9 +196,9 @@ pub(crate) fn minify_js(source: &FileLocation) -> anyhow::Result<String> {
     let output = GLOBALS
         .set(&Default::default(), || {
             try_with_handler(cm.clone(), Default::default(), |handler| {
-                let filename = Lrc::new(match source.source() {
-                    manganis_common::FileSource::Local(path) => FileName::Real(path.clone()),
-                    manganis_common::FileSource::Remote(url) => FileName::Url(url.clone()),
+                let filename = Lrc::new(match source {
+                    manganis_common::AssetSource::Local(path) => FileName::Real(path.clone()),
+                    manganis_common::AssetSource::Remote(url) => FileName::Url(url.clone()),
                 });
                 let fm = cm.new_source_file(filename, js.to_string());
 
@@ -234,19 +226,17 @@ pub(crate) fn minify_js(source: &FileLocation) -> anyhow::Result<String> {
 }
 
 impl Process for JsOptions {
-    fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
+    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
         let js = if self.minify() {
-            minify_js(input_location)?
+            minify_js(source)?
         } else {
-            input_location.read_to_string()?
+            source.read_to_string()?
         };
-        let mut output_location = output_folder.to_path_buf();
-        output_location.push(input_location.unique_name());
 
-        std::fs::write(&output_location, js).with_context(|| {
+        std::fs::write(output_path, js).with_context(|| {
             format!(
                 "Failed to write js to output location: {}",
-                output_location.display()
+                output_path.display()
             )
         })?;
 
@@ -263,8 +253,8 @@ pub(crate) fn minify_json(source: &str) -> anyhow::Result<String> {
 }
 
 impl Process for JsonOptions {
-    fn process(&self, input_location: &FileLocation, output_folder: &Path) -> anyhow::Result<()> {
-        let source = input_location.read_to_string()?;
+    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
+        let source = source.read_to_string()?;
         let json = match minify_json(&source) {
             Ok(json) => json,
             Err(err) => {
@@ -272,13 +262,11 @@ impl Process for JsonOptions {
                 source
             }
         };
-        let mut output_location = output_folder.to_path_buf();
-        output_location.push(input_location.unique_name());
 
-        std::fs::write(&output_location, json).with_context(|| {
+        std::fs::write(output_path, json).with_context(|| {
             format!(
                 "Failed to write json to output location: {}",
-                output_location.display()
+                output_path.display()
             )
         })?;
 

@@ -1,5 +1,5 @@
 use manganis_common::{
-    AssetType, CssOptions, FileAsset, FileOptions, FileSource, ManganisSupportError,
+    AssetSource, AssetType, CssOptions, FileAsset, FileOptions, ManganisSupportError,
 };
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, LitBool};
@@ -107,7 +107,7 @@ impl Parse for CssAssetParser {
         };
 
         let path_as_str = path.value();
-        let path: FileSource = match path_as_str.parse() {
+        let path: AssetSource = match AssetSource::parse_file(&path_as_str) {
             Ok(path) => path,
             Err(e) => {
                 return Err(syn::Error::new(

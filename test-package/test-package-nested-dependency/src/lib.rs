@@ -4,6 +4,8 @@ mod font;
 pub use font::*;
 mod js;
 pub use js::*;
+mod folder;
+pub use folder::*;
 
 const _: &str = manganis::classes!("flex flex-row p-1");
 const _: &str = manganis::classes!("flex flex-row p-2");
