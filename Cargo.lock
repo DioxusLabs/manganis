@@ -1348,6 +1348,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e69cdf6b85b5c8dce514f694089a2cf8b1a702f6cd28607bcb3cf296c9778db"
 
 [[package]]
+name = "linkme"
+version = "0.3.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccb76662d78edc9f9bf56360d6919bdacc8b7761227727e5082f128eeb90bbf5"
+dependencies = [
+ "linkme-impl",
+]
+
+[[package]]
+name = "linkme-impl"
+version = "0.3.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8dccda732e04fa3baf2e17cf835bfe2601c7c2edafd64417c627dabae3a8cda"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.68",
+]
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1439,7 +1459,9 @@ dependencies = [
 name = "manganis-examples"
 version = "0.0.0"
 dependencies = [
+ "linkme",
  "manganis",
+ "manganis-resolver",
 ]
 
 [[package]]
@@ -1454,6 +1476,14 @@ dependencies = [
  "serde_json",
  "syn 2.0.68",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "manganis-resolver"
+version = "0.3.0-alpha.0"
+dependencies = [
+ "infer",
+ "manganis-common",
 ]
 
 [[package]]

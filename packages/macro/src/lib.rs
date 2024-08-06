@@ -229,7 +229,7 @@ impl Parse for AnyAssetParser {
                     }
                 }
                 if let AssetSource::Local(path) = &asset {
-                    if path.is_dir() {
+                    if path.canonicalized.is_dir() {
                         return syn::parse2(
                             quote_spanned! { path_str.span() => folder(#path_str) #input },
                         );

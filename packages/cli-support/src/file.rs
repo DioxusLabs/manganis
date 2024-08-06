@@ -197,7 +197,9 @@ pub(crate) fn minify_js(source: &AssetSource) -> anyhow::Result<String> {
         .set(&Default::default(), || {
             try_with_handler(cm.clone(), Default::default(), |handler| {
                 let filename = Lrc::new(match source {
-                    manganis_common::AssetSource::Local(path) => FileName::Real(path.clone()),
+                    manganis_common::AssetSource::Local(path) => {
+                        FileName::Real(path.canonicalized.clone())
+                    }
                     manganis_common::AssetSource::Remote(url) => FileName::Url(url.clone()),
                 });
                 let fm = cm.new_source_file(filename, js.to_string());

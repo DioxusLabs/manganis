@@ -1,6 +1,9 @@
 # Manganis
 
+> Like `include_bytes!`, but way better, and works with bundlers
+
 The Manganis allows you to submit assets to a build tool that supports collecting assets. It makes it easy to self-host assets that are distributed throughout your library. Manganis also handles optimizing, converting, and fetching assets.
+
 ****
 If you defined this in a component library:
 ```rust

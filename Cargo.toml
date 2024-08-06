@@ -5,6 +5,7 @@ members = [
     "packages/macro",
     "packages/common",
     "packages/cli-support",
+    "packages/resolver",
 
     "packages/test-package",
     "packages/test-package/test-package-dependency",
@@ -19,6 +20,7 @@ manganis  = { path = "packages/manganis", version = "0.3.0-alpha.0" }
 manganis-common  = { path = "packages/common", version = "0.3.0-alpha.0" }
 manganis-cli-support  = { path = "packages/cli-support", version = "0.3.0-alpha.0" }
 manganis-macro  = { path = "packages/macro", version = "0.3.0-alpha.0" }
+manganis-resolver  = { path = "packages/resolver", version = "0.3.0-alpha.0" }
 
 base64 = "0.22.1"
 infer = "0.16.0"
@@ -36,3 +38,5 @@ keywords = ["assets"]
 
 [dev-dependencies]
 manganis = { workspace = true, features = ["macro"] }
+manganis-resolver = { workspace = true }
+linkme = "*"

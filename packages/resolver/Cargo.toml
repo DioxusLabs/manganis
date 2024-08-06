@@ -1,0 +1,8 @@
+[package]
+name = "manganis-resolver"
+edition = "2021"
+version.workspace = true
+
+[dependencies]
+infer = { workspace = true }
+manganis-common = { workspace = true }
