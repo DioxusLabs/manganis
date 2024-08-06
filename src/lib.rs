@@ -1,6 +1,8 @@
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]
 
+use std::path::PathBuf;
+
 #[cfg(feature = "macro")]
 pub use manganis_macro::*;
 
@@ -457,3 +459,154 @@ mod __private {
 impl ForMgMacro for ImageAssetBuilder {}
 impl ForMgMacro for FontAssetBuilder {}
 impl ForMgMacro for &'static str {}
+
+#[derive(Debug, Copy, Clone)]
+struct StaticFileStructure {
+    name: &'static str,
+}
+
+#[derive(Debug, Copy, Clone)]
+struct StaticFolderStructure {
+    name: &'static str,
+    children: &'static [StaticDirectoryStructure],
+}
+
+#[derive(Debug, Copy, Clone)]
+enum StaticDirectoryStructure {
+    File(StaticFileStructure),
+    Folder(StaticFolderStructure),
+}
+
+impl StaticDirectoryStructure {
+    fn name(&self) -> &'static str {
+        match self {
+            StaticDirectoryStructure::File(file) => file.name,
+            StaticDirectoryStructure::Folder(folder) => folder.name,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+struct StaticFolder {
+    root: StaticFolderStructure,
+}
+
+impl StaticFolder {
+    fn canonical(&self) -> PathBuf {
+        todo!()
+    }
+
+    fn join(&self, path: &std::path::Path) -> PathBuf {
+        let mut joined_path = self.canonical();
+        joined_path.push(path);
+        joined_path
+    }
+
+    fn root(&self) -> FolderEntry {
+        FolderEntry {
+            path: FolderPath {
+                folder: *self,
+                path: Vec::new(),
+            },
+        }
+    }
+}
+
+impl std::fmt::Display for StaticFolder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.root.name)
+    }
+}
+
+struct FolderPath {
+    folder: StaticFolder,
+    path: Vec<u8>,
+}
+
+impl FolderPath {
+    fn canonical(&self) -> PathBuf {
+        let mut path = self.path.iter().copied();
+        let mut canonical = self.folder.canonical();
+        let mut current = StaticDirectoryStructure::Folder(self.folder.root);
+        while let (StaticDirectoryStructure::Folder(folder), Some(segment)) =
+            (&current, path.next())
+        {
+            current = folder.children[segment as usize];
+
+            canonical.push(current.name());
+        }
+
+        canonical
+    }
+
+    fn get(&self) -> StaticDirectoryStructure {
+        let mut path = self.path.iter().copied();
+        let mut current = StaticDirectoryStructure::Folder(self.folder.root);
+        while let (StaticDirectoryStructure::Folder(folder), Some(segment)) =
+            (&current, path.next())
+        {
+            current = folder.children[segment as usize];
+        }
+
+        current
+    }
+}
+
+enum DirectoryEntry {
+    File(FileEntry),
+    Folder(FolderEntry),
+}
+
+struct FileEntry {
+    path: FolderPath,
+}
+
+impl FileEntry {
+    fn canonical(&self) -> PathBuf {
+        self.path.canonical()
+    }
+}
+
+struct FolderEntry {
+    path: FolderPath,
+}
+
+impl FolderEntry {
+    fn canonical(&self) -> PathBuf {
+        self.path.canonical()
+    }
+
+    fn children(&self) -> impl Iterator<Item = DirectoryEntry> + 'static {
+        let path = self.path.path.clone();
+        let static_folder = self.path.folder;
+        match self.path.get() {
+            StaticDirectoryStructure::Folder(folder) => {
+                folder.children.iter().enumerate().map(move |(i, child)| {
+                    let path = FolderPath {
+                        folder: static_folder,
+                        path: {
+                            let mut path = path.clone();
+                            path.push(i as u8);
+                            path
+                        },
+                    };
+                    match child {
+                        StaticDirectoryStructure::File(_) => {
+                            DirectoryEntry::File(FileEntry { path })
+                        }
+                        StaticDirectoryStructure::Folder(_) => {
+                            DirectoryEntry::Folder(FolderEntry { path })
+                        }
+                    }
+                })
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+
+struct Asset<T> {
+    unique_name: &'static str,
+    sha: [u8; 48],
+    data: T,
+}
