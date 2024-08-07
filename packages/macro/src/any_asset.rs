@@ -16,7 +16,7 @@ use quote::{quote, quote_spanned, ToTokens};
 use serde::Serialize;
 use std::sync::atomic::Ordering;
 use std::{fs::File, sync::atomic::AtomicBool};
-use syn::{parenthesized, parse::Parse, parse_macro_input, LitStr};
+use syn::{parenthesized, parse::Parse, parse_macro_input, Expr, ExprLit, LitStr, PatLit};
 
 #[derive(Copy, Clone, Default, PartialEq)]
 enum ReturnType {
@@ -52,7 +52,15 @@ impl Parse for AssetParser {
         // the method call will be a recursive chain
         match expr {
             syn::Expr::Lit(lit) => {}
-            syn::Expr::MethodCall(call) => {}
+            syn::Expr::MethodCall(call) => {
+                let receiver = call.receiver.as_ref();
+                let Expr::Lit(ExprLit { lit, .. }) = receiver else {
+                    return Err(syn::Error::new(
+                        proc_macro2::Span::call_site(),
+                        "The receiver of the method call must be a literal",
+                    ));
+                };
+            }
             _ => todo!(),
         }
 
