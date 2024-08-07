@@ -1,8 +1,10 @@
+use crate::Asset;
+
 /// An image asset that is built by the [`asset!`] macro
 #[derive(Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct ImageAsset {
     /// The path to the image
-    path: &'static str,
+    asset: Asset,
     /// A low quality preview of the image that is URL encoded
     preview: Option<&'static str>,
     /// A caption for the image
@@ -11,9 +13,9 @@ pub struct ImageAsset {
 
 impl ImageAsset {
     /// Creates a new image asset
-    pub const fn new(path: &'static str) -> Self {
+    pub const fn new(path: Asset) -> Self {
         Self {
-            path,
+            asset: path,
             preview: None,
             caption: None,
         }
@@ -21,7 +23,7 @@ impl ImageAsset {
 
     /// Returns the path to the image
     pub const fn path(&self) -> &'static str {
-        self.path
+        self.asset.bundled
     }
 
     /// Returns the preview of the image
@@ -46,16 +48,16 @@ impl ImageAsset {
 }
 
 impl std::ops::Deref for ImageAsset {
-    type Target = str;
+    type Target = Asset;
 
     fn deref(&self) -> &Self::Target {
-        self.path
+        &self.asset
     }
 }
 
 impl std::fmt::Display for ImageAsset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.path.fmt(f)
+        self.asset.fmt(f)
     }
 }
 

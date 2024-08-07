@@ -14,11 +14,10 @@ pub fn process_folder(folder: &FolderAsset, output_folder: &Path) -> anyhow::Res
         return Ok(());
     }
 
-    let folder = folder
-        .location()
-        .source()
-        .as_path()
-        .expect("Folder asset must be a local path");
+    // .location()
+    // // .source()
+    // .as_path()
+    let folder = folder.path();
 
     // Optimize and copy all assets in the folder in parallel
     process_folder_inner(folder, &output_folder)
@@ -51,9 +50,10 @@ fn process_folder_inner(folder: &Path, output_folder: &Path) -> anyhow::Result<(
 
 /// Optimize a file without changing any of its contents significantly (e.g. by changing the extension)
 fn process_file_minimal(input_path: &Path, output_path: &Path) -> anyhow::Result<()> {
-    let options =
-        FileOptions::default_for_extension(input_path.extension().and_then(|e| e.to_str()));
-    let source = manganis_common::AssetSource::Local(input_path.to_path_buf());
-    options.process(&source, output_path)?;
-    Ok(())
+    todo!()
+    // let options =
+    //     FileOptions::default_for_extension(input_path.extension().and_then(|e| e.to_str()));
+    // let source = input_path.to_path_buf();
+    // options.process(&source, output_path)?;
+    // Ok(())
 }

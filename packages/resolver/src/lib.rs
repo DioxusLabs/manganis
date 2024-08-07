@@ -1,3 +1,4 @@
+use manganis::Asset;
 use std::path::PathBuf;
 
 pub struct VirtualFile {}
@@ -9,11 +10,8 @@ impl VirtualFile {
     }
 }
 
-pub fn resolve(mg_path: &str) -> Result<VirtualFile, std::io::Error> {
+pub fn resolve(asset: Asset) -> Result<VirtualFile, std::io::Error> {
     todo!()
-    // let root = manganis_common::manifest_dir().unwrap();
-    // dbg!(&root);
-    // todo!()
 }
 
 pub fn resolve_macos(mg_path: &str) -> Result<VirtualFile, std::io::Error> {

@@ -31,12 +31,11 @@ const ALL_ASSETS: &[&str] = &[
 fn main() {
     tracing_subscriber::fmt::init();
 
-    let external_paths_should_exist: bool = option_env!("MANGANIS_SUPPORT").is_some();
-
-    // Make sure the macro paths match with the paths that actually exist
-    for path in ALL_ASSETS {
-        let path = PathBuf::from(path);
-        println!("{:?}", path);
-        assert!(!external_paths_should_exist || path.exists());
-    }
+    todo!()
+    // // Make sure the macro paths match with the paths that actually exist
+    // for path in ALL_ASSETS {
+    //     let path = PathBuf::from(path);
+    //     println!("{:?}", path);
+    //     assert!(!external_paths_should_exist || path.exists());
+    // }
 }

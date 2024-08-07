@@ -52,9 +52,11 @@ object = {version="0.36.0", features=["wasm"]}
 tracing-subscriber = "0.3.18"
 
 [features]
-default = []
-asm = ["ravif/asm", "mozjpeg/nasm_simd"]
+default = ["html"]
 html = ["manganis-common/html"]
+
+asm = ["ravif/asm", "mozjpeg/nasm_simd"]
+
 # Note: this feature now enables nothing and should be removed in the next major version
 webp = []
 avif = []

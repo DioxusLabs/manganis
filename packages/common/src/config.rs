@@ -26,7 +26,6 @@ pub const fn is_bundled() -> bool {
 /// The location of the manifest directory used to build this crate
 pub fn manifest_dir() -> Option<PathBuf> {
     std::env::var("CARGO_MANIFEST_DIR").ok().map(PathBuf::from)
-    // option_env!("CARGO_MANIFEST_DIR").map(PathBuf::from)
 }
 
 #[cfg(test)]

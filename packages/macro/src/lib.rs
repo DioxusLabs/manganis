@@ -9,22 +9,26 @@ use image::ImageAssetParser;
 use js::JsAssetParser;
 use json::JsonAssetParser;
 // use manganis_common::cache::macro_log_file;
-use manganis_common::{AssetSource, MetadataAsset, TailwindAsset};
+use manganis_common::{MetadataAsset, ResourceAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, quote_spanned, ToTokens};
+use resource::ResourceAssetParser;
+use serde::Serialize;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use syn::{parse::Parse, parse_macro_input, LitStr};
 
-mod css;
-mod file;
-mod folder;
-mod font;
-mod image;
-mod js;
-mod json;
+pub(crate) mod any_asset;
+pub(crate) mod css;
+pub(crate) mod file;
+pub(crate) mod folder;
+pub(crate) mod font;
+pub(crate) mod image;
+pub(crate) mod js;
+pub(crate) mod json;
+pub(crate) mod resource;
 
 static LOG_FILE_FRESH: AtomicBool = AtomicBool::new(false);
 
@@ -48,10 +52,10 @@ fn trace_to_file() {
 /// We force rust to store a json representation of the asset description
 /// inside a particular region of the binary, with the label "manganis".
 /// After linking, the "manganis" sections of the different executables will be merged.
-fn generate_link_section(asset: manganis_common::AssetType) -> TokenStream2 {
+fn generate_link_section(asset: &impl Serialize) -> TokenStream2 {
     let position = proc_macro2::Span::call_site();
 
-    let asset_description = serde_json::to_string(&asset).unwrap();
+    let asset_description = serde_json::to_string(asset).unwrap();
 
     let len = asset_description.as_bytes().len();
 
@@ -83,14 +87,13 @@ pub fn classes(input: TokenStream) -> TokenStream {
     let input_as_str = parse_macro_input!(input as LitStr);
     let input_as_str = input_as_str.value();
 
-    let asset = manganis_common::AssetType::Tailwind(TailwindAsset::new(&input_as_str));
-
-    let link_section = generate_link_section(asset);
+    let asset = TailwindAsset::new(&input_as_str);
+    let link_section = generate_link_section(&asset);
 
     quote! {
         {
-        #link_section
-        #input_as_str
+            #link_section
+            #input_as_str
         }
     }
     .into_token_stream()
@@ -146,8 +149,7 @@ pub fn classes(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn asset(input: TokenStream) -> TokenStream {
     trace_to_file();
-
-    let asset = parse_macro_input!(input as AnyAssetParser);
+    let asset = parse_macro_input!(input as any_asset::AssetParser);
 
     quote! {
         #asset
@@ -156,170 +158,31 @@ pub fn asset(input: TokenStream) -> TokenStream {
     .into()
 }
 
-#[derive(Copy, Clone, Default, PartialEq)]
-enum ReturnType {
-    #[default]
-    AssetSpecific,
-    StaticStr,
-}
-
-struct AnyAssetParser {
-    return_type: ReturnType,
-    asset_type: syn::Result<AnyAssetParserType>,
-    source: TokenStream2,
-}
-
-impl ToTokens for AnyAssetParser {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let asset = match &self.asset_type {
-            Ok(AnyAssetParserType::File(file)) => file.into_token_stream(),
-            Ok(AnyAssetParserType::Folder(folder)) => folder.into_token_stream(),
-            Ok(AnyAssetParserType::Image(image)) => {
-                let tokens = image.into_token_stream();
-                if self.return_type == ReturnType::StaticStr {
-                    quote! {
-                        #tokens.path()
-                    }
-                } else {
-                    tokens
-                }
-            }
-            Ok(AnyAssetParserType::Font(font)) => font.into_token_stream(),
-            Ok(AnyAssetParserType::Css(css)) => css.into_token_stream(),
-            Ok(AnyAssetParserType::Js(js)) => js.into_token_stream(),
-            Ok(AnyAssetParserType::Json(js)) => js.into_token_stream(),
-            Err(e) => e.to_compile_error(),
-        };
-        let source = &self.source;
-        let source = quote! {
-            const _: &dyn manganis::ForMgMacro = {
-                use manganis::*;
-                &#source
-            };
-        };
-
-        tokens.extend(quote! {
-            {
-                #source
-                #asset
-            }
-        })
-    }
-}
-
-impl Parse for AnyAssetParser {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        // First try to parse `"myfile".option1().option2()`. We parse that like asset_type("myfile.png").option1().option2()
-        if input.peek(syn::LitStr) {
-            let path_str = input.parse::<syn::LitStr>()?;
-            // Try to parse an extension
-            let asset = AssetSource::parse_any(&path_str.value())
-                .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))?;
-            let input: proc_macro2::TokenStream = input.parse()?;
-            let parse_asset = || -> syn::Result<Self> {
-                if let Some(extension) = asset.extension() {
-                    if extension.parse::<manganis_common::ImageType>().is_ok() {
-                        return syn::parse2(
-                            quote_spanned! { path_str.span() => image(#path_str) #input },
-                        );
-                    } else if extension.parse::<manganis_common::VideoType>().is_ok() {
-                        return syn::parse2(
-                            quote_spanned! { path_str.span() => video(#path_str) #input },
-                        );
-                    }
-                }
-                if let AssetSource::Local(path) = &asset {
-                    if path.canonicalized.is_dir() {
-                        return syn::parse2(
-                            quote_spanned! { path_str.span() => folder(#path_str) #input },
-                        );
-                    }
-                }
-                syn::parse2(quote_spanned! { path_str.span() => file(#path_str) #input })
-            };
-
-            let mut asset = parse_asset()?;
-            // We always return a static string if the asset was not parsed with an explicit type
-            asset.return_type = ReturnType::StaticStr;
-            return Ok(asset);
-        }
-
-        let builder_tokens = { input.fork().parse::<TokenStream2>()? };
-
-        let asset = input.parse::<AnyAssetParserType>();
-        Ok(AnyAssetParser {
-            return_type: ReturnType::AssetSpecific,
-            asset_type: asset,
-            source: builder_tokens,
-        })
-    }
-}
-
-enum AnyAssetParserType {
-    File(FileAssetParser),
-    Folder(FolderAssetParser),
-    Image(ImageAssetParser),
-    Font(FontAssetParser),
-    Css(CssAssetParser),
-    Js(JsAssetParser),
-    Json(JsonAssetParser),
-}
-
-impl Parse for AnyAssetParserType {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let ident = input.parse::<syn::Ident>()?;
-        let as_string = ident.to_string();
-
-        Ok(match &*as_string {
-            "file" => Self::File(input.parse::<FileAssetParser>()?),
-            "folder" => Self::Folder(input.parse::<FolderAssetParser>()?),
-            "image" => Self::Image(input.parse::<ImageAssetParser>()?),
-            "font" => Self::Font(input.parse::<FontAssetParser>()?),
-            "css" => Self::Css(input.parse::<CssAssetParser>()?),
-            "js" => Self::Js(input.parse::<JsAssetParser>()?),
-            "json" => Self::Json(input.parse::<JsonAssetParser>()?),
-            _ => {
-                return Err(syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!(
-                        "Unknown asset type: {as_string}. Supported types are file, image, font, and css"
-                    ),
-                ))
-            }
-        })
-    }
-}
-
-struct MetadataValue {
-    key: String,
-    value: String,
-}
-
-impl Parse for MetadataValue {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let key = input.parse::<Ident>()?.to_string();
-        input.parse::<syn::Token![:]>()?;
-        let value = input.parse::<LitStr>()?.value();
-        Ok(Self { key, value })
-    }
-}
-
 /// // You can also collect arbitrary key-value pairs. The meaning of these pairs is determined by the CLI that processes your assets
 /// ```rust
 /// const _: () = manganis::meta!("opt-level": "3");
 /// ```
 #[proc_macro]
 pub fn meta(input: TokenStream) -> TokenStream {
+    struct MetadataValue {
+        key: String,
+        value: String,
+    }
+
+    impl Parse for MetadataValue {
+        fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+            let key = input.parse::<Ident>()?.to_string();
+            input.parse::<syn::Token![:]>()?;
+            let value = input.parse::<LitStr>()?.value();
+            Ok(Self { key, value })
+        }
+    }
+
     trace_to_file();
 
     let md = parse_macro_input!(input as MetadataValue);
-
-    let asset = manganis_common::AssetType::Metadata(MetadataAsset::new(
-        md.key.as_str(),
-        md.value.as_str(),
-    ));
-
-    let link_section = generate_link_section(asset);
+    let asset = MetadataAsset::new(md.key.as_str(), md.value.as_str());
+    let link_section = generate_link_section(&asset);
 
     quote! {
         {
@@ -330,27 +193,9 @@ pub fn meta(input: TokenStream) -> TokenStream {
     .into()
 }
 
-fn quote_path(path: &Result<String, manganis_common::ManganisSupportError>) -> TokenStream2 {
-    match path {
-        Ok(path) => quote! { #path },
-        Err(err) => {
-            // Expand the error into a warning and return an empty path. Manganis should try not fail to compile the application because it may be checked in CI where manganis CLI support is not available.
-            let err = err.to_string();
-            quote! {
-                {
-                    #[deprecated(note = #err)]
-                    struct ManganisSupportError;
-                    _ = ManganisSupportError;
-                    ""
-                }
-            }
-        }
-    }
-}
-
 #[cfg(feature = "url-encoding")]
 pub(crate) fn url_encoded_asset(
-    file_asset: &manganis_common::FileAsset,
+    file_asset: &manganis_common::ResourceAsset,
 ) -> Result<String, syn::Error> {
     use base64::Engine;
 

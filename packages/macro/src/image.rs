@@ -1,5 +1,5 @@
 use manganis_common::ManganisSupportError;
-use manganis_common::{AssetSource, AssetType, FileAsset, FileOptions, ImageOptions};
+use manganis_common::{AssetType, FileOptions, ImageOptions, ResourceAsset};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, Token};
 
@@ -10,7 +10,7 @@ struct ParseImageOptions {
 }
 
 impl ParseImageOptions {
-    fn apply_to_options(self, file: &mut FileAsset, low_quality_preview: &mut bool) {
+    fn apply_to_options(self, file: &mut ResourceAsset, low_quality_preview: &mut bool) {
         for option in self.options {
             option.apply_to_options(file, low_quality_preview);
         }
@@ -36,7 +36,7 @@ enum ParseImageOption {
 }
 
 impl ParseImageOption {
-    fn apply_to_options(self, file: &mut FileAsset, low_quality_preview: &mut bool) {
+    fn apply_to_options(self, file: &mut ResourceAsset, low_quality_preview: &mut bool) {
         match self {
             ParseImageOption::Format(_)
             | ParseImageOption::Size(_)
@@ -158,9 +158,8 @@ impl Default for ImageType {
 }
 
 pub struct ImageAssetParser {
-    file_name: Result<String, ManganisSupportError>,
+    asset: ResourceAsset,
     low_quality_preview: Option<String>,
-    asset: AssetType,
 }
 
 impl Parse for ImageAssetParser {
@@ -178,8 +177,11 @@ impl Parse for ImageAssetParser {
         };
 
         let path_as_str = path.value();
-        let path: AssetSource = match AssetSource::parse_file(&path_as_str) {
-            Ok(path) => path,
+        let mut asset: ResourceAsset = match ResourceAsset::parse_file(&path_as_str) {
+            Ok(path) => path.with_options(manganis_common::FileOptions::Image(ImageOptions::new(
+                manganis_common::ImageType::Avif,
+                None,
+            ))),
             Err(e) => {
                 return Err(syn::Error::new(
                     proc_macro2::Span::call_site(),
@@ -187,74 +189,72 @@ impl Parse for ImageAssetParser {
                 ))
             }
         };
-        let mut this_file =
-            FileAsset::new(path.clone()).with_options(manganis_common::FileOptions::Image(
-                ImageOptions::new(manganis_common::ImageType::Avif, None),
-            ));
+
         let mut low_quality_preview = false;
         if let Some(parsed_options) = parsed_options {
-            parsed_options.apply_to_options(&mut this_file, &mut low_quality_preview);
+            parsed_options.apply_to_options(&mut asset, &mut low_quality_preview);
         }
 
-        let asset = manganis_common::AssetType::File(this_file.clone());
+        // let asset = manganis_common::AssetType::Resource(asset.clone());
 
-        let file_name = if this_file.url_encoded() {
-            #[cfg(not(feature = "url-encoding"))]
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                "URL encoding is not enabled. Enable the url-encoding feature to use this feature",
-            ));
-            #[cfg(feature = "url-encoding")]
-            Ok(crate::url_encoded_asset(&this_file).map_err(|e| {
-                syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("Failed to encode file: {}", e),
-                )
-            })?)
-        } else {
-            this_file.served_location()
-        };
+        // let file_name = if asset.url_encoded() {
+        //     #[cfg(not(feature = "url-encoding"))]
+        //     return Err(syn::Error::new(
+        //         proc_macro2::Span::call_site(),
+        //         "URL encoding is not enabled. Enable the url-encoding feature to use this feature",
+        //     ));
+        //     #[cfg(feature = "url-encoding")]
+        //     Ok(crate::url_encoded_asset(&asset).map_err(|e| {
+        //         syn::Error::new(
+        //             proc_macro2::Span::call_site(),
+        //             format!("Failed to encode file: {}", e),
+        //         )
+        //     })?)
+        // } else {
+        //     asset.served_location()
+        // };
 
-        let low_quality_preview = if low_quality_preview {
-            #[cfg(not(feature = "url-encoding"))]
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                "Low quality previews require URL encoding. Enable the url-encoding feature to use this feature",
-            ));
+        // let low_quality_preview = if low_quality_preview {
+        //     #[cfg(not(feature = "url-encoding"))]
+        //     return Err(syn::Error::new(
+        //         proc_macro2::Span::call_site(),
+        //         "Low quality previews require URL encoding. Enable the url-encoding feature to use this feature",
+        //     ));
 
-            #[cfg(feature = "url-encoding")]
-            {
-                let current_image_size = match this_file.options() {
-                    manganis_common::FileOptions::Image(options) => options.size(),
-                    _ => None,
-                };
-                let low_quality_preview_size = current_image_size
-                    .map(|(width, height)| {
-                        let width = width / 10;
-                        let height = height / 10;
-                        (width, height)
-                    })
-                    .unwrap_or((32, 32));
-                let lqip = FileAsset::new(path).with_options(manganis_common::FileOptions::Image(
-                    ImageOptions::new(
-                        manganis_common::ImageType::Avif,
-                        Some(low_quality_preview_size),
-                    ),
-                ));
+        //     #[cfg(feature = "url-encoding")]
+        //     {
+        //         let current_image_size = match asset.options() {
+        //             manganis_common::FileOptions::Image(options) => options.size(),
+        //             _ => None,
+        //         };
+        //         let low_quality_preview_size = current_image_size
+        //             .map(|(width, height)| {
+        //                 let width = width / 10;
+        //                 let height = height / 10;
+        //                 (width, height)
+        //             })
+        //             .unwrap_or((32, 32));
+        //         let lqip = ResourceAsset::new(asset).with_options(
+        //             manganis_common::FileOptions::Image(ImageOptions::new(
+        //                 manganis_common::ImageType::Avif,
+        //                 Some(low_quality_preview_size),
+        //             )),
+        //         );
 
-                Some(crate::url_encoded_asset(&lqip).map_err(|e| {
-                    syn::Error::new(
-                        proc_macro2::Span::call_site(),
-                        format!("Failed to encode file: {}", e),
-                    )
-                })?)
-            }
-        } else {
-            None
-        };
+        //         Some(crate::url_encoded_asset(&lqip).map_err(|e| {
+        //             syn::Error::new(
+        //                 proc_macro2::Span::call_site(),
+        //                 format!("Failed to encode file: {}", e),
+        //             )
+        //         })?)
+        //     }
+        // } else {
+        //     None
+        // };
+
+        let low_quality_preview = None;
 
         Ok(ImageAssetParser {
-            file_name,
             low_quality_preview,
             asset,
         })
@@ -263,18 +263,26 @@ impl Parse for ImageAssetParser {
 
 impl ToTokens for ImageAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let file_name = crate::quote_path(&self.file_name);
+        let link_section = generate_link_section(&self.asset);
+        let input = self.asset.input.to_string();
+        let local = self.asset.local.to_string();
+        let bundled = self.asset.bundled.to_string();
+
         let low_quality_preview = match &self.low_quality_preview {
             Some(lqip) => quote! { Some(#lqip) },
             None => quote! { None },
         };
 
-        let link_section = generate_link_section(self.asset.clone());
-
         tokens.extend(quote! {
             {
                 #link_section
-                manganis::ImageAsset::new(#file_name).with_preview(#low_quality_preview)
+                manganis::ImageAsset::new(
+                    manganis::Asset {
+                        input: #input,
+                        local: #local,
+                        bundled: #bundled,
+                    }
+                ).with_preview(#low_quality_preview)
             }
         })
     }

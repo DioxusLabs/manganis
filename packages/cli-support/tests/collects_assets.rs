@@ -68,7 +68,7 @@ fn link() {
     let locations = all_assets
         .iter()
         .filter_map(|a| match a {
-            AssetType::File(f) => Some(f.location()),
+            AssetType::Resource(f) => Some(f.location()),
             _ => None,
         })
         .collect::<Vec<_>>();

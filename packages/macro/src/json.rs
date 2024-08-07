@@ -1,15 +1,41 @@
-use manganis_common::{AssetSource, AssetType, FileAsset, FileOptions, ManganisSupportError};
+use manganis_common::{AssetType, FileOptions, ManganisSupportError, ResourceAsset};
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse};
 
-use crate::generate_link_section;
+use crate::{generate_link_section, resource::ResourceAssetParser};
+
+pub struct JsonAssetParser {
+    asset: ResourceAssetParser,
+}
+
+impl Parse for JsonAssetParser {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let inside;
+        parenthesized!(inside in input);
+        let mut asset = inside.parse::<ResourceAssetParser>()?;
+
+        if !input.is_empty() {
+            let options = input.parse::<ParseJsonOptions>()?;
+            todo!()
+            // asset.asset.set_options(FileOptions::Json(options.options));
+        }
+
+        Ok(JsonAssetParser { asset })
+    }
+}
+
+impl ToTokens for JsonAssetParser {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.asset.to_tokens(tokens)
+    }
+}
 
 struct ParseJsonOptions {
     options: Vec<ParseJsonOption>,
 }
 
 impl ParseJsonOptions {
-    fn apply_to_options(self, file: &mut FileAsset) {
+    fn apply_to_options(self, file: &mut ResourceAsset) {
         for option in self.options {
             option.apply_to_options(file);
         }
@@ -32,7 +58,7 @@ enum ParseJsonOption {
 }
 
 impl ParseJsonOption {
-    fn apply_to_options(self, file: &mut FileAsset) {
+    fn apply_to_options(self, file: &mut ResourceAsset) {
         match self {
             ParseJsonOption::Preload(preload) => file.with_options_mut(|options| {
                 if let FileOptions::Json(options) = options {
@@ -69,75 +95,37 @@ impl Parse for ParseJsonOption {
     }
 }
 
-pub struct JsonAssetParser {
-    file_name: Result<String, ManganisSupportError>,
-    asset: AssetType,
-}
+// use syn::parse::Parser;
+// ResourceAssetParser::parse_file.parse2(input.into())?;
 
-impl Parse for JsonAssetParser {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let inside;
-        parenthesized!(inside in input);
-        let path = inside.parse::<syn::LitStr>()?;
+// let path_as_str = path.value();
+// let mut asset: ResourceAsset = match ResourceAsset::parse_file(&path_as_str) {
+//     Ok(path) => path.with_options(manganis_common::FileOptions::Json(Default::default())),
+//     Err(e) => {
+//         return Err(syn::Error::new(
+//             proc_macro2::Span::call_site(),
+//             format!("{e}"),
+//         ))
+//     }
+// };
 
-        let parsed_options = {
-            if input.is_empty() {
-                None
-            } else {
-                Some(input.parse::<ParseJsonOptions>()?)
-            }
-        };
+// if let Some(parsed_options) = parsed_options {
+//     parsed_options.apply_to_options(&mut asset);
+// }
 
-        let path_as_str = path.value();
-        let path: AssetSource = match AssetSource::parse_file(&path_as_str) {
-            Ok(path) => path,
-            Err(e) => {
-                return Err(syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("{e}"),
-                ))
-            }
-        };
-        let mut this_file = FileAsset::new(path.clone())
-            .with_options(manganis_common::FileOptions::Json(Default::default()));
-        if let Some(parsed_options) = parsed_options {
-            parsed_options.apply_to_options(&mut this_file);
-        }
-
-        let asset = manganis_common::AssetType::File(this_file.clone());
-
-        let file_name = if this_file.url_encoded() {
-            #[cfg(not(feature = "url-encoding"))]
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                "URL encoding is not enabled. Enable the url-encoding feature to use this feature",
-            ));
-            #[cfg(feature = "url-encoding")]
-            Ok(crate::url_encoded_asset(&this_file).map_err(|e| {
-                syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("Failed to encode file: {}", e),
-                )
-            })?)
-        } else {
-            this_file.served_location()
-        };
-
-        Ok(JsonAssetParser { file_name, asset })
-    }
-}
-
-impl ToTokens for JsonAssetParser {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let file_name = crate::quote_path(&self.file_name);
-
-        let link_section = generate_link_section(self.asset.clone());
-
-        tokens.extend(quote! {
-            {
-                #link_section
-                #file_name
-            }
-        })
-    }
-}
+// let file_name = if asset.url_encoded() {
+//     #[cfg(not(feature = "url-encoding"))]
+//     return Err(syn::Error::new(
+//         proc_macro2::Span::call_site(),
+//         "URL encoding is not enabled. Enable the url-encoding feature to use this feature",
+//     ));
+//     #[cfg(feature = "url-encoding")]
+//     Ok(crate::url_encoded_asset(&asset).map_err(|e| {
+//         syn::Error::new(
+//             proc_macro2::Span::call_site(),
+//             format!("Failed to encode file: {}", e),
+//         )
+//     })?)
+// } else {
+//     asset.served_location()
+// };

@@ -1,17 +1,17 @@
 use manganis_common::{
-    AssetSource, AssetType, FileAsset, FileOptions, JsOptions, JsType, ManganisSupportError,
+    AssetType, FileOptions, JsOptions, JsType, ManganisSupportError, ResourceAsset,
 };
 use quote::{quote, ToTokens};
 use syn::{parenthesized, parse::Parse, LitBool};
 
-use crate::generate_link_section;
+use crate::{generate_link_section, resource::ResourceAssetParser};
 
 struct ParseJsOptions {
     options: Vec<ParseJsOption>,
 }
 
 impl ParseJsOptions {
-    fn apply_to_options(self, file: &mut FileAsset) {
+    fn apply_to_options(self, file: &mut ResourceAsset) {
         for option in self.options {
             option.apply_to_options(file);
         }
@@ -35,7 +35,7 @@ enum ParseJsOption {
 }
 
 impl ParseJsOption {
-    fn apply_to_options(self, file: &mut FileAsset) {
+    fn apply_to_options(self, file: &mut ResourceAsset) {
         match self {
             ParseJsOption::Preload(_) | ParseJsOption::Minify(_) => {
                 file.with_options_mut(|options| {
@@ -84,8 +84,7 @@ impl Parse for ParseJsOption {
 }
 
 pub struct JsAssetParser {
-    file_name: Result<String, ManganisSupportError>,
-    asset: AssetType,
+    asset: ResourceAsset,
 }
 
 impl Parse for JsAssetParser {
@@ -103,8 +102,10 @@ impl Parse for JsAssetParser {
         };
 
         let path_as_str = path.value();
-        let path: AssetSource = match AssetSource::parse_file(&path_as_str) {
-            Ok(path) => path,
+        let mut asset: ResourceAsset = match ResourceAsset::parse_file(&path_as_str) {
+            Ok(path) => {
+                path.with_options(manganis_common::FileOptions::Js(JsOptions::new(JsType::Js)))
+            }
             Err(e) => {
                 return Err(syn::Error::new(
                     proc_macro2::Span::call_site(),
@@ -112,46 +113,38 @@ impl Parse for JsAssetParser {
                 ))
             }
         };
-        let mut this_file = FileAsset::new(path.clone())
-            .with_options(manganis_common::FileOptions::Js(JsOptions::new(JsType::Js)));
+
         if let Some(parsed_options) = parsed_options {
-            parsed_options.apply_to_options(&mut this_file);
+            parsed_options.apply_to_options(&mut asset);
         }
 
-        let asset = manganis_common::AssetType::File(this_file.clone());
+        // let mut this_file = ResourceAsset::new(path.clone())
+        //     .with_options(manganis_common::FileOptions::Js(JsOptions::new(JsType::Js)));
+        // let asset = manganis_common::AssetType::Resource(this_file.clone());
 
-        let file_name = if this_file.url_encoded() {
-            #[cfg(not(feature = "url-encoding"))]
-            return Err(syn::Error::new(
-                proc_macro2::Span::call_site(),
-                "URL encoding is not enabled. Enable the url-encoding feature to use this feature",
-            ));
-            #[cfg(feature = "url-encoding")]
-            Ok(crate::url_encoded_asset(&this_file).map_err(|e| {
-                syn::Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("Failed to encode file: {}", e),
-                )
-            })?)
-        } else {
-            this_file.served_location()
-        };
+        // let file_name = if this_file.url_encoded() {
+        //     #[cfg(not(feature = "url-encoding"))]
+        //     return Err(syn::Error::new(
+        //         proc_macro2::Span::call_site(),
+        //         "URL encoding is not enabled. Enable the url-encoding feature to use this feature",
+        //     ));
+        //     #[cfg(feature = "url-encoding")]
+        //     Ok(crate::url_encoded_asset(&this_file).map_err(|e| {
+        //         syn::Error::new(
+        //             proc_macro2::Span::call_site(),
+        //             format!("Failed to encode file: {}", e),
+        //         )
+        //     })?)
+        // } else {
+        //     this_file.served_location()
+        // };
 
-        Ok(JsAssetParser { file_name, asset })
+        Ok(JsAssetParser { asset })
     }
 }
 
 impl ToTokens for JsAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let file_name = crate::quote_path(&self.file_name);
-
-        let link_section = generate_link_section(self.asset.clone());
-
-        tokens.extend(quote! {
-            {
-                #link_section
-                #file_name
-            }
-        })
+        ResourceAssetParser::to_ref_tokens(&self.asset, tokens)
     }
 }

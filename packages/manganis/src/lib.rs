@@ -4,6 +4,9 @@
 #[cfg(feature = "macro")]
 pub use manganis_macro::*;
 
+mod asset;
+pub use asset::*;
+
 mod csss;
 pub use csss::*;
 

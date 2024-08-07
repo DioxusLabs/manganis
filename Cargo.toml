@@ -6,6 +6,7 @@ members = [
     "packages/common",
     "packages/cli-support",
     "packages/resolver",
+    "packages/virtual-file",
 
     "packages/test-package",
     "packages/test-package/test-package-dependency",
@@ -24,6 +25,7 @@ manganis-resolver  = { path = "packages/resolver", version = "0.3.0-alpha.0" }
 
 base64 = "0.22.1"
 infer = "0.16.0"
+serde = { version = "1.0" }
 
 [package]
 name = "manganis-examples"

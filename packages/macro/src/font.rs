@@ -1,8 +1,8 @@
-use manganis_common::{AssetSource, AssetType, CssOptions, FileAsset, ManganisSupportError};
+use manganis_common::{AssetType, CssOptions, ManganisSupportError, ResourceAsset};
 use quote::{quote, ToTokens};
 use syn::{bracketed, parenthesized, parse::Parse};
 
-use crate::generate_link_section;
+use crate::{generate_link_section, resource::ResourceAssetParser};
 
 #[derive(Default)]
 struct FontFamilies {
@@ -135,8 +135,7 @@ impl Parse for ParseFontOptions {
 }
 
 pub struct FontAssetParser {
-    file_name: Result<String, ManganisSupportError>,
-    asset: AssetType,
+    asset: ResourceAsset,
 }
 
 impl Parse for FontAssetParser {
@@ -153,7 +152,7 @@ impl Parse for FontAssetParser {
         let options = input.parse::<ParseFontOptions>()?;
 
         let url = options.url();
-        let url: AssetSource = match AssetSource::parse_file(&url) {
+        let asset: ResourceAsset = match ResourceAsset::parse_file(&url) {
             Ok(url) => url,
             Err(e) => {
                 return Err(syn::Error::new(
@@ -162,27 +161,13 @@ impl Parse for FontAssetParser {
                 ))
             }
         };
-        let this_file = FileAsset::new(url.clone())
-            .with_options(manganis_common::FileOptions::Css(CssOptions::default()));
-        let asset = manganis_common::AssetType::File(this_file.clone());
 
-        let file_name = this_file.served_location();
-
-        Ok(FontAssetParser { file_name, asset })
+        Ok(FontAssetParser { asset })
     }
 }
 
 impl ToTokens for FontAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let file_name = crate::quote_path(&self.file_name);
-
-        let link_section = generate_link_section(self.asset.clone());
-
-        tokens.extend(quote! {
-            {
-                #link_section
-                #file_name
-            }
-        })
+        ResourceAssetParser::to_ref_tokens(&self.asset, tokens)
     }
 }
