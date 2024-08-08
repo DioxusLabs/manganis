@@ -271,7 +271,8 @@ impl Parse for AnyAssetParserType {
         let as_string = ident.to_string();
 
         Ok(match &*as_string {
-            "file" => Self::File(input.parse::<FileAssetParser>()?),
+            // videos and files don't have any special settings yet, we just parse them as files
+            "video" | "file" => Self::File(input.parse::<FileAssetParser>()?),
             "folder" => Self::Folder(input.parse::<FolderAssetParser>()?),
             "image" => Self::Image(input.parse::<ImageAssetParser>()?),
             "font" => Self::Font(input.parse::<FontAssetParser>()?),

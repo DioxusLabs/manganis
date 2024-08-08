@@ -5,8 +5,10 @@ use std::path::PathBuf;
 use test_package_dependency::*;
 
 const TEXT_FILE: &str = manganis::mg!("/test-package-dependency/src/asset.txt");
+const VIDEO_FILE: &str = manganis::mg!("/test.mp4");
 
 const ALL_ASSETS: &[&str] = &[
+    VIDEO_FILE,
     TEXT_FILE,
     TEXT_ASSET,
     IMAGE_ASSET,
