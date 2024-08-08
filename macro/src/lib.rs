@@ -214,7 +214,7 @@ impl Parse for AnyAssetParser {
             let path_str = input.parse::<syn::LitStr>()?;
             // Try to parse an extension
             let asset = AssetSource::parse_any(&path_str.value())
-            .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))?;
+                .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))?;
             let input: proc_macro2::TokenStream = input.parse()?;
             let parse_asset = || -> syn::Result<Self> {
                 if let Some(extension) = asset.extension() {
