@@ -214,7 +214,7 @@ impl Parse for AnyAssetParser {
             let path_str = input.parse::<syn::LitStr>()?;
             // Try to parse an extension
             let asset = AssetSource::parse_any(&path_str.value())
-                .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))?;
+            .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))?;
             let input: proc_macro2::TokenStream = input.parse()?;
             let parse_asset = || -> syn::Result<Self> {
                 if let Some(extension) = asset.extension() {
@@ -271,7 +271,8 @@ impl Parse for AnyAssetParserType {
         let as_string = ident.to_string();
 
         Ok(match &*as_string {
-            "file" => Self::File(input.parse::<FileAssetParser>()?),
+            // videos and files don't have any special settings yet, we just parse them as files
+            "video" | "file" => Self::File(input.parse::<FileAssetParser>()?),
             "folder" => Self::Folder(input.parse::<FolderAssetParser>()?),
             "image" => Self::Image(input.parse::<ImageAssetParser>()?),
             "font" => Self::Font(input.parse::<FontAssetParser>()?),
