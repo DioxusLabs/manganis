@@ -27,6 +27,7 @@ base64 = "0.22.1"
 infer = "0.16.0"
 serde = { version = "1.0" }
 
+
 [package]
 name = "manganis-examples"
 publish = false
@@ -41,4 +42,6 @@ keywords = ["assets"]
 [dev-dependencies]
 manganis = { workspace = true, features = ["macro"] }
 manganis-resolver = { workspace = true }
-linkme = "*"
+fluent-uri = { version = "0.2.0", features = ["serde"] }
+# http = "1.1.0"
+# http-serde = "2.1.1"

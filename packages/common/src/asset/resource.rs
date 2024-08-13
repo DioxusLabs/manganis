@@ -7,7 +7,11 @@ use std::{
 
 use anyhow::Context;
 use base64::Engine;
-use http::Uri;
+use fluent_uri::{
+    component::{Authority, Scheme},
+    encoding::EStr,
+    UriRef,
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -24,15 +28,15 @@ pub struct ResourceAsset {
     /// The input URI
     ///
     /// This is basically whatever the user passed in to the macro
-    #[serde(with = "http_serde::uri")]
-    pub input: Uri,
+    pub input: UriRef<String>,
 
     /// The local URI for fallbacks
     ///
     /// This generally retains the original URI that was used to resolve the asset, but for files,
     /// it's resolved to an absolute path since we transform all schema-less URIs to file:// URIs.
-    #[serde(with = "http_serde::uri")]
-    pub local: Uri,
+    ///
+    /// If the aset is relative, this will be None since we can't figure it out at compile time.
+    pub local: Option<UriRef<String>>,
 
     /// The output URI that makes it into the final bundle.
     /// This explicitly has the `bundle://` scheme to make it clear that it is a bundle URI.
@@ -41,8 +45,7 @@ pub struct ResourceAsset {
     /// final "flat" architecture.
     ///
     /// bundle://asset/path/to/file.txt
-    #[serde(with = "http_serde::uri")]
-    pub bundled: Uri,
+    pub bundled: UriRef<String>,
 
     /// The options for the resource
     pub options: Option<FileOptions>,
@@ -60,7 +63,7 @@ impl ResourceAsset {
     }
 
     ///
-    pub fn original(&self) -> &Uri {
+    pub fn original(&self) -> &UriRef<String> {
         todo!()
     }
 
@@ -136,24 +139,46 @@ impl ResourceAsset {
 
     /// Parse a string as a file or folder source
     pub fn parse_any(src: &str) -> Result<Self, AssetError> {
-        // todo!()
-        // // Attempt to parse every path as a url - kinda dumb but it works
-        // if let Ok(maybe_url) = Url::parse(src) {
-        //     return Self::from_url(maybe_url);
-        // }
-
         // Process the input as a URI
-        let input: Uri = src.parse().unwrap();
+        let input: UriRef<String> = src.parse().unwrap();
 
-        // Join the URI against the filesystem
-        let manifest_dir: PathBuf = std::env::var("CARGO_MANIFEST_DIR").unwrap().into();
-        let manifest_dir = manifest_dir.canonicalize().unwrap();
-        // let manifest_dir = Uri::from_str(manifest_dir.to_str().unwrap()).unwrap();
-        let local = manifest_dir.join(input.path());
-        let local = Uri::from_str(local.to_str().unwrap()).unwrap();
+        let local = match input.scheme().map(|x| x.as_str()) {
+            // For http and https, we just use the input as is
+            // In fallback mode we end up just passing the URI through
+            Some("http") | Some("https") => Some(input.clone()),
 
-        // And then generate the hash we need the bundled
-        let bundled = local.clone();
+            // For file, we use the local path
+            // This will be `file://` in dev
+            // In release this will be `bundle://`
+            // Join the URI against the filesystem
+            None if input.path().is_absolute() => {
+                let manifest_dir: PathBuf = std::env::var("CARGO_MANIFEST_DIR").unwrap().into();
+                let manifest_dir = manifest_dir.canonicalize().unwrap();
+                let _local = manifest_dir.join(input.path().as_str());
+                Some(UriRef::<String>::parse(format!("file://{}", _local.display())).unwrap())
+            }
+            None => None,
+
+            Some(scheme) => {
+                panic!("Unsupported scheme: {}", scheme);
+            }
+        };
+
+        // Generate the bundled URI
+        //
+        // We:
+        // - flatten the URI with a hash
+        // - change the scheme to `bundle`
+        // - add the authority of pkg-name.bundle
+        //
+        // This results in a bundle-per dependency
+        let pkg_name = std::env::var("CARGO_PKG_NAME").unwrap();
+        let bundled = UriRef::builder()
+            .scheme(Scheme::new_or_panic("bundle"))
+            .authority_with(|b| b.host(EStr::new_or_panic(&format!("{}.bundle", pkg_name))))
+            .path(local.as_ref().map(|x| x.path()).unwrap_or_default())
+            .build()
+            .unwrap();
 
         Ok(Self {
             input,
@@ -161,36 +186,11 @@ impl ResourceAsset {
             bundled,
             options: None,
         })
+    }
 
-        // // Paths are always relative to the manifest directory.
-        // // If the path is absolute, we need to make it relative to the manifest directory.
-        // let path = path
-        //     .strip_prefix(std::path::MAIN_SEPARATOR_STR)
-        //     .unwrap_or(&path);
-
-        // let relative = PathBuf::from(std::path::MAIN_SEPARATOR_STR).join(path);
-
-        // let path = manifest_dir.join(path);
-
-        // match path.canonicalize() {
-        //     Ok(x) => Ok(ResourceAsset {
-        //         original: path.clone(),
-        //         relative,
-        //         canonicalized: x,
-        //         url: None,
-        //         unique_name: Default::default(),
-        //         options: todo!(),
-        //         url_encoded: todo!(),
-        //     }),
-
-        //     // relative path does not exist
-        //     Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-        //         Err(AssetError::NotFoundRelative(manifest_dir, src.into()))
-        //     }
-
-        //     // other error
-        //     Err(e) => Err(AssetError::IO(path, e)),
-        // }
+    ///
+    pub fn make_unique_id(uri: &UriRef<String>) -> String {
+        todo!()
     }
 
     ///

@@ -1,34 +1,34 @@
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]
 
-use css::CssAssetParser;
-use file::FileAssetParser;
-use folder::FolderAssetParser;
-use font::FontAssetParser;
-use image::ImageAssetParser;
-use js::JsAssetParser;
-use json::JsonAssetParser;
+// use css::CssAssetParser;
+// use file::FileAssetParser;
+// use folder::FolderAssetParser;
+// use font::FontAssetParser;
+// use image::ImageAssetParser;
+// use js::JsAssetParser;
+// use json::JsonAssetParser;
 // use manganis_common::cache::macro_log_file;
 use manganis_common::{MetadataAsset, ResourceAsset, TailwindAsset};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, quote_spanned, ToTokens};
-use resource::ResourceAssetParser;
+// use resource::ResourceAssetParser;
 use serde::Serialize;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use syn::{parse::Parse, parse_macro_input, LitStr};
 
-pub(crate) mod any_asset;
-pub(crate) mod css;
-pub(crate) mod file;
-pub(crate) mod folder;
-pub(crate) mod font;
-pub(crate) mod image;
-pub(crate) mod js;
-pub(crate) mod json;
-pub(crate) mod resource;
+pub(crate) mod asset;
+// pub(crate) mod css;
+// pub(crate) mod file;
+// pub(crate) mod folder;
+// pub(crate) mod font;
+// pub(crate) mod image;
+// pub(crate) mod js;
+// pub(crate) mod json;
+// pub(crate) mod resource;
 
 static LOG_FILE_FRESH: AtomicBool = AtomicBool::new(false);
 
@@ -149,7 +149,7 @@ pub fn classes(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn asset(input: TokenStream) -> TokenStream {
     trace_to_file();
-    let asset = parse_macro_input!(input as any_asset::AssetParser);
+    let asset = parse_macro_input!(input as asset::AssetParser);
 
     quote! {
         #asset

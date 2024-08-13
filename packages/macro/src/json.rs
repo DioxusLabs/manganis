@@ -4,60 +4,17 @@ use syn::{parenthesized, parse::Parse};
 
 use crate::{generate_link_section, resource::ResourceAssetParser};
 
-pub struct JsonAssetParser {
-    asset: ResourceAssetParser,
-}
-
-impl Parse for JsonAssetParser {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let inside;
-        parenthesized!(inside in input);
-        let mut asset = inside.parse::<ResourceAssetParser>()?;
-
-        if !input.is_empty() {
-            let options = input.parse::<ParseJsonOptions>()?;
-            todo!()
-            // asset.asset.set_options(FileOptions::Json(options.options));
-        }
-
-        Ok(JsonAssetParser { asset })
-    }
-}
-
-impl ToTokens for JsonAssetParser {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        self.asset.to_tokens(tokens)
-    }
-}
-
-struct ParseJsonOptions {
-    options: Vec<ParseJsonOption>,
-}
-
-impl ParseJsonOptions {
-    fn apply_to_options(self, file: &mut ResourceAsset) {
-        for option in self.options {
-            option.apply_to_options(file);
-        }
-    }
-}
-
-impl Parse for ParseJsonOptions {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let mut options = Vec::new();
-        while !input.is_empty() {
-            options.push(input.parse::<ParseJsonOption>()?);
-        }
-        Ok(ParseJsonOptions { options })
-    }
-}
-
-enum ParseJsonOption {
+pub enum ParseJsonOption {
     UrlEncoded(bool),
     Preload(bool),
 }
 
 impl ParseJsonOption {
+    fn apply(options: Vec<Self>, file: &mut ResourceAsset) {
+        for option in options {
+            option.apply_to_options(file);
+        }
+    }
     fn apply_to_options(self, file: &mut ResourceAsset) {
         match self {
             ParseJsonOption::Preload(preload) => file.with_options_mut(|options| {
@@ -94,24 +51,6 @@ impl Parse for ParseJsonOption {
         }
     }
 }
-
-// use syn::parse::Parser;
-// ResourceAssetParser::parse_file.parse2(input.into())?;
-
-// let path_as_str = path.value();
-// let mut asset: ResourceAsset = match ResourceAsset::parse_file(&path_as_str) {
-//     Ok(path) => path.with_options(manganis_common::FileOptions::Json(Default::default())),
-//     Err(e) => {
-//         return Err(syn::Error::new(
-//             proc_macro2::Span::call_site(),
-//             format!("{e}"),
-//         ))
-//     }
-// };
-
-// if let Some(parsed_options) = parsed_options {
-//     parsed_options.apply_to_options(&mut asset);
-// }
 
 // let file_name = if asset.url_encoded() {
 //     #[cfg(not(feature = "url-encoding"))]

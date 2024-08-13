@@ -265,12 +265,28 @@ impl ToTokens for ImageAssetParser {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let link_section = generate_link_section(&self.asset);
         let input = self.asset.input.to_string();
-        let local = self.asset.local.to_string();
+
         let bundled = self.asset.bundled.to_string();
 
         let low_quality_preview = match &self.low_quality_preview {
             Some(lqip) => quote! { Some(#lqip) },
             None => quote! { None },
+        };
+
+        // If the asset is relative, we use concat!(env!("CARGO_MANIFEST_DIR"), "/", asset.input.path())
+        let local = match self.asset.local.as_ref() {
+            Some(local) => {
+                let local = local.to_string();
+                quote! { #local }
+            }
+            None => {
+                quote! {
+                    {
+                        static _: &[_] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", #input.path()));
+                        concat!(env!("CARGO_MANIFEST_DIR"), "/", #input.path())
+                    }
+                }
+            }
         };
 
         tokens.extend(quote! {

@@ -2,20 +2,16 @@
 /// A struct that contains the relative and absolute paths of an asset
 #[derive(Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct Asset {
-    /// The absolute path of the asset in the bundle
-    /// Includes hash elements, etc
-    ///
-    /// asset123123.txt
+    /// The input URI given to the macro
     pub input: &'static str,
 
-    /// The asset relative to the bundle root
+    /// The sourcefile of the asset
+    pub source_file: &'static str,
+
     ///
-    /// assets/asset.txt
     pub local: &'static str,
 
-    /// The absolute path of the asset on the filesystem at compile time
     ///
-    /// /users/user/project/assets/asset.txt
     pub bundled: &'static str,
 }
 

@@ -9,47 +9,62 @@ use syn::{
 
 use crate::generate_link_section;
 
-pub struct ResourceAssetParser {
-    pub asset: ResourceAsset,
-}
+// pub struct ResourceAssetParser {
+//     pub asset: ResourceAsset,
+// }
 
-impl ResourceAssetParser {
-    pub fn new(asset: ResourceAsset) -> Self {
-        Self { asset }
-    }
+// impl ResourceAssetParser {
+//     pub fn new(asset: ResourceAsset) -> Self {
+//         Self { asset }
+//     }
 
-    pub fn to_ref_tokens(asset: &ResourceAsset, tokens: &mut proc_macro2::TokenStream) {
-        let link_section = generate_link_section(&asset);
-        let input = asset.input.to_string();
-        let local = asset.local.to_string();
-        let bundled = asset.bundled.to_string();
+//     pub fn to_ref_tokens(asset: &ResourceAsset, tokens: &mut proc_macro2::TokenStream) {
+//         let link_section = generate_link_section(&asset);
+//         let input = asset.input.to_string();
+//         let bundled = asset.bundled.to_string();
 
-        tokens.extend(quote! {
-            {
-                #link_section
-                manganis::Asset {
-                    input: #input,
-                    local: #local,
-                    bundled: #bundled,
-                }
-            }
-        })
-    }
-}
+//         // If the asset is relative, we use concat!(env!("CARGO_MANIFEST_DIR"), "/", asset.input.path())
+//         let local = match asset.local.as_ref() {
+//             Some(local) => {
+//                 let local = local.to_string();
+//                 quote! { #local }
+//             }
+//             None => {
+//                 quote! {
+//                     {
+//                         static _: &[_] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", #input.path()));
+//                         concat!(env!("CARGO_MANIFEST_DIR"), "/", #input.path())
+//                     }
+//                 }
+//             }
+//         };
 
-/// Parse a litstr into a resource asset
-impl Parse for ResourceAssetParser {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let s = input.parse::<syn::LitStr>()?;
-        let asset =
-            ResourceAsset::parse_any(&s.value()).map_err(|e| syn::Error::new(s.span(), e))?;
+//         tokens.extend(quote! {
+//             {
+//                 #link_section
+//                 manganis::Asset {
+//                     input: #input,
+//                     local: #local,
+//                     bundled: #bundled,
+//                 }
+//             }
+//         })
+//     }
+// }
 
-        Ok(Self { asset })
-    }
-}
+// /// Parse a litstr into a resource asset
+// impl Parse for ResourceAssetParser {
+//     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+//         let s = input.parse::<syn::LitStr>()?;
+//         let asset =
+//             ResourceAsset::parse_any(&s.value()).map_err(|e| syn::Error::new(s.span(), e))?;
 
-impl ToTokens for ResourceAssetParser {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        Self::to_ref_tokens(&self.asset, tokens)
-    }
-}
+//         Ok(Self { asset })
+//     }
+// }
+
+// impl ToTokens for ResourceAssetParser {
+//     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+//         Self::to_ref_tokens(&self.asset, tokens)
+//     }
+// }
