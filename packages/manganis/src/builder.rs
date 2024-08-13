@@ -1,5 +1,3 @@
-// use crate::Asset;
-
 ///
 pub struct Asset {
     src: AssetSource,
@@ -16,7 +14,7 @@ impl Asset {
         FolderAsset::new(self.src)
     }
 
-    ///
+    /// Convert this asset into an image asset
     pub const fn image(self) -> ImageAsset {
         ImageAsset::new(self.src)
     }

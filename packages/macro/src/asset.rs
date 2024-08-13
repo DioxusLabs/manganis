@@ -1,11 +1,14 @@
 use core::panic;
-use manganis_common::{MetadataAsset, ResourceAsset, TailwindAsset};
+use manganis_common::{
+    CssOptions, FileOptions, FontOptions, ImageOptions, JsOptions, JsonOptions, MetadataAsset,
+    ResourceAsset, TailwindAsset, UnknownFileOptions, VideoOptions,
+};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, quote_spanned, ToTokens};
 use serde::Serialize;
-use std::{fs::File, sync::atomic::AtomicBool};
+use std::{collections::HashMap, fs::File, sync::atomic::AtomicBool};
 use std::{path::PathBuf, sync::atomic::Ordering};
 use syn::{
     parenthesized, parse::Parse, parse_macro_input, punctuated::Punctuated, token::Token, Expr,
@@ -16,13 +19,7 @@ pub struct AssetParser {
     option_source: TokenStream2,
     resource: ResourceAsset,
     name: Option<syn::Ident>,
-    options: Vec<MethodCallOption>,
-}
-
-/// A builder method in the form of `.method(arg1, arg2)`
-struct MethodCallOption {
-    method: syn::Ident,
-    args: Punctuated<syn::Lit, Token![,]>,
+    parsed_options: Option<FileOptions>,
 }
 
 impl Parse for AssetParser {
@@ -83,11 +80,13 @@ impl Parse for AssetParser {
             }
         }
 
+        let parsed_options = MethodCalls::new(options);
+
         Ok(Self {
             option_source,
-            options,
             resource,
             name,
+            parsed_options,
         })
     }
 }
@@ -134,5 +133,46 @@ impl ToTokens for AssetParser {
                 }
             ) #option_source
         })
+    }
+}
+
+struct MethodCalls {
+    options: Vec<MethodCallOption>,
+}
+
+/// A builder method in the form of `.method(arg1, arg2)`
+struct MethodCallOption {
+    method: syn::Ident,
+    args: Punctuated<syn::Lit, Token![,]>,
+}
+
+impl MethodCalls {
+    fn new(args: Vec<MethodCallOption>) -> Option<FileOptions> {
+        let asset_type = args.first()?.method.to_string();
+
+        let stack = args
+            .into_iter()
+            .skip(1)
+            .map(|x| (x.method.to_string(), x.args.into_iter().collect::<Vec<_>>()))
+            .collect::<HashMap<String, Vec<syn::Lit>>>();
+
+        let opts = match asset_type.as_str() {
+            "image" => {
+                let mut opts = ImageOptions::new(manganis_common::ImageType::Avif, Some((32, 32)));
+                // opts.set_preload(preload);
+                // opts.set_url_encoded(url_encoded);
+                // opts.set_low_quality_preview(low_quality_preview);
+                FileOptions::Image(opts)
+            }
+
+            "video" => FileOptions::Video(VideoOptions::new(todo!())),
+            "font" => FileOptions::Font(FontOptions::new(todo!())),
+            "css" => FileOptions::Css(CssOptions::new()),
+            "js" => FileOptions::Js(JsOptions::new(todo!())),
+            "json" => FileOptions::Json(JsonOptions::new()),
+            other => FileOptions::Other(UnknownFileOptions::new(todo!())),
+        };
+
+        Some(opts)
     }
 }

@@ -18,7 +18,9 @@ fn main() {
         .image()
         .size(512, 512)
         .format(ImageType::Avif)
-        .url_encoded());
+        .preload()
+        .url_encoded()
+        .low_quality_preview());
 
     // Folders too
     let folder_asset: FolderAsset = asset!("/assets/somefolder".folder());
@@ -44,19 +46,16 @@ fn parses_ur() {
     use fluent_uri::UriRef;
     type Uri = UriRef<String>;
 
-    // "bundlename.bundle/my-image.png"
     let uri = "data:,Hello%2C%20World%21";
+
+    // "bundlename.bundle/my-image.png"
     // let uri = "bundle://pkg-name.bundle/my-image.png";
     // let uri = "bundle://pkg-name.bundle/my-image.png";
     // let uri = "bundle://bundlename.bundle/my-image.png";
-
     // let uri = "http://localhost:8080/assets/file.txt";
     // let uri = "bundle://app/assets/file.txt";
+
     let uri: Uri = uri.parse().unwrap();
     dbg!(&uri);
     dbg!(&uri);
 }
-
-// // Downloading images at compi
-// let url: ImageAsset = asset!("https://raw.githubusercontent.com/TheZoq2/ferris/2c58ca0909375fcf8a21ce0296fb320e5bdf5bea/book_cover/space.png".image());
-// println!("{url}");

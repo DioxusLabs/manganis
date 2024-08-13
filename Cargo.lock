@@ -1504,7 +1504,6 @@ dependencies = [
  "built",
  "fluent-uri",
  "infer",
- "reqwest",
  "scratch",
  "serde",
  "tracing",
