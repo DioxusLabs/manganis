@@ -81,7 +81,7 @@ impl AssetSource {
     pub fn extension(&self) -> Option<String> {
         match self {
             Self::Local(path) => path.extension().map(|e| e.to_str().unwrap().to_string()),
-            Self::Remote(_url) => unimplemented!("no more remote urls!"),
+            Self::Remote(_url) => None,
         }
     }
 
@@ -89,7 +89,7 @@ impl AssetSource {
     pub fn mime_type(&self) -> Option<String> {
         match self {
             Self::Local(path) => get_mime_from_path(path).ok().map(|mime| mime.to_string()),
-            Self::Remote(_url) => unimplemented!("no more remote urls!"),
+            Self::Remote(_url) => None,
         }
     }
 
@@ -108,7 +108,7 @@ impl AssetSource {
                             .map(|created| format!("{:?}", created))
                     })
             }),
-            Self::Remote(_url) => unimplemented!("no more remote urls!"),
+            Self::Remote(_url) => None,
         }
     }
 
@@ -118,7 +118,7 @@ impl AssetSource {
             AssetSource::Local(path) => Ok(std::fs::read_to_string(path).with_context(|| {
                 format!("Failed to read file from location: {}", path.display())
             })?),
-            AssetSource::Remote(_url) => unimplemented!("no more remote urls!"),
+            AssetSource::Remote(_url) => Err(anyhow::anyhow!("no more remote urls!")),
         }
     }
 
@@ -128,9 +128,7 @@ impl AssetSource {
             AssetSource::Local(path) => Ok(std::fs::read(path).with_context(|| {
                 format!("Failed to read file from location: {}", path.display())
             })?),
-            AssetSource::Remote(_url) => {
-                unimplemented!("no more remote urls!")
-            }
+            AssetSource::Remote(_url) => Err(anyhow::anyhow!("no more remote urls!")),
         }
     }
 }
