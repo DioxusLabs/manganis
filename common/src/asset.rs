@@ -81,19 +81,7 @@ impl AssetSource {
     pub fn extension(&self) -> Option<String> {
         match self {
             Self::Local(path) => path.extension().map(|e| e.to_str().unwrap().to_string()),
-            Self::Remote(url) => reqwest::blocking::get(url.as_str())
-                .ok()
-                .and_then(|request| {
-                    request
-                        .headers()
-                        .get("content-type")
-                        .and_then(|content_type| {
-                            content_type
-                                .to_str()
-                                .ok()
-                                .map(|ty| ext_of_mime(ty).to_string())
-                        })
-                }),
+            Self::Remote(_url) => unimplemented!("no more remote urls!"),
         }
     }
 
@@ -101,14 +89,7 @@ impl AssetSource {
     pub fn mime_type(&self) -> Option<String> {
         match self {
             Self::Local(path) => get_mime_from_path(path).ok().map(|mime| mime.to_string()),
-            Self::Remote(url) => reqwest::blocking::get(url.as_str())
-                .ok()
-                .and_then(|request| {
-                    request
-                        .headers()
-                        .get("content-type")
-                        .and_then(|content_type| Some(content_type.to_str().ok()?.to_string()))
-                }),
+            Self::Remote(_url) => unimplemented!("no more remote urls!"),
         }
     }
 
@@ -127,19 +108,7 @@ impl AssetSource {
                             .map(|created| format!("{:?}", created))
                     })
             }),
-            Self::Remote(url) => reqwest::blocking::get(url.as_str())
-                .ok()
-                .and_then(|request| {
-                    request
-                        .headers()
-                        .get("last-modified")
-                        .and_then(|last_modified| {
-                            last_modified
-                                .to_str()
-                                .ok()
-                                .map(|last_modified| last_modified.to_string())
-                        })
-                }),
+            Self::Remote(_url) => unimplemented!("no more remote urls!"),
         }
     }
 
@@ -149,13 +118,7 @@ impl AssetSource {
             AssetSource::Local(path) => Ok(std::fs::read_to_string(path).with_context(|| {
                 format!("Failed to read file from location: {}", path.display())
             })?),
-            AssetSource::Remote(url) => {
-                let response = reqwest::blocking::get(url.as_str())
-                    .with_context(|| format!("Failed to asset from url: {}", url.as_str()))?;
-                Ok(response.text().with_context(|| {
-                    format!("Failed to read text for asset from url: {}", url.as_str())
-                })?)
-            }
+            AssetSource::Remote(_url) => unimplemented!("no more remote urls!"),
         }
     }
 
@@ -165,19 +128,15 @@ impl AssetSource {
             AssetSource::Local(path) => Ok(std::fs::read(path).with_context(|| {
                 format!("Failed to read file from location: {}", path.display())
             })?),
-            AssetSource::Remote(url) => {
-                let response = reqwest::blocking::get(url.as_str())
-                    .with_context(|| format!("Failed to asset from url: {}", url.as_str()))?;
-                Ok(response.bytes().map(|b| b.to_vec()).with_context(|| {
-                    format!("Failed to read text for asset from url: {}", url.as_str())
-                })?)
+            AssetSource::Remote(_url) => {
+                unimplemented!("no more remote urls!")
             }
         }
     }
 }
 
 /// Get the mime type from a URI using its extension
-fn ext_of_mime(mime: &str) -> &str {
+fn _ext_of_mime(mime: &str) -> &str {
     let mime = mime.split(';').next().unwrap_or_default();
     match mime.trim() {
         "application/octet-stream" => "bin",
@@ -296,7 +255,7 @@ impl Display for AssetError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             AssetError::NotFoundRelative(manifest_dir, path) =>
-                write!(f,"cannot find file `{}` in `{}`, please make sure it exists.\nAny relative paths are resolved relative to the manifest directory.", 
+                write!(f,"cannot find file `{}` in `{}`, please make sure it exists.\nAny relative paths are resolved relative to the manifest directory.",
                        path,
                        manifest_dir.display()
                 ),

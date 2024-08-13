@@ -5,3 +5,4 @@
 /test-package/assets
 /cli-support/assets
 /dist
+.DS_Store

@@ -1459,7 +1459,6 @@ dependencies = [
  "built",
  "home",
  "infer",
- "reqwest",
  "serde",
  "toml 0.7.8",
  "tracing",
