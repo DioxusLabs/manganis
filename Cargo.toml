@@ -45,3 +45,18 @@ manganis-resolver = { workspace = true }
 fluent-uri = { version = "0.2.0", features = ["serde"] }
 # http = "1.1.0"
 # http-serde = "2.1.1"
+
+# [lib]
+
+# [dependencies]
+# manganis-macro = { path = "./macro", version = "0.3.0-alpha.1", optional = true }
+
+# [workspace]
+# package.version = "0.3.0-alpha.1"
+# members = ["macro", "common", "cli-support", "test-package", "test-package/test-package-dependency", "test-package/test-package-nested-dependency"]
+
+# [features]
+# default = ["macro"]
+# html = []
+# url-encoding = ["manganis-macro/url-encoding"]
+# macro = ["dep:manganis-macro"]

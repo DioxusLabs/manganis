@@ -24,8 +24,12 @@ serde = { workspace = true, features = ["derive"] }
 manganis-common = { workspace = true }
 manganis-cli-support = { workspace = true, optional = true }
 
+# manganis-common = { path = "../common", version = "0.3.0-alpha.1" }
+# manganis-cli-support = { path = "../cli-support", version = "0.3.0-alpha.1", optional = true }
+# base64 = { version = "0.21.5", optional = true }
+
 [build-dependencies]
-manganis-common = { path = "../common", version = "0.3.0-alpha.0" }
+manganis-common = { workspace = true }
 
 [features]
 default = ["url-encoding"]
