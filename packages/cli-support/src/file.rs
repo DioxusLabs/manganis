@@ -62,7 +62,7 @@ impl Process for FileOptions {
 
 impl Process for ImageOptions {
     fn process(&self, source: &ResourceAsset, output_path: &Path) -> anyhow::Result<()> {
-        let mut image = image::Reader::new(std::io::Cursor::new(&*source.read_to_bytes()?))
+        let mut image = image::ImageReader::new(std::io::Cursor::new(&*source.read_to_bytes()?))
             .with_guessed_format()?
             .decode()?;
 
