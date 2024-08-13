@@ -1,5 +1,5 @@
 use manganis_cli_support::AssetManifestExt;
-use manganis_common::{AssetManifest, AssetType};
+use manganis_common::AssetType;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 

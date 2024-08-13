@@ -5,26 +5,38 @@ fn main() {
     let txt_file: Asset = asset!("/assets/file.txt");
     println!("{txt_file}");
 
-    // Generate a unqiue file name for the txt file after it's been bundled
+    // Same thing for images
     let image_file: Asset = asset!("/assets/logo.png");
     println!("{image_file}");
 
-    // Urls too
-    let url = asset!("https://raw.githubusercontent.com/TheZoq2/ferris/2c58ca0909375fcf8a21ce0296fb320e5bdf5bea/book_cover/space.png");
-    println!("{url}");
-
-    // Images
-    let image_file: Asset = asset!("/assets/logo.png");
+    // Customize the asset type by specifying the `image()` method
+    let image_file: ImageAsset = asset!("/assets/logo.png".image());
     println!("{image_file}");
+
+    // Images can be built with options
+    let image_file: ImageAsset = asset!("/assets/logo.png"
+        .image()
+        .size(512, 512)
+        .format(ImageType::Avif)
+        .url_encoded());
 
     // Folders too
-    let folder_asset: Asset = asset!("/assets/somefolder");
-    let folder_asset: Asset = asset!(folder("/assets/somefolder"));
+    let folder_asset: FolderAsset = asset!("/assets/somefolder".folder());
 
-    // // todo: this doesn't work yet
-    // // Relative assets
-    // let file = asset!("relative.txt");
-    // print!("{file}");
+    // css
+    let css_asset: CssAsset = asset!("/assets/style.css".css().minify(true));
+
+    // Json
+    let json_asset: JsonAsset = asset!("/assets/data.json".json().preload().url_encoded());
+
+    // Js
+    let js_asset: JavaScriptAsset = asset!("/assets/script.js".javascript());
+
+    // Ts
+    let ts_asset: TypeScriptAsset = asset!("/assets/script.ts".typescript());
+
+    // Video
+    let video_asset: VideoAsset = asset!("/assets/video.mp4".video());
 }
 
 #[test]
@@ -44,3 +56,7 @@ fn parses_ur() {
     dbg!(&uri);
     dbg!(&uri);
 }
+
+// // Downloading images at compi
+// let url: ImageAsset = asset!("https://raw.githubusercontent.com/TheZoq2/ferris/2c58ca0909375fcf8a21ce0296fb320e5bdf5bea/book_cover/space.png".image());
+// println!("{url}");

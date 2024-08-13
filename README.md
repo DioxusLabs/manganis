@@ -19,8 +19,8 @@ const TAILWIND_CLASSES: &str = manganis::classes!("flex flex-col p-5");
 // You can also collect arbitrary files. Relative paths are resolved relative to the package root
 const _: &str = manganis::asset!("test-package-dependency/src/asset.txt");
 
-// You can use URLs to copy read the asset at build time
-const _: &str = manganis::asset!("https://rustacean.net/assets/rustacean-flat-happy.png");
+// // You can use URLs to copy read the asset at build time
+// const _: &str = manganis::asset!("https://rustacean.net/assets/rustacean-flat-happy.png");
 
 // You can collect images which will be automatically optimized
 pub const PNG_ASSET: manganis::ImageAsset =

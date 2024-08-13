@@ -1,5 +1,4 @@
 use manganis_cli_support::AssetManifestExt;
-use manganis_common::AssetManifest;
 use std::{path::PathBuf, process::Command};
 
 // This is the location where the assets will be copied to in the filesystem

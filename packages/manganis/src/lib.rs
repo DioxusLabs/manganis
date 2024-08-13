@@ -4,29 +4,32 @@
 #[cfg(feature = "macro")]
 pub use manganis_macro::*;
 
-mod asset;
-pub use asset::*;
+// mod asset;
+// pub use asset::*;
 
-mod csss;
-pub use csss::*;
+// mod csss;
+// pub use csss::*;
 
-mod files;
-pub use files::*;
+// mod files;
+// pub use files::*;
 
-mod folder;
-pub use folder::*;
+// mod folder;
+// pub use folder::*;
 
-mod fonts;
-pub use fonts::*;
+// mod fonts;
+// pub use fonts::*;
 
-mod images;
-pub use images::*;
+// mod images;
+// pub use images::*;
 
-mod jsons;
-pub use jsons::*;
+// mod jsons;
+// pub use jsons::*;
 
-mod jss;
-pub use jss::*;
+// mod jss;
+// pub use jss::*;
+
+mod builder;
+pub use builder::*;
 
 /// A trait for something that can be used in the `asset!` macro
 ///
@@ -38,14 +41,16 @@ mod __private {
 
     pub trait Sealed {}
 
-    impl Sealed for ImageAssetBuilder {}
-    impl Sealed for FontAssetBuilder {}
-    impl Sealed for JsAssetBuilder {}
-    impl Sealed for JsonAssetBuilder {}
-    impl Sealed for CssAssetBuilder {}
+    // impl Sealed for FolderAssetBuilder {}
+    // impl Sealed for FontAssetBuilder {}
+    // impl Sealed for ImageAssetBuilder {}
+    // impl Sealed for JsAssetBuilder {}
+    // impl Sealed for JsonAssetBuilder {}
+    // impl Sealed for CssAssetBuilder {}
     impl Sealed for &'static str {}
 }
 
-impl ForMgMacro for ImageAssetBuilder {}
-impl ForMgMacro for FontAssetBuilder {}
-impl ForMgMacro for &'static str {}
+// impl ForMgMacro for FolderAssetBuilder {}
+// impl ForMgMacro for ImageAssetBuilder {}
+// impl ForMgMacro for FontAssetBuilder {}
+// impl ForMgMacro for &'static str {}

@@ -1,19 +1,14 @@
+use crate::Asset;
+
 /// This is basically a compile-time version of ResourceAsset
 /// A struct that contains the relative and absolute paths of an asset
 #[derive(Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub struct FolderAsset {
-    /// The input URI given to the macro
-    pub input: &'static str,
-
-    /// The sourcefile of the asset
-    pub source_file: &'static str,
-
-    ///
-    pub local: &'static str,
-
-    ///
-    pub bundled: &'static str,
+    src: Asset,
 }
+
+///
+pub struct FolderAssetBuilder;
 
 /// Create an folder asset from the local path
 ///
@@ -24,6 +19,6 @@ pub struct FolderAsset {
 /// const _: &str = manganis::asset!("/assets");
 /// ```
 #[allow(unused)]
-pub const fn folder(path: &'static str) -> &'static str {
-    path
+pub const fn folder(src: &'static str) -> FolderAssetBuilder {
+    FolderAssetBuilder {}
 }
