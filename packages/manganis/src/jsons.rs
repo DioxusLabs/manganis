@@ -34,33 +34,3 @@ impl JsonAssetBuilder {
         Self
     }
 }
-
-struct JsonAsset {
-    source: Asset,
-    preload: bool,
-    url_encoded: bool,
-}
-
-impl JsonAsset {
-    const fn new(source: Asset) -> Self {
-        Self {
-            source,
-            preload: false,
-            url_encoded: false,
-        }
-    }
-
-    const fn url_encoded(mut self) -> Self {
-        self.url_encoded = true;
-        self
-    }
-
-    const fn preload(mut self) -> Self {
-        self.preload = true;
-        self
-    }
-}
-
-fn it_works(mut asset: JsonAsset) {
-    let asset = asset.preload().url_encoded();
-}

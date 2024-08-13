@@ -6,7 +6,6 @@ members = [
     "packages/common",
     "packages/cli-support",
     "packages/resolver",
-    "packages/virtual-file",
 
     "packages/test-package",
     "packages/test-package/test-package-dependency",

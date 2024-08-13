@@ -1,6 +1,0 @@
-[package]
-name = "virtual-file"
-edition = "2021"
-version.workspace = true
-
-[dependencies]
