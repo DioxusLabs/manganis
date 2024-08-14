@@ -366,7 +366,7 @@ pub(crate) fn url_encoded_asset(
             format!("Failed to create output folder: {}", e),
         )
     })?;
-    manganis_cli_support::process_file(file_asset, &output_folder).map_err(|e| {
+    manganis_cli_support::process_file(file_asset, &output_folder, true).map_err(|e| {
         syn::Error::new(
             proc_macro2::Span::call_site(),
             format!("Failed to process file: {}", e),
