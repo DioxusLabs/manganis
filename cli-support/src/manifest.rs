@@ -43,8 +43,12 @@ pub trait AssetManifestExt {
     ///
     /// The asset descriptions are stored inside a manifest file that is produced when the linker is intercepted.
     fn load_from_objects(object_paths: Vec<PathBuf>) -> Self;
-    /// Optimize and copy all assets in the manifest to a folder
-    fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> anyhow::Result<()>;
+    /// Copy all assets in the manifest to a folder with the option to optimize.
+    fn copy_static_assets_to(
+        &self,
+        location: impl Into<PathBuf>,
+        should_opt: bool,
+    ) -> anyhow::Result<()>;
     /// Collect all tailwind classes and generate string with the output css
     fn collect_tailwind_css(
         &self,
@@ -76,7 +80,11 @@ impl AssetManifestExt for AssetManifest {
         Self::load(json)
     }
 
-    fn copy_static_assets_to(&self, location: impl Into<PathBuf>) -> anyhow::Result<()> {
+    fn copy_static_assets_to(
+        &self,
+        location: impl Into<PathBuf>,
+        should_opt: bool,
+    ) -> anyhow::Result<()> {
         let location = location.into();
         match std::fs::create_dir_all(&location) {
             Ok(_) => {}
@@ -91,7 +99,7 @@ impl AssetManifestExt for AssetManifest {
                 AssetType::File(file_asset) => {
                     tracing::info!("Optimizing and bundling {}", file_asset);
                     tracing::trace!("Copying asset from {:?} to {:?}", file_asset, location);
-                    match process_file(file_asset, &location) {
+                    match process_file(file_asset, &location, should_opt) {
                         Ok(_) => {}
                         Err(err) => {
                             tracing::error!("Failed to copy static asset: {}", err);

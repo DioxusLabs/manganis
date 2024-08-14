@@ -70,7 +70,7 @@ fn link() {
     let _ = std::fs::remove_dir_all(&assets_dir);
 
     // And copy the static assets to the public directory
-    assets.copy_static_assets_to(&assets_dir).unwrap();
+    assets.copy_static_assets_to(&assets_dir, true).unwrap();
 
     // Then collect the tailwind CSS
     let css = assets.collect_tailwind_css(true, &mut Vec::new());
