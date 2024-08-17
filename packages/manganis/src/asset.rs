@@ -98,7 +98,8 @@ impl Asset {
     }
 }
 
-static BUNDLED: bool = option_env!("MG_BUNDLED").is_some();
+static BUNDLED: bool = false;
+// static BUNDLED: bool = option_env!("MG_BUNDLED").is_some();
 
 /// Returns whether the app should use the local fallback or not
 ///

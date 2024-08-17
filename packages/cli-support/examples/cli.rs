@@ -53,22 +53,22 @@ fn link() {
     let (link_args, object_files) =
         manganis_cli_support::linker_intercept(std::env::args()).unwrap();
 
-    // Extract the assets
-    let assets = AssetManifest::load_from_objects(object_files);
+    // // Extract the assets
+    // let assets = AssetManifest::load_from_objects(object_files);
 
-    let working_dir = PathBuf::from(link_args.first().unwrap());
-    let assets_dir = working_dir.join(working_dir.join(ASSETS_FILE_LOCATION));
+    // let working_dir = PathBuf::from(link_args.first().unwrap());
+    // let assets_dir = working_dir.join(working_dir.join(ASSETS_FILE_LOCATION));
 
-    // Remove the old assets
-    let _ = std::fs::remove_dir_all(&assets_dir);
+    // // Remove the old assets
+    // let _ = std::fs::remove_dir_all(&assets_dir);
 
-    // And copy the static assets to the public directory
-    assets.copy_static_assets_to(&assets_dir).unwrap();
+    // // And copy the static assets to the public directory
+    // assets.copy_static_assets_to(&assets_dir).unwrap();
 
-    // Then collect the tailwind CSS
-    let css = assets.collect_tailwind_css(true, &mut Vec::new());
+    // // Then collect the tailwind CSS
+    // let css = assets.collect_tailwind_css(true, &mut Vec::new());
 
-    // And write the CSS to the public directory
-    let tailwind_path = assets_dir.join("tailwind.css");
-    std::fs::write(tailwind_path, css).unwrap();
+    // // And write the CSS to the public directory
+    // let tailwind_path = assets_dir.join("tailwind.css");
+    // std::fs::write(tailwind_path, css).unwrap();
 }

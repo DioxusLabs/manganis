@@ -7,7 +7,6 @@ use std::{
 use anyhow::Context;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
-use url::Url;
 
 use crate::{config, FileOptions, ResourceAsset as AssetSource};
 

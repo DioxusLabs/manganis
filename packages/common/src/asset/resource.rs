@@ -13,7 +13,6 @@ use fluent_uri::{
     UriRef,
 };
 use serde::{Deserialize, Serialize};
-use url::Url;
 
 use crate::{config, AssetError, FileOptions};
 
@@ -110,11 +109,6 @@ impl ResourceAsset {
         todo!()
     }
 
-    ///
-    pub fn as_url(&self) -> Option<&Url> {
-        todo!()
-    }
-
     /// Parse a string as a folder source
     pub fn parse_folder(path: &str) -> Result<Self, AssetError> {
         // let myself = Self::parse_any(path)?;
@@ -129,11 +123,6 @@ impl ResourceAsset {
 
     ///
     pub fn parse_url(url: &str) -> Result<Self, AssetError> {
-        todo!()
-    }
-
-    ///
-    pub fn from_url(url: Url) -> Result<Self, AssetError> {
         todo!()
     }
 

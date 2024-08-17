@@ -6,13 +6,14 @@ use std::path::PathBuf;
 ///
 /// If no basepath is set, the default is `/` which is the root of the assets folder.
 pub fn base_path() -> PathBuf {
-    match option_env!("MG_BASEPATH") {
-        Some(path) => {
-            let path = path.trim_end_matches('/').trim_start_matches('/');
-            PathBuf::from(format!("/{path}/"))
-        }
-        None => "/".into(),
-    }
+    "/".into()
+    // match option_env!("MG_BASEPATH") {
+    //     Some(path) => {
+    //         let path = path.trim_end_matches('/').trim_start_matches('/');
+    //         PathBuf::from(format!("/{path}/"))
+    //     }
+    //     None => "/".into(),
+    // }
 }
 
 /// MG_BUNDLED is set to true when the application is bundled.
@@ -20,7 +21,8 @@ pub fn base_path() -> PathBuf {
 /// When running under a dev server, this is false to prevent thrashing of the cache since an ordinary
 /// `cargo check` will not pass MG_BUNDLED.
 pub const fn is_bundled() -> bool {
-    option_env!("MG_BUNDLED").is_some()
+    false
+    // option_env!("MG_BUNDLED").is_some()
 }
 
 /// The location of the manifest directory used to build this crate

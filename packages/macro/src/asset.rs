@@ -105,15 +105,16 @@ impl ToTokens for AssetParser {
                 quote! { #local }
             }
             None => {
-                quote! {
-                    {
-                        // ensure it exists by throwing away the include_bytes
-                        static _BLAH: &[u8] = include_bytes!(#input);
+                todo!("relative paths are not supported yet")
+                // quote! {
+                //     {
+                //         // ensure it exists by throwing away the include_bytes
+                //         static _BLAH: &[u8] = include_bytes!(#input);
 
-                        // But then pass along the path
-                        concat!(env!("CARGO_MANIFEST_DIR"), "/", file!(), "/<split>/", #input)
-                    }
-                }
+                //         // But then pass along the path
+                //         concat!(env!("CARGO_MANIFEST_DIR"), "/", file!(), "/<split>/", #input)
+                //     }
+                // }
             }
         };
 

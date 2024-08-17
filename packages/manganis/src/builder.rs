@@ -1,6 +1,18 @@
-///
+/// Asset
+#[derive(Debug, PartialEq, Clone, Copy, Hash)]
 pub struct Asset {
     src: AssetSource,
+}
+
+impl From<Asset> for String {
+    fn from(value: Asset) -> Self {
+        value.to_string()
+    }
+}
+impl From<Asset> for Option<String> {
+    fn from(value: Asset) -> Self {
+        Some(value.to_string())
+    }
 }
 
 impl Asset {
@@ -52,7 +64,7 @@ impl std::fmt::Display for Asset {
 }
 
 ///
-#[derive(Debug, PartialEq, PartialOrd, Clone, Hash)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Hash)]
 pub struct AssetSource {
     /// The input URI given to the macro
     pub input: &'static str,
@@ -178,7 +190,8 @@ impl FolderAsset {
     }
 }
 
-///
+/// Asset
+#[derive(Debug, PartialEq, Clone, Copy, Hash)]
 pub struct ImageAsset {
     src: AssetSource,
 }

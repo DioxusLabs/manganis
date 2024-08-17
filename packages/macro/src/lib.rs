@@ -193,40 +193,40 @@ pub fn meta(input: TokenStream) -> TokenStream {
     .into()
 }
 
-#[cfg(feature = "url-encoding")]
-pub(crate) fn url_encoded_asset(
-    file_asset: &manganis_common::ResourceAsset,
-) -> Result<String, syn::Error> {
-    use base64::Engine;
+// #[cfg(feature = "url-encoding")]
+// pub(crate) fn url_encoded_asset(
+//     file_asset: &manganis_common::ResourceAsset,
+// ) -> Result<String, syn::Error> {
+//     use base64::Engine;
 
-    let target_directory =
-        std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
-    let output_folder = std::path::Path::new(&target_directory)
-        .join("manganis")
-        .join("assets");
-    std::fs::create_dir_all(&output_folder).map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to create output folder: {}", e),
-        )
-    })?;
-    manganis_cli_support::process_file(file_asset, &output_folder).map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to process file: {}", e),
-        )
-    })?;
-    let file = output_folder.join(file_asset.location().unique_name());
-    let data = std::fs::read(file).map_err(|e| {
-        syn::Error::new(
-            proc_macro2::Span::call_site(),
-            format!("Failed to read file: {}", e),
-        )
-    })?;
-    let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
-    let mime = manganis_common::get_mime_from_ext(file_asset.options().extension());
-    Ok(format!("data:{mime};base64,{data}"))
-}
+//     let target_directory =
+//         std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".to_string());
+//     let output_folder = std::path::Path::new(&target_directory)
+//         .join("manganis")
+//         .join("assets");
+//     std::fs::create_dir_all(&output_folder).map_err(|e| {
+//         syn::Error::new(
+//             proc_macro2::Span::call_site(),
+//             format!("Failed to create output folder: {}", e),
+//         )
+//     })?;
+//     manganis_cli_support::process_file(file_asset, &output_folder).map_err(|e| {
+//         syn::Error::new(
+//             proc_macro2::Span::call_site(),
+//             format!("Failed to process file: {}", e),
+//         )
+//     })?;
+//     let file = output_folder.join(file_asset.location().unique_name());
+//     let data = std::fs::read(file).map_err(|e| {
+//         syn::Error::new(
+//             proc_macro2::Span::call_site(),
+//             format!("Failed to read file: {}", e),
+//         )
+//     })?;
+//     let data = base64::engine::general_purpose::STANDARD_NO_PAD.encode(data);
+//     let mime = manganis_common::get_mime_from_ext(file_asset.options().extension());
+//     Ok(format!("data:{mime};base64,{data}"))
+// }
 
 pub(crate) fn verify_preload_valid(ident: &Ident) -> Result<(), syn::Error> {
     // Compile time preload is only supported for the primary package

@@ -1506,8 +1506,6 @@ dependencies = [
  "infer",
  "scratch",
  "serde",
- "tracing",
- "url",
 ]
 
 [[package]]
@@ -1524,14 +1522,12 @@ name = "manganis-macro"
 version = "0.3.0-alpha.0"
 dependencies = [
  "base64 0.22.1",
- "manganis-cli-support",
  "manganis-common",
  "proc-macro2",
  "quote",
  "serde",
  "serde_json",
  "syn 2.0.74",
- "tracing-subscriber",
 ]
 
 [[package]]
