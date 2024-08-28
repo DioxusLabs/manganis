@@ -10,7 +10,7 @@ use std::{
     path::Path,
     sync::Arc,
 };
-use swc::{config::JsMinifyOptions, try_with_handler, BoolOrDataConfig};
+use swc::{config::JsMinifyOptions, try_with_handler, BoolOrDataConfig, JsMinifyExtras};
 use swc_common::{sync::Lrc, FileName};
 use swc_common::{SourceMap, GLOBALS};
 
@@ -210,6 +210,7 @@ pub(crate) fn minify_js(source: &AssetSource) -> anyhow::Result<String> {
                         mangle: BoolOrDataConfig::from_bool(true),
                         ..Default::default()
                     },
+                    JsMinifyExtras::default(),
                 )
                 .context("failed to minify javascript")
             })
