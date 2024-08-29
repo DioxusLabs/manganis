@@ -1,7 +1,7 @@
 mod file;
 pub use file::*;
 mod font;
-// pub use font::*;
+pub use font::*;
 mod js;
 pub use js::*;
 mod folder;
