@@ -72,7 +72,7 @@ swc_ecma_transforms_compat = { version = "=0.171.0", default-features = false }
 swc_ecma_transforms_macros = { version = "=0.5.5", default-features = false }
 swc_ecma_transforms_module = { version = "=0.190.0", default-features = false }
 swc_ecma_transforms_optimization = { version = "=0.208.0", default-features = false }
-swc_ecma_transforms_proposal = { version = "=0.179.0", default-features = false }
+swc_ecma_transforms_proposal = { version = "=0.178.0", default-features = false }
 swc_ecma_transforms_react = { version = "=0.191.0", default-features = false }
 swc_ecma_transforms_typescript = { version = "=0.198.1", default-features = false }
 swc_ecma_usage_analyzer = { version = "=0.30.3", default-features = false }
