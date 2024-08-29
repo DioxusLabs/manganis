@@ -11,8 +11,8 @@ const ALL_ASSETS: &[&str] = &[
     VIDEO_FILE,
     TEXT_FILE,
     TEXT_ASSET,
-    // IMAGE_ASSET,
-    // HTML_ASSET,
+    IMAGE_ASSET,
+    HTML_ASSET,
     CSS_ASSET,
     PNG_ASSET,
     RESIZED_PNG_ASSET.path(),
@@ -22,9 +22,9 @@ const ALL_ASSETS: &[&str] = &[
     RESIZED_AVIF_ASSET.path(),
     WEBP_ASSET.path(),
     RESIZED_WEBP_ASSET.path(),
-    // ROBOTO_FONT,
-    // COMFORTAA_FONT,
-    // ROBOTO_FONT_LIGHT_FONT,
+    ROBOTO_FONT,
+    COMFORTAA_FONT,
+    ROBOTO_FONT_LIGHT_FONT,
     SCRIPT,
     DATA,
     FOLDER,
@@ -37,6 +37,10 @@ fn main() {
 
     // Make sure the macro paths match with the paths that actually exist
     for path in ALL_ASSETS {
+        // Skip remote assets
+        if path.starts_with("http") {
+            continue;
+        }
         let path = PathBuf::from(path);
         println!("{:?}", path);
         assert!(!external_paths_should_exist || path.exists());
