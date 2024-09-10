@@ -12,10 +12,10 @@ keywords = ["assets"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-manganis-common = { path = "../common", version = "0.3.0-alpha.1" }
+manganis-common = { path = "../common", version = "0.3.0-alpha.2" }
 
 serde = { version = "1.0.183", features = ["derive"] }
-serde_json = {version="1.0.116"}
+serde_json = { version = "1.0.116" }
 anyhow = "1"
 rayon = "1.7.0"
 rustc-hash = "1.1.0"
@@ -25,7 +25,9 @@ railwind = "0.1.5"
 
 # Image compression/conversion
 # JPEG
-mozjpeg = { version = "0.10.7", default-features = false, features = ["parallel"] }
+mozjpeg = { version = "0.10.7", default-features = false, features = [
+    "parallel",
+] }
 # PNG
 imagequant = "4.2.0"
 png = "0.17.9"
@@ -64,7 +66,9 @@ swc_ecma_lints = { version = "=0.100.0", default-features = false }
 swc_ecma_loader = { version = "=0.49.1", default-features = false }
 swc_ecma_minifier = { version = "=0.204.0", default-features = false }
 swc_ecma_parser = { version = "=0.149.1", default-features = false }
-swc_ecma_preset_env = { version = "=0.217.0", default-features = false, features = ["serde"] }
+swc_ecma_preset_env = { version = "=0.217.0", default-features = false, features = [
+    "serde",
+] }
 swc_ecma_transforms = { version = "=0.239.0", default-features = false }
 swc_ecma_transforms_base = { version = "=0.145.0", default-features = false }
 swc_ecma_transforms_classes = { version = "=0.134.0", default-features = false }
@@ -95,7 +99,7 @@ reqwest = { version = "0.12.5", features = ["blocking"] }
 tracing = "0.1.37"
 
 # Extracting data from an executable
-object = {version="0.36.0", features=["wasm"]}
+object = { version = "0.36.0", features = ["wasm"] }
 
 [dev-dependencies]
 tracing-subscriber = "0.3.18"
