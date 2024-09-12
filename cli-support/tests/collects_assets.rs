@@ -89,7 +89,7 @@ fn link() {
 
     // Then copy the assets to a temporary directory and run the application
     let assets_dir = PathBuf::from("./assets");
-    assets.copy_static_assets_to(assets_dir).unwrap();
+    assets.copy_static_assets_to(assets_dir, true).unwrap();
 
     // Then run the application
     let status = Command::new("cargo")

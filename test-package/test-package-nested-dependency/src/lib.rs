@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 mod file;
 pub use file::*;
 mod font;
