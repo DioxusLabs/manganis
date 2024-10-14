@@ -6,6 +6,7 @@ use manganis_common::{
     JsonOptions,
 };
 use std::{
+    fs,
     io::{BufWriter, Write},
     path::Path,
     sync::Arc,
@@ -15,19 +16,33 @@ use swc_common::{sync::Lrc, FileName};
 use swc_common::{SourceMap, GLOBALS};
 
 pub trait Process {
-    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()>;
+    fn process(
+        &self,
+        source: &AssetSource,
+        output_path: &Path,
+        should_opt: bool,
+    ) -> anyhow::Result<()>;
 }
 
-/// Process a specific file asset
-pub fn process_file(file: &FileAsset, output_folder: &Path) -> anyhow::Result<()> {
+/// Process a specific file asset, specifying the output folder and if the file should be optimized.
+pub fn process_file(
+    file: &FileAsset,
+    output_folder: &Path,
+    should_opt: bool,
+) -> anyhow::Result<()> {
     let location = file.location();
     let source = location.source();
     let output_path = output_folder.join(location.unique_name());
-    file.options().process(source, &output_path)
+    file.options().process(source, &output_path, should_opt)
 }
 
 impl Process for FileOptions {
-    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
+    fn process(
+        &self,
+        source: &AssetSource,
+        output_path: &Path,
+        should_opt: bool,
+    ) -> anyhow::Result<()> {
         if output_path.exists() {
             return Ok(());
         }
@@ -42,16 +57,16 @@ impl Process for FileOptions {
                 })?;
             }
             Self::Css(options) => {
-                options.process(source, output_path)?;
+                options.process(source, output_path, should_opt)?;
             }
             Self::Js(options) => {
-                options.process(source, output_path)?;
+                options.process(source, output_path, should_opt)?;
             }
             Self::Json(options) => {
-                options.process(source, output_path)?;
+                options.process(source, output_path, should_opt)?;
             }
             Self::Image(options) => {
-                options.process(source, output_path)?;
+                options.process(source, output_path, should_opt)?;
             }
             _ => todo!(),
         }
@@ -61,7 +76,18 @@ impl Process for FileOptions {
 }
 
 impl Process for ImageOptions {
-    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
+    fn process(
+        &self,
+        source: &AssetSource,
+        output_path: &Path,
+        should_opt: bool,
+    ) -> anyhow::Result<()> {
+        if !should_opt {
+            if let Some(path) = source.as_path() {
+                fs::copy(path, output_path)?;
+                return Ok(());
+            }
+        }
         let mut image = image::ImageReader::new(std::io::Cursor::new(&*source.read_to_bytes()?))
             .with_guessed_format()?
             .decode()?;
@@ -161,10 +187,19 @@ fn compress_png(image: DynamicImage, output_location: &Path) {
 }
 
 impl Process for CssOptions {
-    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
+    fn process(
+        &self,
+        source: &AssetSource,
+        output_path: &Path,
+        should_opt: bool,
+    ) -> anyhow::Result<()> {
         let css = source.read_to_string()?;
 
-        let css = if self.minify() { minify_css(&css) } else { css };
+        let css = if self.minify() && should_opt {
+            minify_css(&css)
+        } else {
+            css
+        };
 
         std::fs::write(output_path, css).with_context(|| {
             format!(
@@ -226,8 +261,13 @@ pub(crate) fn minify_js(source: &AssetSource) -> anyhow::Result<String> {
 }
 
 impl Process for JsOptions {
-    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
-        let js = if self.minify() {
+    fn process(
+        &self,
+        source: &AssetSource,
+        output_path: &Path,
+        should_opt: bool,
+    ) -> anyhow::Result<()> {
+        let js = if self.minify() && should_opt {
             minify_js(source)?
         } else {
             source.read_to_string()?
@@ -253,14 +293,22 @@ pub(crate) fn minify_json(source: &str) -> anyhow::Result<String> {
 }
 
 impl Process for JsonOptions {
-    fn process(&self, source: &AssetSource, output_path: &Path) -> anyhow::Result<()> {
+    fn process(
+        &self,
+        source: &AssetSource,
+        output_path: &Path,
+        should_opt: bool,
+    ) -> anyhow::Result<()> {
         let source = source.read_to_string()?;
-        let json = match minify_json(&source) {
-            Ok(json) => json,
-            Err(err) => {
-                tracing::error!("Failed to minify json: {}", err);
-                source
-            }
+        let json = match should_opt {
+            false => source,
+            true => match minify_json(&source) {
+                Ok(json) => json,
+                Err(err) => {
+                    tracing::error!("Failed to minify json: {}", err);
+                    source
+                }
+            },
         };
 
         std::fs::write(output_path, json).with_context(|| {
