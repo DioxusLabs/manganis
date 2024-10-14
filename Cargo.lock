@@ -1426,14 +1426,14 @@ dependencies = [
 
 [[package]]
 name = "manganis"
-version = "0.3.0-alpha.2"
+version = "0.3.0-alpha.3"
 dependencies = [
  "manganis-macro",
 ]
 
 [[package]]
 name = "manganis-cli-support"
-version = "0.3.0-alpha.2"
+version = "0.3.0-alpha.3"
 dependencies = [
  "anyhow",
  "image",
@@ -1508,7 +1508,7 @@ dependencies = [
 
 [[package]]
 name = "manganis-common"
-version = "0.3.0-alpha.2"
+version = "0.3.0-alpha.3"
 dependencies = [
  "anyhow",
  "base64 0.21.7",
@@ -1523,7 +1523,7 @@ dependencies = [
 
 [[package]]
 name = "manganis-macro"
-version = "0.3.0-alpha.2"
+version = "0.3.0-alpha.3"
 dependencies = [
  "base64 0.21.7",
  "manganis-cli-support",
