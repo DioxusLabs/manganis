@@ -457,6 +457,8 @@ pub const fn folder(path: &'static str) -> &'static str {
 /// > **Note**: These types will do nothing outside of the `mg!` macro
 pub trait ForMgMacro: __private::Sealed + Sync + Send {}
 
+impl<T> ForMgMacro for T where T: __private::Sealed + Sync + Send {}
+
 mod __private {
     use super::*;
 
@@ -469,7 +471,3 @@ mod __private {
     impl Sealed for CssAssetBuilder {}
     impl Sealed for &'static str {}
 }
-
-impl ForMgMacro for ImageAssetBuilder {}
-impl ForMgMacro for FontAssetBuilder {}
-impl ForMgMacro for &'static str {}
