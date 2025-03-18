@@ -1,5 +1,7 @@
 # Manganis
 
+# ⚠️ **Manganis has moved into the main diouxs repo [here](https://github.com/DioxusLabs/dioxus/tree/main/packages/manganis)**
+
 The Manganis allows you to submit assets to a build tool that supports collecting assets. It makes it easy to self-host assets that are distributed throughout your library. Manganis also handles optimizing, converting, and fetching assets.
 
 If you defined this in a component library:
