@@ -54,6 +54,6 @@ fn process_file_minimal(input_path: &Path, output_path: &Path) -> anyhow::Result
     let options =
         FileOptions::default_for_extension(input_path.extension().and_then(|e| e.to_str()));
     let source = manganis_common::AssetSource::Local(input_path.to_path_buf());
-    options.process(&source, output_path)?;
+    options.process(&source, output_path, true)?;
     Ok(())
 }
